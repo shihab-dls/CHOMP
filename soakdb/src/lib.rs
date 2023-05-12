@@ -4,7 +4,7 @@
 pub(crate) mod datatypes;
 pub(crate) mod tables;
 
-use sea_orm::{Database, DatabaseConnection, DbErr};
+use sea_orm::{Database, DatabaseConnection, DbErr, EntityTrait};
 use std::path::Path;
 
 #[derive(Debug, thiserror::Error)]
@@ -15,12 +15,34 @@ pub enum ConnectionError {
     DatabaseError(#[from] DbErr),
 }
 
-pub async fn connect(path: impl AsRef<Path>) -> Result<DatabaseConnection, ConnectionError> {
+async fn connect(path: impl AsRef<Path>) -> Result<DatabaseConnection, ConnectionError> {
     let database_url = format!(
         "sqlite://{}",
         path.as_ref().to_str().ok_or(ConnectionError::InvalidPath)?
     );
     Ok(Database::connect(database_url).await?)
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ReadError {
+    #[error("Connection failed")]
+    ConnectionError(#[from] ConnectionError),
+    #[error("Read failed")]
+    ReadError(#[from] DbErr),
+}
+
+pub async fn read_database(
+    path: impl AsRef<Path>,
+) -> Result<(tables::soak_db::Model, Vec<tables::main_table::Model>), ReadError> {
+    let database = connect(path).await?;
+    let metadata = tables::soak_db::Entity::find()
+        .one(&database)
+        .await?
+        .ok_or(ReadError::ReadError(DbErr::Custom(
+            "No instances found".to_string(),
+        )))?;
+    let entries = tables::main_table::Entity::find().all(&database).await?;
+    Ok((metadata, entries))
 }
 
 #[cfg(test)]
