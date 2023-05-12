@@ -4,7 +4,7 @@
 pub(crate) mod datatypes;
 pub(crate) mod tables;
 
-use sea_orm::{Database, DatabaseConnection, DbErr, EntityTrait};
+use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, EntityTrait, Schema};
 use std::path::Path;
 
 #[derive(Debug, thiserror::Error)]
@@ -43,6 +43,34 @@ pub async fn read_database(
         )))?;
     let entries = tables::main_table::Entity::find().all(&database).await?;
     Ok((metadata, entries))
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum CreateError {
+    #[error("Connection failed")]
+    ConnectionError(#[from] ConnectionError),
+    #[error("Write failed")]
+    WriteError(#[from] DbErr),
+}
+
+pub async fn create_database(path: impl AsRef<Path>) -> Result<(), CreateError> {
+    let database = connect(format!(
+        "{}?mode=rwc",
+        path.as_ref().to_str().ok_or(ConnectionError::InvalidPath)?
+    ))
+    .await?;
+    let builder = database.get_database_backend();
+    let schema = Schema::new(builder);
+    database
+        .execute(builder.build(&schema.create_table_from_entity(tables::soak_db::Entity)))
+        .await?;
+    database
+        .execute(builder.build(&schema.create_table_from_entity(tables::main_table::Entity)))
+        .await?;
+    database
+        .execute(builder.build(&schema.create_table_from_entity(tables::pucks::Entity)))
+        .await?;
+    Ok(())
 }
 
 #[cfg(test)]
