@@ -1,4 +1,5 @@
-use chrono::{DateTime, TimeZone, Utc};
+use super::combination::AsSelfOr;
+use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use chrono_tz::Europe::London;
 use derive_more::{Deref, DerefMut, From};
 use sea_orm::{
@@ -6,6 +7,8 @@ use sea_orm::{
     ColIdx, ColumnType, DbErr, QueryResult, TryGetError, TryGetable, Value,
 };
 use std::{any::type_name, str::FromStr};
+
+pub type DateTimeAsVarious = AsSelfOr<DateTimeAsEuroText, DateTimeAsExcelFloat>;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut, From)]
 pub struct DateTimeAsEuroText(DateTime<Utc>);
@@ -82,9 +85,98 @@ impl Nullable for DateTimeAsEuroText {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut, From)]
+pub struct DateTimeAsExcelFloat(DateTime<Utc>);
+
+impl DateTimeAsExcelFloat {
+    fn epoch() -> NaiveDateTime {
+        NaiveDate::from_ymd_opt(1899, 12, 30)
+            .unwrap()
+            .and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+    }
+}
+
+impl From<f32> for DateTimeAsExcelFloat {
+    fn from(value: f32) -> Self {
+        let days_from_epoch = Duration::days(value.floor() as i64);
+        let seconds_from_midnight =
+            Duration::seconds((value.fract() * Duration::days(1).num_seconds() as f32) as i64);
+        let naive_date_time =
+            DateTimeAsExcelFloat::epoch() + days_from_epoch + seconds_from_midnight;
+        Self(
+            naive_date_time
+                .and_local_timezone(London)
+                .unwrap()
+                .with_timezone(&Utc),
+        )
+    }
+}
+
+impl From<DateTimeAsExcelFloat> for f32 {
+    fn from(value: DateTimeAsExcelFloat) -> Self {
+        let duration_from_lotus_epoch =
+            value.0.with_timezone(&London).naive_local() - DateTimeAsExcelFloat::epoch();
+        let num_days = duration_from_lotus_epoch.num_days();
+        let num_seconds = (duration_from_lotus_epoch - Duration::days(num_days)).num_seconds();
+        let proportion_of_day = num_seconds as f32 / Duration::days(1).num_seconds() as f32;
+        num_days as f32 + proportion_of_day
+    }
+}
+
+impl From<DateTimeAsExcelFloat> for Value {
+    fn from(value: DateTimeAsExcelFloat) -> Self {
+        Self::Float(Some(value.into()))
+    }
+}
+
+impl TryGetable for DateTimeAsExcelFloat {
+    fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
+        f32::try_get_by(res, index).map(Self::from)
+    }
+}
+
+impl ValueType for DateTimeAsExcelFloat {
+    fn try_from(v: Value) -> Result<Self, ValueTypeErr> {
+        match v {
+            Value::Float(Some(val)) => Ok(Self::from(val)),
+            _ => Err(ValueTypeErr),
+        }
+    }
+
+    fn type_name() -> String {
+        type_name::<Self>().to_string()
+    }
+
+    fn array_type() -> ArrayType {
+        ArrayType::Float
+    }
+
+    fn column_type() -> ColumnType {
+        ColumnType::Float
+    }
+}
+
+impl Nullable for DateTimeAsExcelFloat {
+    fn null() -> Value {
+        f32::null()
+    }
+}
+
+impl From<DateTimeAsExcelFloat> for DateTimeAsEuroText {
+    fn from(value: DateTimeAsExcelFloat) -> Self {
+        Self(value.0)
+    }
+}
+
+impl From<DateTimeAsEuroText> for DateTimeAsExcelFloat {
+    fn from(value: DateTimeAsEuroText) -> Self {
+        Self(value.0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::DateTimeAsEuroText;
+    use super::{DateTimeAsEuroText, DateTimeAsExcelFloat};
     use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone, Utc};
     use std::str::FromStr;
 
@@ -111,6 +203,23 @@ mod tests {
             DateTimeAsEuroText::from_str("11/05/2023 14:10:37")
                 .unwrap()
                 .0
+        )
+    }
+
+    #[test]
+    fn date_time_as_excel_float_serializes() {
+        assert_eq!(45_057.59, f32::from(DateTimeAsExcelFloat(test_date_time())))
+    }
+
+    /// Check f32 is deserialized to a time within a minute of the expected.
+    #[test]
+    fn date_time_as_excel_float_deserializes() {
+        let deserialized_date_time = DateTimeAsExcelFloat::from(45_057.59).0;
+        assert!(
+            (deserialized_date_time - test_date_time())
+                .num_minutes()
+                .abs()
+                <= 1
         )
     }
 }
