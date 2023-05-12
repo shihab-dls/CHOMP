@@ -18,3 +18,27 @@ pub async fn connect(path: impl AsRef<Path>) -> Result<DatabaseConnection, Conne
     );
     Ok(Database::connect(database_url).await?)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::connect;
+    use sea_orm::DatabaseConnection;
+    use std::{future::Future, path::PathBuf};
+
+    pub fn connect_test_databases(
+    ) -> impl Iterator<Item = impl Future<Output = (DatabaseConnection, PathBuf)>> {
+        let mut paths = std::fs::read_dir("test_data")
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .collect::<Vec<_>>();
+        paths.sort();
+        paths.into_iter().map(|path| async {
+            (
+                connect(&path)
+                    .await
+                    .expect("Could not connect to test database at 'test_data/soakdb.sqlite'"),
+                path,
+            )
+        })
+    }
+}

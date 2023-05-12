@@ -1,2 +1,5 @@
 # Rust
 /target
+
+# Test Data
+/test_data

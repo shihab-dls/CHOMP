@@ -95,3 +95,27 @@ pub struct Model {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+
+#[cfg(test)]
+mod tests {
+    use super::Entity;
+    use crate::tests::connect_test_databases;
+    use futures::{stream::FuturesOrdered, StreamExt};
+    use sea_orm::EntityTrait;
+
+    #[tokio::test]
+    async fn read_from_test_database() {
+        connect_test_databases()
+            .map(|database| async {
+                let (database, path) = database.await;
+                Entity::find()
+                    .all(&database)
+                    .await
+                    .map_err(|err| panic!("At {:?} with {}", path, err))
+                    .unwrap();
+            })
+            .collect::<FuturesOrdered<_>>()
+            .collect::<Vec<_>>()
+            .await;
+    }
+}
