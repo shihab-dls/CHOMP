@@ -1,3 +1,6 @@
+#[doc = include_str!("../README.md")]
+#[forbid(unsafe_code)]
+#[warn(missing_docs)]
 pub(crate) mod datatypes;
 pub(crate) mod tables;
 
