@@ -1,4 +1,4 @@
-#[doc = include_str!("../README.md")]
+#[doc = include_str!("../../README.md")]
 #[forbid(unsafe_code)]
 #[warn(missing_docs)]
 pub(crate) mod datatypes;
@@ -31,7 +31,7 @@ mod tests {
 
     pub fn connect_test_databases(
     ) -> impl Iterator<Item = impl Future<Output = (DatabaseConnection, PathBuf)>> {
-        let mut paths = std::fs::read_dir("test_data")
+        let mut paths = std::fs::read_dir("../test_data")
             .unwrap()
             .map(|entry| entry.unwrap().path())
             .collect::<Vec<_>>();

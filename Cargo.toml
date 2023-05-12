@@ -1,27 +1,2 @@
-[package]
-name = "soakdb"
-version = "0.1.0"
-edition = "2021"
-authors = ["Garry O'Donnell <garry.o'donnell@diamond.ac.uk>"]
-description = "An XChemLab service, used to interface with the legacy SoakDB database."
-license = "Apache-2.0"
-repository = "https://github.com/garryod/xchemlab_soakdb_interface"
-homepage = "https://github.com/garryod/xchemlab_soakdb_interface"
-readme = "../README.md"
-
-[dependencies]
-chrono = { version = "0.4.24", default-features = false }
-chrono-tz = { version = "0.8.2" }
-derive_more = { version = "0.99.17" }
-sea-orm = { version = "0.11.2", default-features = false, features = [
-    "runtime-tokio-native-tls",
-    "macros",
-    "with-chrono",
-    "with-uuid",
-    "sqlx-sqlite",
-] }
-thiserror = { version = "1.0.40" }
-
-[dev-dependencies]
-tokio = { version = "1.27.0", features = ["rt-multi-thread", "macros"] }
-futures = { version = "0.3.28" }
+[workspace]
+members = ["soakdb"]
