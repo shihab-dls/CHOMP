@@ -105,3 +105,76 @@ where
         T::null()
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut, From)]
+pub struct NullAsLiteralNone<T>(T)
+where
+    Value: From<T>,
+    T: TryGetable + ValueType + Nullable;
+
+impl<T> From<NullAsLiteralNone<T>> for Value
+where
+    Value: From<T>,
+    T: TryGetable + ValueType + Nullable,
+{
+    fn from(value: NullAsLiteralNone<T>) -> Self {
+        Value::from(value.0)
+    }
+}
+
+impl<T> TryGetable for NullAsLiteralNone<T>
+where
+    Value: From<T>,
+    T: TryGetable + ValueType + Nullable,
+{
+    fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
+        let as_self = T::try_get_by(res, index);
+        let as_literal_none = String::try_get_by(res, index).map(|text| {
+            if text == "None" {
+                TryGetError::Null(index.as_str().unwrap().to_string())
+            } else {
+                TryGetError::DbErr(DbErr::Type(format!(
+                    "Retrieved text ({}) was not literal 'None'.",
+                    text
+                )))
+            }
+        });
+        match (as_self, as_literal_none) {
+            (Ok(val), _) => Ok(Self(val)),
+            (_, Ok(TryGetError::Null(val))) => Err(TryGetError::Null(val)),
+            (Err(err), _) => Err(err),
+        }
+    }
+}
+
+impl<T> ValueType for NullAsLiteralNone<T>
+where
+    Value: From<T>,
+    T: TryGetable + ValueType + Nullable,
+{
+    fn try_from(v: Value) -> Result<Self, ValueTypeErr> {
+        T::try_from(v).map(|value| Self(value))
+    }
+
+    fn type_name() -> String {
+        type_name::<Self>().to_string()
+    }
+
+    fn array_type() -> ArrayType {
+        T::array_type()
+    }
+
+    fn column_type() -> ColumnType {
+        T::column_type()
+    }
+}
+
+impl<T> Nullable for NullAsLiteralNone<T>
+where
+    Value: From<T>,
+    T: TryGetable + ValueType + Nullable,
+{
+    fn null() -> Value {
+        T::null()
+    }
+}
