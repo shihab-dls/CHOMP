@@ -1,0 +1,12 @@
+[package]
+name = "soakdb"
+version = "0.1.0"
+edition = "2021"
+authors = ["Garry O'Donnell <garry.o'donnell@diamond.ac.uk>"]
+description = "An XChemLab service, used to interface with the legacy SoakDB database."
+license = "Apache-2.0"
+repository = "https://github.com/garryod/xchemlab_soakdb_interface"
+homepage = "https://github.com/garryod/xchemlab_soakdb_interface"
+readme = "../README.md"
+
+[dependencies]
