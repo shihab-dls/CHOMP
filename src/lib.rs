@@ -1,3 +1,4 @@
+pub(crate) mod datatypes;
 pub(crate) mod tables;
 
 use sea_orm::{Database, DatabaseConnection, DbErr};
