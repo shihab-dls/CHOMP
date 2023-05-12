@@ -17,3 +17,4 @@ sea-orm = { version = "0.11.2", default-features = false, features = [
     "with-uuid",
     "sqlx-sqlite",
 ] }
+thiserror = { version = "1.0.40" }
