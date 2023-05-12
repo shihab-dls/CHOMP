@@ -1,11 +1,11 @@
-use derive_more::{Deref, DerefMut, From};
+use derive_more::{Deref, DerefMut};
 use sea_orm::{
     sea_query::{ArrayType, Nullable, ValueType, ValueTypeErr},
     ColIdx, ColumnType, QueryResult, TryGetError, TryGetable, Value,
 };
 use std::{any::type_name, marker::PhantomData, str::FromStr};
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut, From)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut)]
 pub struct AsSelfOr<RW, R>(
     #[deref]
     #[deref_mut]
@@ -16,6 +16,17 @@ where
     Value: From<RW>,
     RW: TryGetable + ValueType,
     R: TryGetable + ValueType + Into<RW>;
+
+impl<RW, R> From<RW> for AsSelfOr<RW, R>
+where
+    Value: From<RW>,
+    RW: TryGetable + ValueType,
+    R: TryGetable + ValueType + Into<RW>,
+{
+    fn from(value: RW) -> Self {
+        Self(value, PhantomData)
+    }
+}
 
 impl<RW, R> From<AsSelfOr<RW, R>> for Value
 where
