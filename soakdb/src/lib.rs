@@ -31,18 +31,19 @@ pub enum ReadError {
     ReadError(#[from] DbErr),
 }
 
-pub async fn read_database(
-    path: impl AsRef<Path>,
-) -> Result<(tables::soak_db::Model, Vec<tables::main_table::Model>), ReadError> {
+pub async fn read_metadata(path: impl AsRef<Path>) -> Result<tables::soak_db::Model, ReadError> {
     let database = connect(path).await?;
-    let metadata = tables::soak_db::Entity::find()
+    Ok(tables::soak_db::Entity::find()
         .one(&database)
         .await?
-        .ok_or(ReadError::ReadError(DbErr::Custom(
-            "No instances found".to_string(),
-        )))?;
-    let entries = tables::main_table::Entity::find().all(&database).await?;
-    Ok((metadata, entries))
+        .ok_or(DbErr::Custom("No instances found".to_string()))?)
+}
+
+pub async fn read_entries(
+    path: impl AsRef<Path>,
+) -> Result<Vec<tables::main_table::Model>, ReadError> {
+    let database = connect(path).await?;
+    Ok(tables::main_table::Entity::find().all(&database).await?)
 }
 
 #[derive(Debug, thiserror::Error)]
