@@ -2,8 +2,10 @@
 #[forbid(unsafe_code)]
 #[warn(missing_docs)]
 pub(crate) mod datatypes;
+pub mod models;
 pub(crate) mod tables;
 
+use models::{Visit, VisitReadback};
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, EntityTrait, Schema};
 use std::path::Path;
 
@@ -31,12 +33,13 @@ pub enum ReadError {
     ReadError(#[from] DbErr),
 }
 
-pub async fn read_metadata(path: impl AsRef<Path>) -> Result<tables::soak_db::Model, ReadError> {
+pub async fn read_visit(path: impl AsRef<Path>) -> Result<VisitReadback, ReadError> {
     let database = connect(path).await?;
     Ok(tables::soak_db::Entity::find()
         .one(&database)
         .await?
-        .ok_or(DbErr::Custom("No instances found".to_string()))?)
+        .ok_or(DbErr::Custom("No instances found".to_string()))?
+        .into())
 }
 
 pub async fn read_entries(
