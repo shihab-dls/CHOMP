@@ -50,14 +50,14 @@ pub async fn read_entries(
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum CreateError {
+pub enum WriteError {
     #[error("Connection failed")]
     ConnectionError(#[from] ConnectionError),
     #[error("Write failed")]
     WriteError(#[from] DbErr),
 }
 
-pub async fn create_database(path: impl AsRef<Path>) -> Result<(), CreateError> {
+pub async fn create_database(path: impl AsRef<Path>) -> Result<(), WriteError> {
     let database = connect(format!(
         "{}?mode=rwc",
         path.as_ref().to_str().ok_or(ConnectionError::InvalidPath)?
@@ -75,6 +75,19 @@ pub async fn create_database(path: impl AsRef<Path>) -> Result<(), CreateError> 
         .execute(builder.build(&schema.create_table_from_entity(tables::pucks::Entity)))
         .await?;
     Ok(())
+}
+
+pub async fn write_visit(
+    path: impl AsRef<Path>,
+    visit: Visit,
+) -> Result<VisitReadback, WriteError> {
+    let database = connect(path).await?;
+    Ok(
+        tables::soak_db::Entity::update(tables::soak_db::ActiveModel::from(visit))
+            .exec(&database)
+            .await?
+            .into(),
+    )
 }
 
 #[cfg(test)]
