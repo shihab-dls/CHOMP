@@ -1,16 +1,15 @@
+pub mod export;
 pub mod import;
 
-use self::import::ImportQuery;
-use async_graphql::{
-    EmptyMutation, EmptySubscription, MergedObject, MergedSubscription, Schema, SchemaBuilder,
-};
+use self::{export::ExportMutation, import::ImportQuery};
+use async_graphql::{EmptySubscription, MergedObject, MergedSubscription, Schema, SchemaBuilder};
 
-pub type RootSchema = Schema<RootQuery, EmptyMutation, EmptySubscription>;
+pub type RootSchema = Schema<RootQuery, RootMutation, EmptySubscription>;
 
-pub fn schema_builder() -> SchemaBuilder<RootQuery, EmptyMutation, EmptySubscription> {
+pub fn schema_builder() -> SchemaBuilder<RootQuery, RootMutation, EmptySubscription> {
     Schema::build(
         RootQuery::default(),
-        EmptyMutation::default(),
+        RootMutation::default(),
         EmptySubscription::default(),
     )
 }
@@ -19,7 +18,7 @@ pub fn schema_builder() -> SchemaBuilder<RootQuery, EmptyMutation, EmptySubscrip
 pub struct RootQuery(ImportQuery);
 
 #[derive(Debug, MergedObject, Default)]
-pub struct RootMutation;
+pub struct RootMutation(ExportMutation);
 
 #[derive(Debug, MergedSubscription, Default)]
 pub struct RootSubscription;
