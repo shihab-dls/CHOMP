@@ -11,7 +11,10 @@
         "extensions": [
           "rust-lang.rust-analyzer",
           "tamasfe.even-better-toml"
-      ]
+      ],
+      "settings": {
+        "rust-analyzer.cargo.features": "all"
+      }
       }
     },
     "features": {
