@@ -1,14 +1,7 @@
 pub mod api;
 
-use std::{
-    fs::File,
-    io::Write,
-    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-    path::PathBuf,
-};
-
 use api::{RootMutation, RootQuery, RootSchema, RootSubscription};
-use async_graphql::{http::GraphiQLSource, Schema};
+use async_graphql::{extensions::Tracing, http::GraphiQLSource, Schema};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
 use axum::{
     response::{Html, IntoResponse},
@@ -16,6 +9,12 @@ use axum::{
     Extension, Router, Server,
 };
 use clap::Parser;
+use std::{
+    fs::File,
+    io::Write,
+    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+    path::PathBuf,
+};
 
 async fn setup_api() -> RootSchema {
     Schema::build(
@@ -23,6 +22,7 @@ async fn setup_api() -> RootSchema {
         RootMutation::default(),
         RootSubscription::default(),
     )
+    .extension(Tracing)
     .finish()
 }
 
@@ -86,6 +86,11 @@ struct SchemaArgs {
 #[tokio::main]
 async fn main() {
     let args = Cli::parse();
+
+    let tracing_subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .finish();
+    tracing::subscriber::set_global_default(tracing_subscriber).unwrap();
 
     match args {
         Cli::Serve(args) => {
