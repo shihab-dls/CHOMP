@@ -1,6 +1,6 @@
 pub mod api;
 
-use api::{RootMutation, RootQuery, RootSchema, RootSubscription};
+use api::{schema_builder, RootSchema};
 use async_graphql::{extensions::Tracing, http::GraphiQLSource, Schema};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
 use axum::{
@@ -17,13 +17,7 @@ use std::{
 };
 
 async fn setup_api() -> RootSchema {
-    Schema::build(
-        RootQuery::default(),
-        RootMutation::default(),
-        RootSubscription::default(),
-    )
-    .extension(Tracing)
-    .finish()
+    schema_builder().extension(Tracing).finish()
 }
 
 async fn graphiql() -> impl IntoResponse {
