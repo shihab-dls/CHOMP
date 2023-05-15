@@ -1,2 +1,2 @@
 [workspace]
-members = ["soakdb"]
+members = ["soakdb", "exporter"]
