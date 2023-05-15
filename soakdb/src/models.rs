@@ -1,6 +1,10 @@
 use sea_orm::ActiveValue;
 
+#[cfg(feature = "graphql-models")]
+use async_graphql::{InputObject, SimpleObject};
+
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
 pub struct Visit {
     pub name: String,
     pub protein: String,
@@ -44,6 +48,7 @@ impl From<Visit> for crate::tables::soak_db::ActiveModel {
 }
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
 pub struct VisitReadback {
     pub name: Option<String>,
     pub protein: Option<String>,

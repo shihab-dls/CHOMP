@@ -1,5 +1,4 @@
 pub mod api;
-pub mod models;
 
 use api::{schema_builder, RootSchema};
 use async_graphql::{extensions::Tracing, http::GraphiQLSource, Schema};
