@@ -625,6 +625,8 @@ dependencies = [
  "async-graphql-axum",
  "axum",
  "clap",
+ "derive_more",
+ "soakdb",
  "tokio",
  "tracing",
  "tracing-subscriber",
