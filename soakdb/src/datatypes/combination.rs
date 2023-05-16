@@ -1,4 +1,4 @@
-use derive_more::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut, From};
 use sea_orm::{
     sea_query::{ArrayType, Nullable, ValueType, ValueTypeErr},
     ColIdx, ColumnType, QueryResult, TryGetError, TryGetable, Value,
@@ -113,5 +113,75 @@ where
 {
     fn null() -> Value {
         RW::null()
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut, From)]
+pub struct NeverRead<T>(T)
+where
+    Value: From<T>,
+    T: ValueType;
+
+impl<T> From<NeverRead<T>> for Value
+where
+    Value: From<T>,
+    T: ValueType,
+{
+    fn from(value: NeverRead<T>) -> Self {
+        Value::from(value.0)
+    }
+}
+
+impl<T> FromStr for NeverRead<T>
+where
+    Value: From<T>,
+    T: ValueType + FromStr,
+{
+    type Err = <T as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self(s.parse::<T>()?))
+    }
+}
+
+impl<T> TryGetable for NeverRead<T>
+where
+    Value: From<T>,
+    T: ValueType,
+{
+    fn try_get_by<I: ColIdx>(_res: &QueryResult, _index: I) -> Result<Self, TryGetError> {
+        Err(TryGetError::Null(type_name::<I>().to_string()))
+    }
+}
+
+impl<T> ValueType for NeverRead<T>
+where
+    Value: From<T>,
+    T: ValueType,
+{
+    fn try_from(v: Value) -> Result<Self, ValueTypeErr> {
+        Ok(Self(T::try_from(v)?))
+    }
+
+    fn type_name() -> String {
+        type_name::<Self>().to_string()
+    }
+
+    fn array_type() -> ArrayType {
+        T::array_type()
+    }
+
+    fn column_type() -> ColumnType {
+        T::column_type()
+    }
+}
+
+impl<T> Nullable for NeverRead<T>
+where
+    Value: From<T>,
+    T: ValueType + Nullable,
+{
+    fn null() -> Value {
+        T::null()
     }
 }

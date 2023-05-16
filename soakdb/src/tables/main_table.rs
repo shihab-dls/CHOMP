@@ -1,5 +1,5 @@
 use crate::datatypes::{
-    combination::AsSelfOr,
+    combination::{AsSelfOr, NeverRead},
     datetime::DateTimeAsVarious,
     duration::DurationAsVarious,
     text::{AsSelfOrText, NullAsLiteralNone},
@@ -70,7 +70,7 @@ pub struct Model {
     #[sea_orm(column_name = "CryoTimestamp")]
     pub cryo_timestamp: Option<NullAsLiteralNone<DateTimeAsVarious>>,
     #[sea_orm(column_name = "SoakingTime", column_type = "Double", nullable)]
-    pub soaking_time: Option<NullAsLiteralNone<DurationAsVarious>>,
+    pub soaking_time: Option<NeverRead<NullAsLiteralNone<DurationAsVarious>>>,
     #[sea_orm(column_name = "HarvestStatus")]
     pub harvest_status: Option<String>,
     #[sea_orm(column_name = "CrystalName")]
