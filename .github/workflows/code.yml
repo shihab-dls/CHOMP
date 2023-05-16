@@ -1,0 +1,68 @@
+name: Code
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    # Deduplicate jobs from pull requests and branch pushes within the same repo.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3.5.2
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@1.68.2
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Cache Rust Build
+        uses: Swatinem/rust-cache@v2.2.1
+
+      - name: Check Formatting
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: fmt
+          args: >
+            --all
+            --check
+
+      - name: Lint with Clippy
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: clippy
+          args: >
+            --workspace
+            --no-deps
+            --all-targets
+            --all-features
+            --
+            --deny warnings
+
+  test:
+    # Deduplicate jobs from pull requests and branch pushes within the same repo.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3.5.2
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@1.68.2
+        with:
+          toolchain: stable
+          components: rustfmt
+
+      - name: Cache Rust Build
+        uses: Swatinem/rust-cache@v2.2.1
+
+      - name: Test
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: test
+          args: >
+            --all-targets
+            --all-features

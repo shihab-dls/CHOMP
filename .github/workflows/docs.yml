@@ -1,0 +1,61 @@
+name: Docs
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    # Deduplicate jobs from pull requests and branch pushes within the same repo.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3.5.2
+
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@1.68.2
+        with:
+          toolchain: nightly
+          components: rustfmt
+
+      - name: Cache Rust Build
+        uses: Swatinem/rust-cache@v2.2.1
+
+      - name: Build docs
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          # Nightly toolchain used to enable workspace index page
+          toolchain: nightly
+          command: doc
+          args: >
+            --workspace
+            --no-deps
+            --all-features
+            --document-private-items
+        env:
+          RUSTDOCFLAGS: >
+            -Z unstable-options
+            --enable-index-page
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v1.0.8
+        with:
+          path: target/doc
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags')
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Publish docs to GitHub Pages
+        id: deployment
+        uses: actions/github-pages@v2.0.1
