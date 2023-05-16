@@ -1,8 +1,8 @@
 use crate::datatypes::{
     combination::{AsSelfOr, NeverRead},
     datetime::DateTimeAsVarious,
-    duration::DurationAsVarious,
-    text::{AsSelfOrText, NullAsLiteralNone},
+    duration::{DurationAsExcelFloat, DurationAsVarious},
+    text::{AsSelfOrText, FloatAsScientificText, NullAsLiteralNone},
 };
 use sea_orm::entity::prelude::*;
 
@@ -88,7 +88,7 @@ pub struct Model {
     #[sea_orm(column_name = "MountedTimestamp")]
     pub mounted_timestamp: Option<NullAsLiteralNone<DateTimeAsVarious>>,
     #[sea_orm(column_name = "MountingTime")]
-    pub mounting_time: Option<String>,
+    pub mounting_time: Option<NullAsLiteralNone<FloatAsScientificText<DurationAsExcelFloat>>>,
     #[sea_orm(column_name = "ispybStatus")]
     pub ispyb_status: Option<String>,
     #[sea_orm(column_name = "DataCollectionVisit")]
