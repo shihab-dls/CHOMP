@@ -88,7 +88,8 @@ pub struct Model {
     #[sea_orm(column_name = "MountedTimestamp")]
     pub mounted_timestamp: Option<NullAsLiteralNone<DateTimeAsVarious>>,
     #[sea_orm(column_name = "MountingTime")]
-    pub mounting_time: Option<NullAsLiteralNone<FloatAsScientificText<DurationAsExcelFloat>>>,
+    pub mounting_time:
+        Option<NeverRead<NullAsLiteralNone<FloatAsScientificText<DurationAsExcelFloat>>>>,
     #[sea_orm(column_name = "ispybStatus")]
     pub ispyb_status: Option<String>,
     #[sea_orm(column_name = "DataCollectionVisit")]
