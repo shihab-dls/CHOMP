@@ -2,6 +2,7 @@ use crate::datatypes::{
     combination::{AsSelfOr, NeverRead},
     datetime::DateTimeAsVarious,
     duration::{DurationAsExcelFloat, DurationAsVarious},
+    status::StatusAsText,
     text::{AsSelfOrText, FloatAsScientificText, NullAsLiteralNone},
 };
 use sea_orm::entity::prelude::*;
@@ -54,7 +55,7 @@ pub struct Model {
     #[sea_orm(column_name = "SoakTransferVol", column_type = "Double", nullable)]
     pub soak_transfer_vol: Option<NullAsLiteralNone<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "SoakStatus")]
-    pub soak_status: Option<String>,
+    pub soak_status: Option<NullAsLiteralNone<StatusAsText>>,
     #[sea_orm(column_name = "SoakTimestamp")]
     pub soak_timestamp: Option<NullAsLiteralNone<DateTimeAsVarious>>,
     #[sea_orm(column_name = "CryoStockFraction", column_type = "Double", nullable)]
@@ -66,13 +67,13 @@ pub struct Model {
     #[sea_orm(column_name = "CryoTransferVolume", column_type = "Double", nullable)]
     pub cryo_transfer_volume: Option<NullAsLiteralNone<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "CryoStatus")]
-    pub cryo_status: Option<String>,
+    pub cryo_status: Option<NullAsLiteralNone<StatusAsText>>,
     #[sea_orm(column_name = "CryoTimestamp")]
     pub cryo_timestamp: Option<NullAsLiteralNone<DateTimeAsVarious>>,
     #[sea_orm(column_name = "SoakingTime", column_type = "Double", nullable)]
     pub soaking_time: Option<NeverRead<NullAsLiteralNone<DurationAsVarious>>>,
     #[sea_orm(column_name = "HarvestStatus")]
-    pub harvest_status: Option<String>,
+    pub harvest_status: Option<NullAsLiteralNone<StatusAsText>>,
     #[sea_orm(column_name = "CrystalName")]
     pub crystal_name: Option<String>,
     #[sea_orm(column_name = "Puck")]
