@@ -42,11 +42,14 @@ pub async fn read_metadata(path: impl AsRef<Path>) -> Result<MetadataReadback, R
         .into())
 }
 
-pub async fn read_entries(
-    path: impl AsRef<Path>,
-) -> Result<Vec<tables::main_table::Model>, ReadError> {
+pub async fn read_wells(path: impl AsRef<Path>) -> Result<Vec<WellReadback>, ReadError> {
     let database = connect(path).await?;
-    Ok(tables::main_table::Entity::find().all(&database).await?)
+    Ok(tables::main_table::Entity::find()
+        .all(&database)
+        .await?
+        .into_iter()
+        .map(WellReadback::from)
+        .collect())
 }
 
 #[derive(Debug, thiserror::Error)]
