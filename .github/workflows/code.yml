@@ -59,6 +59,9 @@ jobs:
       - name: Cache Rust Build
         uses: Swatinem/rust-cache@v2.2.1
 
+      - name: Create test_data directory
+        run: mkdir test_data
+
       - name: Test
         uses: actions-rs/cargo@v1.0.1
         with:
