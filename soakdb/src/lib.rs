@@ -5,7 +5,7 @@ pub(crate) mod datatypes;
 pub mod models;
 pub(crate) mod tables;
 
-use models::{Visit, VisitReadback};
+use models::{Metadata, MetadataReadback, WellReadback};
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, EntityTrait, Schema};
 use std::path::Path;
 
@@ -33,7 +33,7 @@ pub enum ReadError {
     ReadError(#[from] DbErr),
 }
 
-pub async fn read_visit(path: impl AsRef<Path>) -> Result<VisitReadback, ReadError> {
+pub async fn read_metadata(path: impl AsRef<Path>) -> Result<MetadataReadback, ReadError> {
     let database = connect(path).await?;
     Ok(tables::soak_db::Entity::find()
         .one(&database)
@@ -77,10 +77,10 @@ pub async fn create_database(path: impl AsRef<Path>) -> Result<(), WriteError> {
     Ok(())
 }
 
-pub async fn write_visit(
+pub async fn write_metadata(
     path: impl AsRef<Path>,
-    visit: Visit,
-) -> Result<VisitReadback, WriteError> {
+    visit: Metadata,
+) -> Result<MetadataReadback, WriteError> {
     let database = connect(path).await?;
     Ok(
         tables::soak_db::Entity::update(tables::soak_db::ActiveModel::from(visit))

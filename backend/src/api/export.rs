@@ -1,7 +1,7 @@
 use async_graphql::Object;
 use soakdb::{
-    models::{Visit, VisitReadback},
-    write_visit,
+    models::{Metadata, MetadataReadback},
+    write_metadata,
 };
 use tracing::debug;
 
@@ -10,13 +10,13 @@ pub struct ExportMutation;
 
 #[Object]
 impl ExportMutation {
-    async fn update_visit(
+    async fn update_metadata(
         &self,
         path: String,
-        visit: Visit,
-    ) -> async_graphql::Result<VisitReadback> {
+        visit: Metadata,
+    ) -> async_graphql::Result<MetadataReadback> {
         debug!("Writing metadata to '{}'", path);
-        let visit = write_visit(&path, visit).await?;
+        let visit = write_metadata(&path, visit).await?;
         debug!("Wrote metadata to '{}'", path);
         Ok(visit)
     }

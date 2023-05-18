@@ -1,16 +1,16 @@
 use async_graphql::{Context, Object};
-use soakdb::{models::VisitReadback, read_visit};
+use soakdb::{models::MetadataReadback, read_entries, read_metadata};
 
 #[derive(Debug, Default)]
 pub struct ImportQuery;
 
 #[Object]
 impl ImportQuery {
-    async fn read_visit(
+    async fn read_metadata(
         &self,
         _ctx: &Context<'_>,
         path: String,
-    ) -> async_graphql::Result<VisitReadback> {
-        Ok(read_visit(&path).await?)
+    ) -> async_graphql::Result<MetadataReadback> {
+        Ok(read_metadata(&path).await?)
     }
 }
