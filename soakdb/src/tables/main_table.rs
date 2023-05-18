@@ -2,6 +2,7 @@ use crate::datatypes::{
     combination::{AsSelfOr, NeverRead},
     datetime::DateTimeAsVarious,
     duration::{DurationAsExcelFloat, DurationAsVarious},
+    mounting_result::MountingResultAsText,
     status::StatusAsText,
     text::{AsSelfOrText, FloatAsScientificText, NullAsLiteralNone},
 };
@@ -83,7 +84,7 @@ pub struct Model {
     #[sea_orm(column_name = "PinBarcode")]
     pub pin_barcode: Option<String>,
     #[sea_orm(column_name = "MountingResult")]
-    pub mounting_result: Option<String>,
+    pub mounting_result: Option<NullAsLiteralNone<MountingResultAsText>>,
     #[sea_orm(column_name = "MountingArrivalTime")]
     pub mounting_arrival_time: Option<NullAsLiteralNone<DateTimeAsVarious>>,
     #[sea_orm(column_name = "MountedTimestamp")]
