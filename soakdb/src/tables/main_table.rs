@@ -2,6 +2,7 @@ use crate::datatypes::{
     combination::{AsSelfOr, NeverRead},
     datetime::DateTimeAsVarious,
     duration::{DurationAsExcelFloat, DurationAsVarious},
+    ispyb_export::ISPyBExportAsText,
     mounting_result::MountingResultAsText,
     status::StatusAsText,
     text::{AsSelfOrText, FloatAsScientificText, NullAsVarious},
@@ -93,7 +94,7 @@ pub struct Model {
     pub mounting_time:
         Option<NeverRead<NullAsVarious<FloatAsScientificText<DurationAsExcelFloat>>>>,
     #[sea_orm(column_name = "ispybStatus")]
-    pub ispyb_status: Option<String>,
+    pub ispyb_status: Option<NullAsVarious<ISPyBExportAsText>>,
     #[sea_orm(column_name = "DataCollectionVisit")]
     pub data_collection_visit: Option<String>,
     #[sea_orm(column_name = "SoakDBComments")]
