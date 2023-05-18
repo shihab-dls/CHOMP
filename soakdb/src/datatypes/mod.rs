@@ -5,3 +5,4 @@ pub mod ispyb_export;
 pub mod mounting_result;
 pub mod status;
 pub mod text;
+pub mod visit;

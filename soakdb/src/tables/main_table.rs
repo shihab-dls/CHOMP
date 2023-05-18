@@ -6,6 +6,7 @@ use crate::datatypes::{
     mounting_result::MountingResultAsText,
     status::StatusAsText,
     text::{AsSelfOrText, FloatAsScientificText, NullAsVarious},
+    visit::VisitAsText,
 };
 use sea_orm::entity::prelude::*;
 
@@ -15,7 +16,7 @@ pub struct Model {
     #[sea_orm(column_name = "ID", primary_key, auto_increment = false)]
     pub id: i32,
     #[sea_orm(column_name = "LabVisit")]
-    pub lab_visit: Option<String>,
+    pub lab_visit: Option<NullAsVarious<VisitAsText>>,
     #[sea_orm(column_name = "LibraryPlate")]
     pub library_plate: Option<String>,
     #[sea_orm(column_name = "SourceWell")]
@@ -96,7 +97,7 @@ pub struct Model {
     #[sea_orm(column_name = "ispybStatus")]
     pub ispyb_status: Option<NullAsVarious<ISPyBExportAsText>>,
     #[sea_orm(column_name = "DataCollectionVisit")]
-    pub data_collection_visit: Option<String>,
+    pub data_collection_visit: Option<NullAsVarious<VisitAsText>>,
     #[sea_orm(column_name = "SoakDBComments")]
     pub soak_db_comments: Option<String>,
 }
