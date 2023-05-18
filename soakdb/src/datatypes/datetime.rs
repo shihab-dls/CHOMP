@@ -45,16 +45,12 @@ impl From<DateTimeAsEuroText> for Value {
 impl TryGetable for DateTimeAsEuroText {
     fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
         let text = String::try_get_by(res, index)?.trim().to_string();
-        if text.is_empty() {
-            Err(TryGetError::Null(type_name::<I>().to_string()))
-        } else {
-            text.parse().map_err(|err| {
-                TryGetError::DbErr(DbErr::Type(format!(
-                    "Could not parse '{}' as DateTime using format '{}' for {:?}: {}",
-                    text, DATE_TIME_FORMAT, index, err
-                )))
-            })
-        }
+        text.parse().map_err(|err| {
+            TryGetError::DbErr(DbErr::Type(format!(
+                "Could not parse '{}' as DateTime using format '{}' for {:?}: {}",
+                text, DATE_TIME_FORMAT, index, err
+            )))
+        })
     }
 }
 

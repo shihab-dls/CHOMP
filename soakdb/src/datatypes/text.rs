@@ -39,20 +39,14 @@ where
         let as_text = String::try_get_by(res, index).map(|text| text.trim().to_string());
         match (as_self, as_text) {
             (Ok(val), _) => Ok(Self(val)),
-            (_, Ok(text)) => {
-                if text.is_empty() {
-                    Err(TryGetError::Null(index.as_str().unwrap().to_string()))
-                } else {
-                    Ok(Self(text.parse().map_err(|_| {
-                        TryGetError::DbErr(DbErr::Type(format!(
-                            "Could not parse '{}' into {} for {:?}",
-                            text,
-                            type_name::<T>(),
-                            index
-                        )))
-                    })?))
-                }
-            }
+            (_, Ok(text)) => Ok(Self(text.parse().map_err(|_| {
+                TryGetError::DbErr(DbErr::Type(format!(
+                    "Could not parse '{}' into {} for {:?}",
+                    text,
+                    type_name::<T>(),
+                    index
+                )))
+            })?)),
             (Err(TryGetError::Null(err)), _) => Err(TryGetError::Null(err)),
             (_, Err(TryGetError::Null(err))) => Err(TryGetError::Null(err)),
             (Err(TryGetError::DbErr(self_err)), Err(TryGetError::DbErr(text_err))) => {
@@ -106,6 +100,81 @@ where
     }
 }
 
+pub type NullAsVarious<T> = NullAsEmptyString<NullAsLiteralNone<T>>;
+
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut, From)]
+pub struct NullAsEmptyString<T>(T)
+where
+    Value: From<T>,
+    T: TryGetable + ValueType + Nullable;
+
+impl<T> From<NullAsEmptyString<T>> for Value
+where
+    Value: From<T>,
+    T: TryGetable + ValueType + Nullable,
+{
+    fn from(value: NullAsEmptyString<T>) -> Self {
+        Value::from(value.0)
+    }
+}
+
+impl<T> TryGetable for NullAsEmptyString<T>
+where
+    Value: From<T>,
+    T: TryGetable + ValueType + Nullable,
+{
+    fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
+        let as_self = T::try_get_by(res, index);
+        let as_empty_string = String::try_get_by(res, index).map(|text| {
+            if text.trim().is_empty() {
+                TryGetError::Null(index.as_str().unwrap().to_string())
+            } else {
+                TryGetError::DbErr(DbErr::Type(format!(
+                    "Retrieved text ({}) was not an empty string.",
+                    text
+                )))
+            }
+        });
+        match (as_self, as_empty_string) {
+            (Ok(val), _) => Ok(Self(val)),
+            (_, Ok(TryGetError::Null(val))) => Err(TryGetError::Null(val)),
+            (Err(err), _) => Err(err),
+        }
+    }
+}
+
+impl<T> ValueType for NullAsEmptyString<T>
+where
+    Value: From<T>,
+    T: TryGetable + ValueType + Nullable,
+{
+    fn try_from(v: Value) -> Result<Self, ValueTypeErr> {
+        T::try_from(v).map(|value| Self(value))
+    }
+
+    fn type_name() -> String {
+        type_name::<Self>().to_string()
+    }
+
+    fn array_type() -> ArrayType {
+        T::array_type()
+    }
+
+    fn column_type() -> ColumnType {
+        T::column_type()
+    }
+}
+
+impl<T> Nullable for NullAsEmptyString<T>
+where
+    Value: From<T>,
+    T: TryGetable + ValueType + Nullable,
+{
+    fn null() -> Value {
+        T::null()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut, From)]
 pub struct NullAsLiteralNone<T>(T)
 where
@@ -130,7 +199,7 @@ where
     fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
         let as_self = T::try_get_by(res, index);
         let as_literal_none = String::try_get_by(res, index).map(|text| {
-            if text == "None" {
+            if text.trim() == "None" {
                 TryGetError::Null(index.as_str().unwrap().to_string())
             } else {
                 TryGetError::DbErr(DbErr::Type(format!(
@@ -229,10 +298,6 @@ where
     T: From<f32> + Copy + ValueType,
 {
     fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
-        let text = String::try_get_by(res, index)?.trim().to_string();
-        if text.is_empty() {
-            return Err(TryGetError::Null(type_name::<Self>().to_string()));
-        }
         Ok(Self::from_str(&String::try_get_by(res, index)?)
             .map_err(|err| DbErr::Type(format!("Failed to parse {:?} with: {}", index, err)))?)
     }

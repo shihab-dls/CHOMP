@@ -4,7 +4,7 @@ use crate::datatypes::{
     duration::{DurationAsExcelFloat, DurationAsVarious},
     mounting_result::MountingResultAsText,
     status::StatusAsText,
-    text::{AsSelfOrText, FloatAsScientificText, NullAsLiteralNone},
+    text::{AsSelfOrText, FloatAsScientificText, NullAsVarious},
 };
 use sea_orm::entity::prelude::*;
 
@@ -30,68 +30,68 @@ pub struct Model {
     #[sea_orm(column_name = "CrystalWell")]
     pub crystal_well: Option<String>,
     #[sea_orm(column_name = "EchoX")]
-    pub echo_x: Option<NullAsLiteralNone<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub echo_x: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "EchoY")]
-    pub echo_y: Option<NullAsLiteralNone<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub echo_y: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "DropVolume", column_type = "Double", nullable)]
-    pub drop_volume: Option<NullAsLiteralNone<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub drop_volume: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "ProteinName")]
     pub protein_name: Option<String>,
     #[sea_orm(column_name = "BatchNumber")]
-    pub batch_number: Option<NullAsLiteralNone<AsSelfOrText<i32>>>,
+    pub batch_number: Option<NullAsVarious<AsSelfOrText<i32>>>,
     #[sea_orm(
         column_name = "CompoundStockConcentration",
         column_type = "Double",
         nullable
     )]
-    pub compound_stock_concentration: Option<NullAsLiteralNone<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub compound_stock_concentration: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(
         column_name = "CompoundConcentration",
         column_type = "Double",
         nullable
     )]
-    pub compound_concentration: Option<NullAsLiteralNone<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub compound_concentration: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "SolventFraction", column_type = "Double", nullable)]
-    pub solvent_fraction: Option<NullAsLiteralNone<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub solvent_fraction: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "SoakTransferVol", column_type = "Double", nullable)]
-    pub soak_transfer_vol: Option<NullAsLiteralNone<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub soak_transfer_vol: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "SoakStatus")]
-    pub soak_status: Option<NullAsLiteralNone<StatusAsText>>,
+    pub soak_status: Option<NullAsVarious<StatusAsText>>,
     #[sea_orm(column_name = "SoakTimestamp")]
-    pub soak_timestamp: Option<NullAsLiteralNone<DateTimeAsVarious>>,
+    pub soak_timestamp: Option<NullAsVarious<DateTimeAsVarious>>,
     #[sea_orm(column_name = "CryoStockFraction", column_type = "Double", nullable)]
-    pub cryo_stock_fraction: Option<NullAsLiteralNone<AsSelfOrText<i32>>>,
+    pub cryo_stock_fraction: Option<NullAsVarious<AsSelfOrText<i32>>>,
     #[sea_orm(column_name = "CryoFraction", column_type = "Double", nullable)]
-    pub cryo_fraction: Option<NullAsLiteralNone<AsSelfOrText<i32>>>,
+    pub cryo_fraction: Option<NullAsVarious<AsSelfOrText<i32>>>,
     #[sea_orm(column_name = "CryoWell")]
     pub cryo_well: Option<String>,
     #[sea_orm(column_name = "CryoTransferVolume", column_type = "Double", nullable)]
-    pub cryo_transfer_volume: Option<NullAsLiteralNone<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub cryo_transfer_volume: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "CryoStatus")]
-    pub cryo_status: Option<NullAsLiteralNone<StatusAsText>>,
+    pub cryo_status: Option<NullAsVarious<StatusAsText>>,
     #[sea_orm(column_name = "CryoTimestamp")]
-    pub cryo_timestamp: Option<NullAsLiteralNone<DateTimeAsVarious>>,
+    pub cryo_timestamp: Option<NullAsVarious<DateTimeAsVarious>>,
     #[sea_orm(column_name = "SoakingTime", column_type = "Double", nullable)]
-    pub soaking_time: Option<NeverRead<NullAsLiteralNone<DurationAsVarious>>>,
+    pub soaking_time: Option<NeverRead<NullAsVarious<DurationAsVarious>>>,
     #[sea_orm(column_name = "HarvestStatus")]
-    pub harvest_status: Option<NullAsLiteralNone<StatusAsText>>,
+    pub harvest_status: Option<NullAsVarious<StatusAsText>>,
     #[sea_orm(column_name = "CrystalName")]
     pub crystal_name: Option<String>,
     #[sea_orm(column_name = "Puck")]
     pub puck: Option<String>,
     #[sea_orm(column_name = "PuckPosition")]
-    pub puck_position: Option<NullAsLiteralNone<AsSelfOrText<i32>>>,
+    pub puck_position: Option<NullAsVarious<AsSelfOrText<i32>>>,
     #[sea_orm(column_name = "PinBarcode")]
     pub pin_barcode: Option<String>,
     #[sea_orm(column_name = "MountingResult")]
-    pub mounting_result: Option<NullAsLiteralNone<MountingResultAsText>>,
+    pub mounting_result: Option<NullAsVarious<MountingResultAsText>>,
     #[sea_orm(column_name = "MountingArrivalTime")]
-    pub mounting_arrival_time: Option<NullAsLiteralNone<DateTimeAsVarious>>,
+    pub mounting_arrival_time: Option<NullAsVarious<DateTimeAsVarious>>,
     #[sea_orm(column_name = "MountedTimestamp")]
-    pub mounted_timestamp: Option<NullAsLiteralNone<DateTimeAsVarious>>,
+    pub mounted_timestamp: Option<NullAsVarious<DateTimeAsVarious>>,
     #[sea_orm(column_name = "MountingTime")]
     pub mounting_time:
-        Option<NeverRead<NullAsLiteralNone<FloatAsScientificText<DurationAsExcelFloat>>>>,
+        Option<NeverRead<NullAsVarious<FloatAsScientificText<DurationAsExcelFloat>>>>,
     #[sea_orm(column_name = "ispybStatus")]
     pub ispyb_status: Option<String>,
     #[sea_orm(column_name = "DataCollectionVisit")]

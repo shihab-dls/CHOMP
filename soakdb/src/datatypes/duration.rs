@@ -42,16 +42,12 @@ impl TryGetable for DurationAsText {
         index: I,
     ) -> Result<Self, TryGetError> {
         let text = String::try_get_by(res, index)?.trim().to_string();
-        if text.is_empty() {
-            Err(sea_orm::TryGetError::Null(type_name::<I>().to_string()))
-        } else {
-            text.parse().map_err(|err| {
-                sea_orm::TryGetError::DbErr(sea_orm::DbErr::Type(format!(
-                    "Could not parse '{}' as Duration using format '{}' for {:?}: {}",
-                    text, DURATION_FORMAT, index, err
-                )))
-            })
-        }
+        text.parse().map_err(|err| {
+            sea_orm::TryGetError::DbErr(sea_orm::DbErr::Type(format!(
+                "Could not parse '{}' as Duration using format '{}' for {:?}: {}",
+                text, DURATION_FORMAT, index, err
+            )))
+        })
     }
 }
 
@@ -115,16 +111,12 @@ impl TryGetable for DurationAsTimeText {
         index: I,
     ) -> Result<Self, TryGetError> {
         let text = String::try_get_by(res, index)?.trim().to_string();
-        if text.is_empty() {
-            Err(sea_orm::TryGetError::Null(type_name::<I>().to_string()))
-        } else {
-            text.parse().map_err(|err| {
-                sea_orm::TryGetError::DbErr(sea_orm::DbErr::Type(format!(
-                    "Could not parse '{}' as Duration using format '{}' for {:?}: {}",
-                    text, DURATION_FORMAT_TIME, index, err
-                )))
-            })
-        }
+        text.parse().map_err(|err| {
+            sea_orm::TryGetError::DbErr(sea_orm::DbErr::Type(format!(
+                "Could not parse '{}' as Duration using format '{}' for {:?}: {}",
+                text, DURATION_FORMAT_TIME, index, err
+            )))
+        })
     }
 }
 

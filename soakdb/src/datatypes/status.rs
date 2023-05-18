@@ -46,16 +46,12 @@ impl From<StatusAsText> for Value {
 impl TryGetable for StatusAsText {
     fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
         let text = String::try_get_by(res, index)?.trim().to_string();
-        if text.is_empty() {
-            Err(TryGetError::Null(type_name::<I>().to_string()))
-        } else {
-            Self::from_str(&text).map_err(|_| {
-                TryGetError::DbErr(DbErr::Type(format!(
-                    "Could not parse '{}' as Status for {:?}",
-                    text, index
-                )))
-            })
-        }
+        Self::from_str(&text).map_err(|_| {
+            TryGetError::DbErr(DbErr::Type(format!(
+                "Could not parse '{}' as Status for {:?}",
+                text, index
+            )))
+        })
     }
 }
 
