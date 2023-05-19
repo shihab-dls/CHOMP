@@ -16,7 +16,7 @@ use std::{
     path::PathBuf,
 };
 
-async fn setup_api() -> RootSchema {
+fn setup_api() -> RootSchema {
     schema_builder().extension(Tracing).finish()
 }
 
@@ -33,7 +33,7 @@ async fn graphql_handler(schema: Extension<RootSchema>, req: GraphQLRequest) -> 
     schema.execute(req.into_inner()).await.into()
 }
 
-async fn setup_router<Q, M, S>(schema: Schema<Q, M, S>) -> Router
+fn setup_router<Q, M, S>(schema: Schema<Q, M, S>) -> Router
 where
     Q: async_graphql::ObjectType + 'static,
     M: async_graphql::ObjectType + 'static,
@@ -88,12 +88,12 @@ async fn main() {
 
     match args {
         Cli::Serve(args) => {
-            let schema = setup_api().await;
-            let router = setup_router(schema).await;
+            let schema = setup_api();
+            let router = setup_router(schema);
             serve(router, args.port).await;
         }
         Cli::Schema(args) => {
-            let schema = setup_api().await;
+            let schema = setup_api();
             let schema_string = schema.sdl();
             if let Some(path) = args.path {
                 let mut file = File::create(path).unwrap();
