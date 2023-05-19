@@ -27,14 +27,17 @@ impl FromStr for MountingResultAsText {
         let success_text = components
             .next()
             .ok_or(MountingResultParsingError::MissingField)?
+            .trim()
             .to_string();
         let comment_1 = components
             .next()
             .ok_or(MountingResultParsingError::MissingField)?
+            .trim()
             .to_string();
         let comment_2 = components
             .next()
             .ok_or(MountingResultParsingError::MissingField)?
+            .trim()
             .to_string();
         if components.next().is_some() {
             return Err(MountingResultParsingError::ExtraField);
@@ -56,8 +59,8 @@ impl FromStr for MountingResultAsText {
 
 impl ToString for MountingResultAsText {
     fn to_string(&self) -> String {
-        let success_text = if self.success { "OK" } else { "???" };
-        format!("{}: {}:{}", success_text, self.comment_1, self.comment_2)
+        let success_text = if self.success { "OK" } else { "FAIL" };
+        format!("{}: {}: {}", success_text, self.comment_1, self.comment_2)
     }
 }
 
@@ -108,9 +111,48 @@ impl Nullable for MountingResultAsText {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn mounting_result_as_text_serializes() {}
+    use crate::datatypes::mounting_result::MountingResultAsText;
+    use std::str::FromStr;
 
     #[test]
-    fn mounting_result_as_text_deserializes() {}
+    fn mounting_result_as_text_serializes() {
+        assert_eq!(
+            "OK: One: Two",
+            MountingResultAsText {
+                success: true,
+                comment_1: "One".to_string(),
+                comment_2: "Two".to_string()
+            }
+            .to_string()
+        );
+        assert_eq!(
+            "FAIL: One: Two",
+            MountingResultAsText {
+                success: false,
+                comment_1: "One".to_string(),
+                comment_2: "Two".to_string()
+            }
+            .to_string()
+        );
+    }
+
+    #[test]
+    fn mounting_result_as_text_deserializes() {
+        assert_eq!(
+            MountingResultAsText {
+                success: true,
+                comment_1: "One".to_string(),
+                comment_2: "Two".to_string()
+            },
+            MountingResultAsText::from_str("OK: One:Two").unwrap()
+        );
+        assert_eq!(
+            MountingResultAsText {
+                success: false,
+                comment_1: "One".to_string(),
+                comment_2: "Two".to_string()
+            },
+            MountingResultAsText::from_str("FAIL: One:Two").unwrap()
+        );
+    }
 }
