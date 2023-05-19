@@ -5,7 +5,7 @@ pub(crate) mod datatypes;
 pub mod models;
 pub(crate) mod tables;
 
-use models::{Metadata, MetadataReadback, WellReadback};
+use models::{Metadata, MetadataReadback, Well, WellReadback};
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, EntityTrait, Schema};
 use std::path::Path;
 
@@ -91,6 +91,20 @@ pub async fn write_metadata(
             .await?
             .into(),
     )
+}
+
+pub async fn insert_wells(
+    path: impl AsRef<Path>,
+    wells: Vec<Well>,
+) -> Result<impl Iterator<Item = i32>, WriteError> {
+    let database = connect(path).await?;
+    let num_inserts = wells.len();
+    let insert = tables::main_table::Entity::insert_many(
+        wells.into_iter().map(tables::main_table::ActiveModel::from),
+    )
+    .exec(&database)
+    .await?;
+    Ok(insert.last_insert_id - num_inserts as i32..insert.last_insert_id)
 }
 
 #[cfg(test)]

@@ -1,6 +1,7 @@
 use async_graphql::Object;
 use soakdb::{
-    models::{Metadata, MetadataReadback},
+    insert_wells,
+    models::{Metadata, MetadataReadback, Well},
     write_metadata,
 };
 use tracing::debug;
@@ -19,5 +20,14 @@ impl ExportMutation {
         let visit = write_metadata(&path, visit).await?;
         debug!("Wrote metadata to '{}'", path);
         Ok(visit)
+    }
+
+    async fn insert_wells(
+        &self,
+        path: String,
+        wells: Vec<Well>,
+    ) -> async_graphql::Result<Vec<i32>> {
+        let ids = insert_wells(path, wells).await?.collect();
+        Ok(ids)
     }
 }
