@@ -85,7 +85,7 @@ impl From<crate::tables::soak_db::Model> for MetadataReadback {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
 pub struct Well {
     lab_visit: Visit,
     collection_visit: Visit,
@@ -99,7 +99,7 @@ pub struct Well {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
 pub struct Visit {
     proposal_type: [char; 2],
     proposal_number: u32,
@@ -127,7 +127,7 @@ impl From<Visit> for VisitAsText {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
 pub struct Crystal {
     plate: String,
     well: String,
@@ -138,14 +138,14 @@ pub struct Crystal {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
 pub struct Position {
     x: f64,
     y: f64,
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
 pub struct Solvent {
     plate: String,
     well: String,
@@ -161,7 +161,7 @@ pub struct Solvent {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
 pub struct Cryo {
     well: String,
     stock_fraction: i32,
@@ -172,7 +172,7 @@ pub struct Cryo {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
 pub struct Mount {
     puck_barcode: String,
     puck_well: i32,
@@ -212,7 +212,7 @@ impl From<Status> for crate::datatypes::status::StatusAsText {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
 pub struct MountingResult {
     success: bool,
     comment_1: String,
