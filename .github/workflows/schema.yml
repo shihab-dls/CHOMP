@@ -1,0 +1,37 @@
+name: Schema
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  generate_schema:
+    # Deduplicate jobs from pull requests and branch pushes within the same repo.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3.5.2
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@1.68.2
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Cache Rust Build
+        uses: Swatinem/rust-cache@v2.2.1
+
+      - name: Generate Schema
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          command: run
+          args: >
+            schema
+            --path api-schema.graphql
+
+      - name: Upload Schema Artifact
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: api-schema.graphql
+          path: api-schema.graphql
