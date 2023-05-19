@@ -87,7 +87,6 @@ impl From<crate::tables::soak_db::Model> for MetadataReadback {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
 pub struct Well {
-    id: i32,
     lab_visit: Visit,
     collection_visit: Visit,
     batch: i32,
@@ -269,7 +268,7 @@ impl From<ISPyBExport> for ISPyBExportAsText {
 impl From<Well> for crate::tables::main_table::ActiveModel {
     fn from(value: Well) -> Self {
         Self {
-            id: ActiveValue::Set(value.id),
+            id: ActiveValue::NotSet,
             lab_visit: ActiveValue::Set(Some(NullAsEmptyString::from(NullAsLiteralNone::from(
                 NullAsLiteralNa::from(VisitAsText::from(value.lab_visit)),
             )))),
