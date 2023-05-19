@@ -16,7 +16,7 @@ use chrono::{DateTime, Utc};
 use sea_orm::ActiveValue;
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
+#[cfg_attr(feature = "graphql-models", derive(InputObject))]
 pub struct Metadata {
     pub name: String,
     pub protein: String,
@@ -85,7 +85,7 @@ impl From<crate::tables::soak_db::Model> for MetadataReadback {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
+#[cfg_attr(feature = "graphql-models", derive(InputObject))]
 pub struct Well {
     lab_visit: Visit,
     collection_visit: Visit,
@@ -99,7 +99,7 @@ pub struct Well {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
+#[cfg_attr(feature = "graphql-models", derive(InputObject))]
 pub struct Visit {
     proposal_type: [char; 2],
     proposal_number: u32,
@@ -127,7 +127,7 @@ impl From<Visit> for VisitAsText {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
+#[cfg_attr(feature = "graphql-models", derive(InputObject))]
 pub struct Crystal {
     plate: String,
     well: String,
@@ -138,14 +138,14 @@ pub struct Crystal {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
+#[cfg_attr(feature = "graphql-models", derive(InputObject))]
 pub struct Position {
     x: f64,
     y: f64,
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
+#[cfg_attr(feature = "graphql-models", derive(InputObject))]
 pub struct Solvent {
     plate: String,
     well: String,
@@ -161,7 +161,7 @@ pub struct Solvent {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
+#[cfg_attr(feature = "graphql-models", derive(InputObject))]
 pub struct Cryo {
     well: String,
     stock_fraction: i32,
@@ -172,7 +172,7 @@ pub struct Cryo {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
+#[cfg_attr(feature = "graphql-models", derive(InputObject))]
 pub struct Mount {
     puck_barcode: String,
     puck_well: i32,
@@ -212,7 +212,7 @@ impl From<Status> for crate::datatypes::status::StatusAsText {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "graphql-models", derive(SimpleObject, InputObject))]
+#[cfg_attr(feature = "graphql-models", derive(InputObject))]
 pub struct MountingResult {
     success: bool,
     comment_1: String,
@@ -401,8 +401,8 @@ impl From<Well> for crate::tables::main_table::ActiveModel {
 #[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
 pub struct WellReadback {
     id: i32,
-    lab_visit_name: Option<Visit>,
-    collection_visit_name: Option<Visit>,
+    lab_visit_name: Option<VisitReadback>,
+    collection_visit_name: Option<VisitReadback>,
     batch: Option<i32>,
     crystal: CrystalReadback,
     solvent: SolventReadback,
@@ -414,13 +414,48 @@ pub struct WellReadback {
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+pub struct VisitReadback {
+    proposal_type: [char; 2],
+    proposal_number: u32,
+    visit_number: u32,
+}
+
+impl From<VisitAsText> for VisitReadback {
+    fn from(value: VisitAsText) -> Self {
+        Self {
+            proposal_type: value.proposal_type,
+            proposal_number: value.proposal_number,
+            visit_number: value.visit_number,
+        }
+    }
+}
+
+impl From<VisitReadback> for VisitAsText {
+    fn from(value: VisitReadback) -> Self {
+        Self {
+            proposal_type: value.proposal_type,
+            proposal_number: value.proposal_number,
+            visit_number: value.visit_number,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
 pub struct CrystalReadback {
     plate: Option<String>,
     well: Option<String>,
     name: Option<String>,
-    position: Option<Position>,
+    position: Option<PositionReadback>,
     drop_volume: Option<f64>,
     protein_name: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+pub struct PositionReadback {
+    x: f64,
+    y: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -459,13 +494,41 @@ pub struct MountReadback {
     start_time: Option<DateTime<Utc>>,
     end_time: Option<DateTime<Utc>>,
     harvest_status: Option<Status>,
-    result: Option<MountingResult>,
+    result: Option<MountingResultReadback>,
+}
+
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "graphql-models", derive(SimpleObject))]
+pub struct MountingResultReadback {
+    success: bool,
+    comment_1: String,
+    comment_2: String,
+}
+
+impl From<MountingResultAsText> for MountingResultReadback {
+    fn from(value: MountingResultAsText) -> Self {
+        Self {
+            success: value.success,
+            comment_1: value.comment_1,
+            comment_2: value.comment_2,
+        }
+    }
+}
+
+impl From<MountingResultReadback> for MountingResultAsText {
+    fn from(value: MountingResultReadback) -> Self {
+        Self {
+            success: value.success,
+            comment_1: value.comment_1,
+            comment_2: value.comment_2,
+        }
+    }
 }
 
 impl From<crate::tables::main_table::Model> for WellReadback {
     fn from(value: crate::tables::main_table::Model) -> Self {
         let crystal_position = match (value.echo_x, value.echo_y) {
-            (Some(x), Some(y)) => Some(Position {
+            (Some(x), Some(y)) => Some(PositionReadback {
                 x: *****x,
                 y: *****y,
             }),
@@ -473,10 +536,12 @@ impl From<crate::tables::main_table::Model> for WellReadback {
         };
         Self {
             id: value.id,
-            lab_visit_name: value.lab_visit.map(|val| Visit::from((***val).clone())),
+            lab_visit_name: value
+                .lab_visit
+                .map(|val| VisitReadback::from((***val).clone())),
             collection_visit_name: value
                 .data_collection_visit
-                .map(|val| Visit::from((***val).clone())),
+                .map(|val| VisitReadback::from((***val).clone())),
             batch: value.batch_number.map(|val| ****val),
             crystal: CrystalReadback {
                 plate: value.crystal_plate,
@@ -516,7 +581,7 @@ impl From<crate::tables::main_table::Model> for WellReadback {
                 harvest_status: value.harvest_status.map(|val| Status::from(***val)),
                 result: value
                     .mounting_result
-                    .map(|val| MountingResult::from((***val).clone())),
+                    .map(|val| MountingResultReadback::from((***val).clone())),
             },
             ispyb_export: value
                 .ispyb_status
