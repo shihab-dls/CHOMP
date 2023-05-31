@@ -1,8 +1,7 @@
+use crate::models::{MetadataReadback, WellReadback};
 use async_graphql::{Context, Object};
-use soakdb::{
-    models::{MetadataReadback, WellReadback},
-    read_metadata, read_wells,
-};
+use itertools::Itertools;
+use soakdb::{read_metadata, read_wells};
 
 #[derive(Debug, Default)]
 pub struct ImportQuery;
@@ -14,7 +13,7 @@ impl ImportQuery {
         _ctx: &Context<'_>,
         path: String,
     ) -> async_graphql::Result<MetadataReadback> {
-        Ok(read_metadata(&path).await?)
+        Ok(read_metadata(&path).await?.into())
     }
 
     async fn read_wells(
@@ -22,6 +21,6 @@ impl ImportQuery {
         _ctx: &Context<'_>,
         path: String,
     ) -> async_graphql::Result<Vec<WellReadback>> {
-        Ok(read_wells(&path).await?)
+        Ok(read_wells(&path).await?.into_iter().map_into().collect())
     }
 }
