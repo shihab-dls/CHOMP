@@ -14,10 +14,10 @@ jobs:
         uses: actions/checkout@v3.5.2
 
       - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@1.68.2
+        uses: actions-rs/toolchain@v1.0.6
         with:
           toolchain: stable
-          components: rustfmt, clippy
+          default: true
 
       - name: Cache Rust Build
         uses: Swatinem/rust-cache@v2.2.1
