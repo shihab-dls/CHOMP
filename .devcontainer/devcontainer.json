@@ -34,5 +34,6 @@
       "source=${localEnv:HOME}/.inputrc,target=/root/.inputrc,type=bind"
     ],
     "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
-	  "workspaceFolder": "${localWorkspaceFolder}"
+	  "workspaceFolder": "${localWorkspaceFolder}",
+    "postCreateCommand": "pre-commit install"
 }
