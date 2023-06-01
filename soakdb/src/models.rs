@@ -6,9 +6,7 @@ use crate::datatypes::{
     ispyb_export::ISPyBExportAsText,
     mounting_result::MountingResultAsText,
     status::StatusAsText,
-    text::{
-        AsSelfOrText, FloatAsScientificText, NullAsEmptyString, NullAsLiteralNa, NullAsLiteralNone,
-    },
+    text::{AsSelfOrText, FloatAsScientificText, NullAsVarious},
     visit::VisitAsText,
 };
 use chrono::{DateTime, Utc};
@@ -247,8 +245,8 @@ impl From<Well> for crate::tables::main_table::ActiveModel {
     fn from(value: Well) -> Self {
         Self {
             id: ActiveValue::NotSet,
-            lab_visit: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(VisitAsText::from(value.lab_visit))),
+            lab_visit: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                VisitAsText::from(value.lab_visit),
             )))),
             library_plate: ActiveValue::Set(FallibleRead::Ok(Some(value.solvent.plate))),
             source_well: ActiveValue::Set(FallibleRead::Ok(Some(value.solvent.well))),
@@ -257,133 +255,89 @@ impl From<Well> for crate::tables::main_table::ActiveModel {
             compound_code: ActiveValue::Set(FallibleRead::Ok(Some(value.solvent.code))),
             crystal_plate: ActiveValue::Set(FallibleRead::Ok(Some(value.crystal.plate))),
             crystal_well: ActiveValue::Set(FallibleRead::Ok(Some(value.crystal.well))),
-            echo_x: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOrText::from(AsSelfOr::from(
-                    value.crystal.position.x,
-                )))),
+            echo_x: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(AsSelfOr::from(value.crystal.position.x)),
             )))),
-            echo_y: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOrText::from(AsSelfOr::from(
-                    value.crystal.position.y,
-                )))),
+            echo_y: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(AsSelfOr::from(value.crystal.position.y)),
             )))),
-            drop_volume: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOrText::from(AsSelfOr::from(
-                    value.crystal.drop_volume,
-                )))),
+            drop_volume: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(AsSelfOr::from(value.crystal.drop_volume)),
             )))),
             protein_name: ActiveValue::Set(FallibleRead::Ok(Some(value.crystal.protein_name))),
-            batch_number: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOrText::from(value.batch))),
+            batch_number: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(value.batch),
             )))),
             compound_stock_concentration: ActiveValue::Set(FallibleRead::Ok(Some(
-                NullAsEmptyString::from(NullAsLiteralNone::from(NullAsLiteralNa::from(
-                    AsSelfOrText::from(AsSelfOr::from(value.solvent.stock_concentration)),
+                NullAsVarious::from(AsSelfOrText::from(AsSelfOr::from(
+                    value.solvent.stock_concentration,
                 ))),
             ))),
-            compound_concentration: ActiveValue::Set(FallibleRead::Ok(Some(
-                NullAsEmptyString::from(NullAsLiteralNone::from(NullAsLiteralNa::from(
-                    AsSelfOrText::from(AsSelfOr::from(value.solvent.concentration)),
-                ))),
-            ))),
-            solvent_fraction: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOrText::from(AsSelfOr::from(
-                    value.solvent.fraction,
-                )))),
+            compound_concentration: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(AsSelfOr::from(value.solvent.concentration)),
             )))),
-            soak_transfer_vol: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOrText::from(AsSelfOr::from(
-                    value.solvent.transfer_volume,
-                )))),
+            solvent_fraction: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(AsSelfOr::from(value.solvent.fraction)),
             )))),
-            soak_status: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(StatusAsText::from(
-                    value.solvent.status,
-                ))),
+            soak_transfer_vol: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(AsSelfOr::from(value.solvent.transfer_volume)),
             )))),
-            soak_timestamp: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOr::from(
-                    DateTimeAsEuroText::from(value.solvent.timestamp),
-                ))),
+            soak_status: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                StatusAsText::from(value.solvent.status),
             )))),
-            cryo_stock_fraction: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOrText::from(
-                    value.cryo.stock_fraction,
-                ))),
+            soak_timestamp: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOr::from(DateTimeAsEuroText::from(value.solvent.timestamp)),
             )))),
-            cryo_fraction: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOrText::from(
-                    value.cryo.fraction,
-                ))),
+            cryo_stock_fraction: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(value.cryo.stock_fraction),
+            )))),
+            cryo_fraction: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(value.cryo.fraction),
             )))),
             cryo_well: ActiveValue::Set(FallibleRead::Ok(Some(value.cryo.well))),
-            cryo_transfer_volume: ActiveValue::Set(FallibleRead::Ok(Some(
-                NullAsEmptyString::from(NullAsLiteralNone::from(NullAsLiteralNa::from(
-                    AsSelfOrText::from(AsSelfOr::from(value.cryo.transfer_volume)),
-                ))),
-            ))),
-            cryo_status: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(StatusAsText::from(
-                    value.cryo.status,
-                ))),
+            cryo_transfer_volume: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(AsSelfOr::from(value.cryo.transfer_volume)),
             )))),
-            cryo_timestamp: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOr::from(
-                    DateTimeAsEuroText::from(value.cryo.timestamp),
-                ))),
+            cryo_status: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                StatusAsText::from(value.cryo.status),
+            )))),
+            cryo_timestamp: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOr::from(DateTimeAsEuroText::from(value.cryo.timestamp)),
             )))),
             soaking_time: ActiveValue::Set(FallibleRead::Ok(Some(NeverRead::from(
-                NullAsEmptyString::from(NullAsLiteralNone::from(NullAsLiteralNa::from(
-                    DurationAsVarious::from(DurationAsText::from(
-                        value.mount.end_time - value.solvent.timestamp,
-                    )),
+                NullAsVarious::from(DurationAsVarious::from(DurationAsText::from(
+                    value.mount.end_time - value.solvent.timestamp,
                 ))),
             )))),
-            harvest_status: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(StatusAsText::from(
-                    value.mount.harvest_status,
-                ))),
+            harvest_status: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                StatusAsText::from(value.mount.harvest_status),
             )))),
             crystal_name: ActiveValue::Set(FallibleRead::Ok(Some(value.crystal.name))),
             puck: ActiveValue::Set(FallibleRead::Ok(Some(value.mount.puck_barcode))),
-            puck_position: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOrText::from(
-                    value.mount.puck_well,
-                ))),
+            puck_position: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOrText::from(value.mount.puck_well),
             )))),
             pin_barcode: ActiveValue::Set(FallibleRead::Ok(Some(value.mount.pin_barcode))),
-            mounting_result: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(MountingResultAsText::from(
-                    value.mount.result,
-                ))),
+            mounting_result: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                MountingResultAsText::from(value.mount.result),
             )))),
-            mounting_arrival_time: ActiveValue::Set(FallibleRead::Ok(Some(
-                NullAsEmptyString::from(NullAsLiteralNone::from(NullAsLiteralNa::from(
-                    AsSelfOr::from(DateTimeAsEuroText::from(value.mount.start_time)),
-                ))),
-            ))),
-            mounted_timestamp: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(AsSelfOr::from(
-                    DateTimeAsEuroText::from(value.mount.end_time),
-                ))),
+            mounting_arrival_time: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOr::from(DateTimeAsEuroText::from(value.mount.start_time)),
+            )))),
+            mounted_timestamp: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                AsSelfOr::from(DateTimeAsEuroText::from(value.mount.end_time)),
             )))),
             mounting_time: ActiveValue::Set(FallibleRead::Ok(Some(NeverRead::from(
-                NullAsEmptyString::from(NullAsLiteralNone::from(NullAsLiteralNa::from(
-                    FloatAsScientificText::from(DurationAsExcelFloat::from(
-                        value.mount.end_time - value.mount.start_time,
-                    )),
+                NullAsVarious::from(FloatAsScientificText::from(DurationAsExcelFloat::from(
+                    value.mount.end_time - value.mount.start_time,
                 ))),
             )))),
-            ispyb_status: ActiveValue::Set(FallibleRead::Ok(Some(NullAsEmptyString::from(
-                NullAsLiteralNone::from(NullAsLiteralNa::from(ISPyBExportAsText::from(
-                    value.ispyb_export,
-                ))),
+            ispyb_status: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                ISPyBExportAsText::from(value.ispyb_export),
             )))),
-            data_collection_visit: ActiveValue::Set(FallibleRead::Ok(Some(
-                NullAsEmptyString::from(NullAsLiteralNone::from(NullAsLiteralNa::from(
-                    VisitAsText::from(value.collection_visit),
-                ))),
-            ))),
+            data_collection_visit: ActiveValue::Set(FallibleRead::Ok(Some(NullAsVarious::from(
+                VisitAsText::from(value.collection_visit),
+            )))),
             soak_db_comments: ActiveValue::Set(FallibleRead::Ok(Some(value.comments))),
         }
     }
@@ -512,10 +466,7 @@ impl From<crate::tables::main_table::Model> for WellReadback {
     fn from(value: crate::tables::main_table::Model) -> Self {
         let crystal_position = match (value.echo_x, value.echo_y) {
             (FallibleRead::Ok(Some(x)), FallibleRead::Ok(Some(y))) => {
-                Fallible::Ok(Some(Position {
-                    x: *****x,
-                    y: *****y,
-                }))
+                Fallible::Ok(Some(Position { x: ***x, y: ***y }))
             }
             (FallibleRead::Ok(None), _) => Fallible::Ok(None),
             (_, FallibleRead::Ok(None)) => Fallible::Ok(None),
@@ -525,16 +476,16 @@ impl From<crate::tables::main_table::Model> for WellReadback {
         Self {
             id: value.id,
             lab_visit_name: Fallible::from(value.lab_visit)
-                .map_opt(|val| Visit::from((***val).clone())),
+                .map_opt(|val| Visit::from((*val).clone())),
             collection_visit_name: Fallible::from(value.data_collection_visit)
-                .map_opt(|val| Visit::from((***val).clone())),
-            batch: Fallible::from(value.batch_number).map_opt(|val| ****val),
+                .map_opt(|val| Visit::from((*val).clone())),
+            batch: Fallible::from(value.batch_number).map_opt(|val| **val),
             crystal: CrystalReadback {
                 plate: Fallible::from(value.crystal_plate),
                 well: Fallible::from(value.crystal_well),
                 name: Fallible::from(value.crystal_name),
                 position: crystal_position,
-                drop_volume: Fallible::from(value.drop_volume).map_opt(|val| *****val),
+                drop_volume: Fallible::from(value.drop_volume).map_opt(|val| ***val),
                 protein_name: Fallible::from(value.protein_name),
             },
             solvent: SolventReadback {
@@ -544,34 +495,34 @@ impl From<crate::tables::main_table::Model> for WellReadback {
                 smiles: Fallible::from(value.compound_smiles),
                 code: Fallible::from(value.compound_code),
                 stock_concentration: Fallible::from(value.compound_stock_concentration)
-                    .map_opt(|val| *****val),
-                concentration: Fallible::from(value.compound_concentration).map_opt(|val| *****val),
-                fraction: Fallible::from(value.solvent_fraction).map_opt(|val| *****val),
-                transfer_volume: Fallible::from(value.soak_transfer_vol).map_opt(|val| *****val),
-                status: Fallible::from(value.soak_status).map_opt(|val| Status::from(***val)),
-                timestamp: Fallible::from(value.soak_timestamp).map_opt(|val| *****val),
+                    .map_opt(|val| ***val),
+                concentration: Fallible::from(value.compound_concentration).map_opt(|val| ***val),
+                fraction: Fallible::from(value.solvent_fraction).map_opt(|val| ***val),
+                transfer_volume: Fallible::from(value.soak_transfer_vol).map_opt(|val| ***val),
+                status: Fallible::from(value.soak_status).map_opt(|val| Status::from(*val)),
+                timestamp: Fallible::from(value.soak_timestamp).map_opt(|val| ***val),
             },
             cryo: CryoReadback {
                 well: Fallible::from(value.cryo_well),
-                stock_fraction: Fallible::from(value.cryo_stock_fraction).map_opt(|val| ****val),
-                fraction: Fallible::from(value.cryo_fraction).map_opt(|val| ****val),
-                transfer_volume: Fallible::from(value.cryo_transfer_volume).map_opt(|val| *****val),
-                status: Fallible::from(value.cryo_status).map_opt(|val| Status::from(***val)),
-                timestamp: Fallible::from(value.cryo_timestamp).map_opt(|val| *****val),
+                stock_fraction: Fallible::from(value.cryo_stock_fraction).map_opt(|val| **val),
+                fraction: Fallible::from(value.cryo_fraction).map_opt(|val| **val),
+                transfer_volume: Fallible::from(value.cryo_transfer_volume).map_opt(|val| ***val),
+                status: Fallible::from(value.cryo_status).map_opt(|val| Status::from(*val)),
+                timestamp: Fallible::from(value.cryo_timestamp).map_opt(|val| ***val),
             },
             mount: MountReadback {
                 puck_barcode: Fallible::from(value.puck),
-                puck_well: Fallible::from(value.puck_position).map_opt(|val| ****val),
+                puck_well: Fallible::from(value.puck_position).map_opt(|val| **val),
                 pin_barcode: Fallible::from(value.pin_barcode),
-                start_time: Fallible::from(value.mounting_arrival_time).map_opt(|val| *****val),
-                end_time: Fallible::from(value.mounted_timestamp).map_opt(|val| *****val),
+                start_time: Fallible::from(value.mounting_arrival_time).map_opt(|val| ***val),
+                end_time: Fallible::from(value.mounted_timestamp).map_opt(|val| ***val),
                 harvest_status: Fallible::from(value.harvest_status)
-                    .map_opt(|val| Status::from(***val)),
+                    .map_opt(|val| Status::from(*val)),
                 result: Fallible::from(value.mounting_result)
-                    .map_opt(|val| MountingResult::from((***val).clone())),
+                    .map_opt(|val| MountingResult::from((*val).clone())),
             },
             ispyb_export: Fallible::from(value.ispyb_status)
-                .map_opt(|val| ISPyBExport::from((***val).clone())),
+                .map_opt(|val| ISPyBExport::from((*val).clone())),
             comments: Fallible::from(value.soak_db_comments),
         }
     }

@@ -1,6 +1,6 @@
 use crate::datatypes::{
     combination::AsSelfOr,
-    text::{AsSelfOrText, NullAsEmptyString},
+    text::{AsSelfOrText, NullAsVarious},
 };
 use sea_orm::entity::prelude::*;
 
@@ -18,45 +18,45 @@ pub struct Model {
     #[sea_orm(column_name = "Protein")]
     pub protein: Option<String>,
     #[sea_orm(column_name = "DropVolume", column_type = "Double", nullable)]
-    pub drop_volume: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub drop_volume: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "CrystalsPerBatch")]
-    pub crystals_per_batch: Option<NullAsEmptyString<AsSelfOrText<i32>>>,
+    pub crystals_per_batch: Option<NullAsVarious<AsSelfOrText<i32>>>,
     #[sea_orm(column_name = "OneBatchPerPlate")]
     pub one_batch_per_plate: Option<String>,
     #[sea_orm(column_name = "CompoundStock", column_type = "Double", nullable)]
-    pub compound_stock: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub compound_stock: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "SolventPercent", column_type = "Double", nullable)]
-    pub solvent_percent: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub solvent_percent: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "CryoStock", column_type = "Double", nullable)]
-    pub cryo_stock: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub cryo_stock: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "DesiredCryo", column_type = "Double", nullable)]
-    pub desired_cryo: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub desired_cryo: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "CryoLocation")]
     pub cryo_location: Option<String>,
     #[sea_orm(column_name = "DesiredSoakTime", column_type = "Double", nullable)]
-    pub desired_soak_time: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub desired_soak_time: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "CrystalStartNumber")]
-    pub crystal_start_number: Option<NullAsEmptyString<AsSelfOrText<i32>>>,
+    pub crystal_start_number: Option<NullAsVarious<AsSelfOrText<i32>>>,
     #[sea_orm(column_name = "BeamlineVisit")]
     pub beamline_visit: Option<String>,
     #[sea_orm(column_name = "SpaceGroup")]
     pub space_group: Option<String>,
     #[sea_orm(column_name = "A", column_type = "Double", nullable)]
-    pub a: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub a: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "B", column_type = "Double", nullable)]
-    pub b: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub b: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "C", column_type = "Double", nullable)]
-    pub c: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub c: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_type = "Double", nullable)]
-    pub alpha: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub alpha: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_type = "Double", nullable)]
-    pub beta: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub beta: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_type = "Double", nullable)]
-    pub gamma: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub gamma: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "Recipe")]
     pub recipe: Option<String>,
     #[sea_orm(column_name = "Resolution", column_type = "Double", nullable)]
-    pub resolution: Option<NullAsEmptyString<AsSelfOrText<AsSelfOr<f64, i32>>>>,
+    pub resolution: Option<NullAsVarious<AsSelfOrText<AsSelfOr<f64, i32>>>>,
     #[sea_orm(column_name = "CentringMethod")]
     pub centring_method: Option<String>,
     #[sea_orm(column_name = "EUBOpen")]

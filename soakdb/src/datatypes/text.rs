@@ -100,33 +100,33 @@ where
     }
 }
 
-pub type NullAsVarious<T> = NullAsEmptyString<NullAsLiteralNone<NullAsLiteralNa<T>>>;
-
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut, From)]
-pub struct NullAsEmptyString<T>(T)
+pub struct NullAsVarious<T>(T)
 where
     Value: From<T>,
     T: TryGetable + ValueType + Nullable;
 
-impl<T> From<NullAsEmptyString<T>> for Value
+const NULL_STRINGS: &[&str] = &["", "None", "Na"];
+
+impl<T> From<NullAsVarious<T>> for Value
 where
     Value: From<T>,
     T: TryGetable + ValueType + Nullable,
 {
-    fn from(value: NullAsEmptyString<T>) -> Self {
+    fn from(value: NullAsVarious<T>) -> Self {
         Value::from(value.0)
     }
 }
 
-impl<T> TryGetable for NullAsEmptyString<T>
+impl<T> TryGetable for NullAsVarious<T>
 where
     Value: From<T>,
     T: TryGetable + ValueType + Nullable,
 {
     fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
         let as_self = T::try_get_by(res, index);
-        let as_empty_string = String::try_get_by(res, index).map(|text| {
-            if text.trim().is_empty() {
+        let as_null_string = String::try_get_by(res, index).map(|text| {
+            if NULL_STRINGS.contains(&text.trim()) {
                 TryGetError::Null(index.as_str().unwrap().to_string())
             } else {
                 TryGetError::DbErr(DbErr::Type(format!(
@@ -135,7 +135,7 @@ where
                 )))
             }
         });
-        match (as_self, as_empty_string) {
+        match (as_self, as_null_string) {
             (Ok(val), _) => Ok(Self(val)),
             (_, Ok(TryGetError::Null(val))) => Err(TryGetError::Null(val)),
             (Err(err), _) => Err(err),
@@ -143,7 +143,7 @@ where
     }
 }
 
-impl<T> ValueType for NullAsEmptyString<T>
+impl<T> ValueType for NullAsVarious<T>
 where
     Value: From<T>,
     T: TryGetable + ValueType + Nullable,
@@ -165,153 +165,7 @@ where
     }
 }
 
-impl<T> Nullable for NullAsEmptyString<T>
-where
-    Value: From<T>,
-    T: TryGetable + ValueType + Nullable,
-{
-    fn null() -> Value {
-        T::null()
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut, From)]
-pub struct NullAsLiteralNone<T>(T)
-where
-    Value: From<T>,
-    T: TryGetable + ValueType + Nullable;
-
-impl<T> From<NullAsLiteralNone<T>> for Value
-where
-    Value: From<T>,
-    T: TryGetable + ValueType + Nullable,
-{
-    fn from(value: NullAsLiteralNone<T>) -> Self {
-        Value::from(value.0)
-    }
-}
-
-impl<T> TryGetable for NullAsLiteralNone<T>
-where
-    Value: From<T>,
-    T: TryGetable + ValueType + Nullable,
-{
-    fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
-        let as_self = T::try_get_by(res, index);
-        let as_literal_none = String::try_get_by(res, index).map(|text| {
-            if text.trim() == "None" {
-                TryGetError::Null(index.as_str().unwrap().to_string())
-            } else {
-                TryGetError::DbErr(DbErr::Type(format!(
-                    "Retrieved text ({}) was not literal 'None'.",
-                    text
-                )))
-            }
-        });
-        match (as_self, as_literal_none) {
-            (Ok(val), _) => Ok(Self(val)),
-            (_, Ok(TryGetError::Null(val))) => Err(TryGetError::Null(val)),
-            (Err(err), _) => Err(err),
-        }
-    }
-}
-
-impl<T> ValueType for NullAsLiteralNone<T>
-where
-    Value: From<T>,
-    T: TryGetable + ValueType + Nullable,
-{
-    fn try_from(v: Value) -> Result<Self, ValueTypeErr> {
-        T::try_from(v).map(|value| Self(value))
-    }
-
-    fn type_name() -> String {
-        type_name::<Self>().to_string()
-    }
-
-    fn array_type() -> ArrayType {
-        T::array_type()
-    }
-
-    fn column_type() -> ColumnType {
-        T::column_type()
-    }
-}
-
-impl<T> Nullable for NullAsLiteralNone<T>
-where
-    Value: From<T>,
-    T: TryGetable + ValueType + Nullable,
-{
-    fn null() -> Value {
-        T::null()
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deref, DerefMut, From)]
-pub struct NullAsLiteralNa<T>(T)
-where
-    Value: From<T>,
-    T: TryGetable + ValueType + Nullable;
-
-impl<T> From<NullAsLiteralNa<T>> for Value
-where
-    Value: From<T>,
-    T: TryGetable + ValueType + Nullable,
-{
-    fn from(value: NullAsLiteralNa<T>) -> Self {
-        Value::from(value.0)
-    }
-}
-
-impl<T> TryGetable for NullAsLiteralNa<T>
-where
-    Value: From<T>,
-    T: TryGetable + ValueType + Nullable,
-{
-    fn try_get_by<I: ColIdx>(res: &QueryResult, index: I) -> Result<Self, TryGetError> {
-        let as_self = T::try_get_by(res, index);
-        let as_literal_none = String::try_get_by(res, index).map(|text| {
-            if text.trim() == "Na" {
-                TryGetError::Null(index.as_str().unwrap().to_string())
-            } else {
-                TryGetError::DbErr(DbErr::Type(format!(
-                    "Retrieved text ({}) was not literal 'Na'.",
-                    text
-                )))
-            }
-        });
-        match (as_self, as_literal_none) {
-            (Ok(val), _) => Ok(Self(val)),
-            (_, Ok(TryGetError::Null(val))) => Err(TryGetError::Null(val)),
-            (Err(err), _) => Err(err),
-        }
-    }
-}
-
-impl<T> ValueType for NullAsLiteralNa<T>
-where
-    Value: From<T>,
-    T: TryGetable + ValueType + Nullable,
-{
-    fn try_from(v: Value) -> Result<Self, ValueTypeErr> {
-        T::try_from(v).map(|value| Self(value))
-    }
-
-    fn type_name() -> String {
-        type_name::<Self>().to_string()
-    }
-
-    fn array_type() -> ArrayType {
-        T::array_type()
-    }
-
-    fn column_type() -> ColumnType {
-        T::column_type()
-    }
-}
-
-impl<T> Nullable for NullAsLiteralNa<T>
+impl<T> Nullable for NullAsVarious<T>
 where
     Value: From<T>,
     T: TryGetable + ValueType + Nullable,
