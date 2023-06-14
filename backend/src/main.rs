@@ -1,20 +1,14 @@
 #![doc = include_str!("../../README.md")]
 #![forbid(unsafe_code)]
-pub mod api;
-pub mod models;
+mod graphql;
+mod models;
+mod resolvers;
 
-use api::{schema_builder, RootSchema};
-use async_graphql::{extensions::Tracing, http::GraphiQLSource};
-use async_graphql_axum::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
-use axum::{
-    extract::{FromRef, State},
-    headers::{authorization::Bearer, Authorization},
-    response::{Html, IntoResponse},
-    routing::get,
-    Router, Server, TypedHeader,
-};
+use async_graphql_axum::GraphQLSubscription;
+use axum::{extract::FromRef, routing::get, Router, Server};
 use clap::Parser;
-use opa_client::{AuthorizationToken, OPAClient};
+use graphql::{build_schema, graphiql_handler, graphql_handler, RootSchema};
+use opa_client::OPAClient;
 use std::{
     fs::File,
     io::Write,
@@ -22,33 +16,6 @@ use std::{
     path::PathBuf,
 };
 use url::Url;
-
-fn setup_api() -> RootSchema {
-    schema_builder().extension(Tracing).finish()
-}
-
-async fn graphiql() -> impl IntoResponse {
-    Html(
-        GraphiQLSource::build()
-            .endpoint("/")
-            .subscription_endpoint("/ws")
-            .finish(),
-    )
-}
-
-async fn graphql_handler(
-    State(schema): State<RootSchema>,
-    State(authz_client): State<OPAClient>,
-    authorization_header: Option<TypedHeader<Authorization<Bearer>>>,
-    req: GraphQLRequest,
-) -> GraphQLResponse {
-    let token =
-        AuthorizationToken::from(authorization_header.map(|header| header.token().to_string()));
-    schema
-        .execute(req.into_inner().data(token).data(authz_client))
-        .await
-        .into()
-}
 
 #[derive(Clone, FromRef)]
 struct AppState {
@@ -58,7 +25,7 @@ struct AppState {
 
 fn setup_router(schema: RootSchema, opa_client: OPAClient) -> Router {
     Router::new()
-        .route("/", get(graphiql).post(graphql_handler))
+        .route("/", get(graphiql_handler).post(graphql_handler))
         .route_service("/ws", GraphQLSubscription::new(schema.clone()))
         .with_state(AppState { opa_client, schema })
 }
@@ -111,13 +78,13 @@ async fn main() {
 
     match args {
         Cli::Serve(args) => {
-            let schema = setup_api();
+            let schema = build_schema();
             let opa_client = OPAClient::new(args.opa_url);
             let router = setup_router(schema, opa_client);
             serve(router, args.port).await;
         }
         Cli::Schema(args) => {
-            let schema = setup_api();
+            let schema = build_schema();
             let schema_string = schema.sdl();
             if let Some(path) = args.path {
                 let mut file = File::create(path).unwrap();

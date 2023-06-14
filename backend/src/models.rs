@@ -1,8 +1,7 @@
-use std::any::type_name;
-
 use async_graphql::{Enum, ErrorExtensions, InputObject, SimpleObject};
 use chrono::{DateTime, Utc};
 use soakdb::models::Fallible;
+use std::any::type_name;
 
 #[derive(Debug, Clone, InputObject)]
 pub struct Metadata {
