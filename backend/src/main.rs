@@ -7,7 +7,7 @@ mod resolvers;
 use async_graphql_axum::GraphQLSubscription;
 use axum::{extract::FromRef, routing::get, Router, Server};
 use clap::Parser;
-use graphql::{build_schema, graphiql_handler, graphql_handler, RootSchema};
+use graphql::{build_schema, graphql_handler, GraphiQLHandler, RootSchema};
 use opa_client::OPAClient;
 use std::{
     fs::File,
@@ -24,9 +24,22 @@ struct AppState {
 }
 
 fn setup_router(schema: RootSchema, opa_client: OPAClient) -> Router {
+    const GRAPHQL_ENDPOINT: &str = "/";
+    const SUBSCRIPTION_ENDPOINT: &str = "/ws";
+
     Router::new()
-        .route("/", get(graphiql_handler).post(graphql_handler))
-        .route_service("/ws", GraphQLSubscription::new(schema.clone()))
+        .route(
+            GRAPHQL_ENDPOINT,
+            get(GraphiQLHandler::new(
+                GRAPHQL_ENDPOINT,
+                SUBSCRIPTION_ENDPOINT,
+            ))
+            .post(graphql_handler),
+        )
+        .route_service(
+            SUBSCRIPTION_ENDPOINT,
+            GraphQLSubscription::new(schema.clone()),
+        )
         .with_state(AppState { opa_client, schema })
 }
 
