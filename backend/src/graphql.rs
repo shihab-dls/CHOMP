@@ -1,7 +1,7 @@
 use crate::resolvers::{export::ExportMutation, import::ImportQuery};
 use async_graphql::{
     extensions::Tracing, http::GraphiQLSource, EmptySubscription, MergedObject, MergedSubscription,
-    Schema, SchemaBuilder,
+    Schema,
 };
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
@@ -15,7 +15,13 @@ use opa_client::{AuthorizationToken, OPAClient};
 use std::{future::Future, pin::Pin};
 
 pub fn build_schema() -> RootSchema {
-    schema_builder().extension(Tracing).finish()
+    Schema::build(
+        RootQuery::default(),
+        RootMutation::default(),
+        EmptySubscription::default(),
+    )
+    .extension(Tracing)
+    .finish()
 }
 
 #[derive(Debug, Clone)]
@@ -55,14 +61,6 @@ pub async fn graphql_handler(
 }
 
 pub type RootSchema = Schema<RootQuery, RootMutation, EmptySubscription>;
-
-pub fn schema_builder() -> SchemaBuilder<RootQuery, RootMutation, EmptySubscription> {
-    Schema::build(
-        RootQuery::default(),
-        RootMutation::default(),
-        EmptySubscription::default(),
-    )
-}
 
 #[derive(Debug, MergedObject, Default)]
 pub struct RootQuery(ImportQuery);
