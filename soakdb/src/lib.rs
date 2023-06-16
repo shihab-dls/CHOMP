@@ -17,6 +17,10 @@ pub enum ConnectionError {
 }
 
 #[derive(Debug, thiserror::Error)]
+#[error("Database operation failed: {0}")]
+pub struct DatabaseError(#[from] DbErr);
+
+#[derive(Debug, thiserror::Error)]
 pub enum CreationError {
     #[error("Connection failed")]
     ConnectionError(#[from] ConnectionError),
@@ -63,7 +67,7 @@ impl SoakDB {
         Ok(database)
     }
 
-    pub async fn read_metadata(&self) -> Result<MetadataReadback, DbErr> {
+    pub async fn read_metadata(&self) -> Result<MetadataReadback, DatabaseError> {
         Ok(tables::soak_db::Entity::find()
             .one(&self.connection)
             .await?
@@ -71,7 +75,7 @@ impl SoakDB {
             .into())
     }
 
-    pub async fn read_wells(&self) -> Result<Vec<WellReadback>, DbErr> {
+    pub async fn read_wells(&self) -> Result<Vec<WellReadback>, DatabaseError> {
         Ok(tables::main_table::Entity::find()
             .all(&self.connection)
             .await?
@@ -80,7 +84,10 @@ impl SoakDB {
             .collect())
     }
 
-    pub async fn write_metadata(&mut self, visit: Metadata) -> Result<MetadataReadback, DbErr> {
+    pub async fn write_metadata(
+        &mut self,
+        visit: Metadata,
+    ) -> Result<MetadataReadback, DatabaseError> {
         Ok(
             tables::soak_db::Entity::update(tables::soak_db::ActiveModel::from(visit))
                 .exec(&self.connection)
@@ -92,7 +99,7 @@ impl SoakDB {
     pub async fn insert_wells(
         &mut self,
         wells: Vec<Well>,
-    ) -> Result<impl Iterator<Item = i32>, DbErr> {
+    ) -> Result<impl Iterator<Item = i32>, DatabaseError> {
         let num_inserts = wells.len();
         let insert = tables::main_table::Entity::insert_many(
             wells.into_iter().map(tables::main_table::ActiveModel::from),
