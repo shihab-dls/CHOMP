@@ -3,14 +3,46 @@ use serde::Serialize;
 
 use crate::{AuthorizationToken, OPAClient};
 
+/// An [`async_graphql`] Resolver [`Guard`] which queries OPA for an Authorization decision.
+///
+/// The [`Context`] must contain both a [`OPAClient`] and an [`AuthorizationToken`], if either of these are not found an [`Err`] will be returned.
+///
+/// # Examples
+/// ```
+/// use async_graphql::SimpleObject;
+/// use opa_client::graphql::OPAGuard;
+///
+/// #[derive(SimpleObject)]
+/// struct MyModel {
+///     #[graphql(guard = "OPAGuard::new(\"my.opa.policy.allow\")")]
+///     value: i32
+/// }
+///
+/// ```
+///
+/// ```
+/// use async_graphql::{Object};
+/// use opa_client::graphql::OPAGuard;
+///
+/// struct Query;
+///
+/// #[Object]
+/// impl Query {
+///     #[graphql(guard = "OPAGuard::new(\"my.opa.policy.allow\")")]
+///     async fn value(&self, value: i32) -> i32 {
+///         value
+///     }
+/// }
+/// ```
 pub struct OPAGuard {
     endpoint: String,
 }
 
 impl OPAGuard {
-    pub fn new(endpoint: impl AsRef<str>) -> Self {
+    /// Constructs a new [`OPAGuard`] which will query the provided policy for a decision.
+    pub fn new(policy: impl AsRef<str>) -> Self {
         Self {
-            endpoint: endpoint.as_ref().to_string(),
+            endpoint: policy.as_ref().to_string(),
         }
     }
 }
@@ -35,7 +67,7 @@ impl Guard for OPAGuard {
             token,
         };
         authz_client
-            .get_decision::<_, bool>(&self.endpoint, input)
+            .decide::<_, bool>(&self.endpoint, input)
             .await?
             .then_some(())
             .ok_or(async_graphql::Error::new("Unauthorized"))
