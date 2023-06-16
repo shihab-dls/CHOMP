@@ -3,6 +3,12 @@ use chrono::{DateTime, Utc};
 use soakdb::models::Fallible;
 use std::any::type_name;
 
+#[derive(Debug, Clone, SimpleObject)]
+pub struct SoakDBReadback {
+    pub metadata: MetadataReadback,
+    pub wells: Vec<WellReadback>,
+}
+
 #[derive(Debug, Clone, InputObject)]
 pub struct Metadata {
     pub name: String,

@@ -55,7 +55,7 @@ impl From<Metadata> for crate::tables::soak_db::ActiveModel {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct MetadataReadback {
     pub name: Option<String>,
     pub protein: Option<String>,
