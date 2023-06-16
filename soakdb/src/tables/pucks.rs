@@ -47,7 +47,7 @@ mod tests {
             .map(|database| async {
                 let (database, path) = database.await;
                 Entity::find()
-                    .all(&database)
+                    .all(&database.connection)
                     .await
                     .map_err(|err| panic!("At {:?} with {}", path, err))
                     .unwrap();

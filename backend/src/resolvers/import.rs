@@ -2,7 +2,7 @@ use crate::models::{MetadataReadback, WellReadback};
 use async_graphql::{Context, Object};
 use itertools::Itertools;
 use opa_client::graphql::OPAGuard;
-use soakdb::{read_metadata, read_wells};
+use soakdb::SoakDB;
 
 #[derive(Debug, Default)]
 pub struct ImportQuery;
@@ -15,7 +15,8 @@ impl ImportQuery {
         _ctx: &Context<'_>,
         path: String,
     ) -> async_graphql::Result<MetadataReadback> {
-        Ok(read_metadata(&path).await?.into())
+        let database = SoakDB::connect(path).await?;
+        Ok(database.read_metadata().await?.into())
     }
 
     #[graphql(guard = "OPAGuard::new(\"xchemlab.soakdb_interface.allow\")")]
@@ -24,6 +25,12 @@ impl ImportQuery {
         _ctx: &Context<'_>,
         path: String,
     ) -> async_graphql::Result<Vec<WellReadback>> {
-        Ok(read_wells(&path).await?.into_iter().map_into().collect())
+        let database = SoakDB::connect(path).await?;
+        Ok(database
+            .read_wells()
+            .await?
+            .into_iter()
+            .map_into()
+            .collect())
     }
 }
