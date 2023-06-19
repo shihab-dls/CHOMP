@@ -2,7 +2,7 @@ use crate::models::{Metadata, MetadataReadback, Well};
 use async_graphql::Object;
 use itertools::Itertools;
 use opa_client::graphql::OPAGuard;
-use soakdb::SoakDB;
+use soakdb_io::SoakDB;
 
 #[derive(Debug, Default)]
 pub struct ExportMutation;

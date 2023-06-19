@@ -1,2 +1,2 @@
 [workspace]
-members = ["soakdb", "backend", "opa_client"]
+members = ["soakdb_io", "soakdb_sync", "opa_client"]

@@ -317,26 +317,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "backend"
-version = "0.1.0"
-dependencies = [
- "async-graphql",
- "async-graphql-axum",
- "axum",
- "chrono",
- "clap",
- "derive_more",
- "dotenvy",
- "itertools",
- "opa_client",
- "soakdb",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "url",
-]
-
-[[package]]
 name = "bae"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2088,7 +2068,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
 
 [[package]]
-name = "soakdb"
+name = "soakdb_io"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -2099,6 +2079,26 @@ dependencies = [
  "sea-orm",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "soakdb_sync"
+version = "0.1.0"
+dependencies = [
+ "async-graphql",
+ "async-graphql-axum",
+ "axum",
+ "chrono",
+ "clap",
+ "derive_more",
+ "dotenvy",
+ "itertools",
+ "opa_client",
+ "soakdb_io",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "url",
 ]
 
 [[package]]

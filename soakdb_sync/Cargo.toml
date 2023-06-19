@@ -1,5 +1,5 @@
 [package]
-name = "backend"
+name = "soakdb_sync"
 version = "0.1.0"
 edition = "2021"
 authors = ["Garry O'Donnell <garry.o'donnell@diamond.ac.uk>"]
@@ -19,7 +19,7 @@ derive_more = { version = "0.99.17" }
 dotenvy = { version = "0.15.7" }
 itertools = { version = "0.10.5" }
 opa_client = { path = "../opa_client", features = ["graphql"] }
-soakdb = { path = "../soakdb" }
+soakdb_io = { path = "../soakdb_io" }
 tokio = { version = "1.28.2", features = ["rt-multi-thread", "macros"] }
 tracing = { version = "0.1.37" }
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }

@@ -1,5 +1,5 @@
 [package]
-name = "soakdb"
+name = "soakdb_io"
 version = "0.1.0"
 edition = "2021"
 authors = ["Garry O'Donnell <garry.o'donnell@diamond.ac.uk>"]
