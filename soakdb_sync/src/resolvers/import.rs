@@ -4,7 +4,7 @@ use itertools::Itertools;
 use opa_client::graphql::OPAGuard;
 use soakdb_io::{models::MetadataReadback, SoakDB};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct ImportQuery;
 
 #[Object]

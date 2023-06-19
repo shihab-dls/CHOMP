@@ -12,11 +12,11 @@ readme = "../README.md"
 [dependencies]
 axum = { workspace = true }
 async-graphql = { workspace = true }
-async-graphql-axum = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true }
 derive_more = { workspace = true }
 dotenvy = { workspace = true }
+graphql_endpoints = { path = "../graphql_endpoints" }
 itertools = { workspace = true }
 opa_client = { path = "../opa_client", features = ["graphql"] }
 soakdb_io = { path = "../soakdb_io" }

@@ -802,6 +802,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphql_endpoints"
+version = "0.1.0"
+dependencies = [
+ "async-graphql",
+ "async-graphql-axum",
+ "axum",
+ "derive_more",
+ "opa_client",
+ "url",
+]
+
+[[package]]
 name = "h2"
 version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2069,12 +2081,12 @@ name = "soakdb_sync"
 version = "0.1.0"
 dependencies = [
  "async-graphql",
- "async-graphql-axum",
  "axum",
  "chrono",
  "clap",
  "derive_more",
  "dotenvy",
+ "graphql_endpoints",
  "itertools",
  "opa_client",
  "soakdb_io",

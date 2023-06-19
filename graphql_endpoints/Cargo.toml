@@ -1,0 +1,14 @@
+[package]
+name = "graphql_endpoints"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-graphql = { workspace = true }
+async-graphql-axum = { version = "5.0.9" }
+axum = { workspace = true }
+derive_more = { workspace = true }
+opa_client = { path = "../opa_client" }
+
+[dev-dependencies]
+url = { workspace = true }

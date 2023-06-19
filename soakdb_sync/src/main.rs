@@ -4,10 +4,10 @@ mod graphql;
 mod models;
 mod resolvers;
 
-use async_graphql_axum::GraphQLSubscription;
 use axum::{routing::get, Router, Server};
 use clap::Parser;
-use graphql::{build_schema, GraphQLHandler, GraphiQLHandler, RootSchema};
+use graphql::{build_schema, RootSchema};
+use graphql_endpoints::{GraphQLHandler, GraphQLSubscription, GraphiQLHandler};
 use opa_client::OPAClient;
 use std::{
     fs::File,
