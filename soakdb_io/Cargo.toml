@@ -10,19 +10,13 @@ homepage = "https://github.com/garryod/xchemlab_soakdb_interface"
 readme = "../README.md"
 
 [dependencies]
-chrono = { version = "0.4.26", default-features = false }
+chrono = { workspace = true }
 chrono-tz = { version = "0.8.2" }
-derive_more = { version = "0.99.17" }
+derive_more = { workspace = true }
 lexical = { version = "6.1.1" }
-sea-orm = { version = "0.11.2", default-features = false, features = [
-    "runtime-tokio-native-tls",
-    "macros",
-    "with-chrono",
-    "with-uuid",
-    "sqlx-sqlite",
-] }
-thiserror = { version = "1.0.40" }
+sea-orm = { workspace = true, features = ["sqlx-sqlite"] }
+thiserror = { workspace = true }
 
 [dev-dependencies]
-tokio = { version = "1.28.2", features = ["rt-multi-thread", "macros"] }
+tokio = { workspace = true }
 futures = { version = "0.3.28" }

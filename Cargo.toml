@@ -1,2 +1,28 @@
 [workspace]
-members = ["soakdb_io", "soakdb_sync", "opa_client"]
+members = ["opa_client", "soakdb_io", "soakdb_sync"]
+
+[workspace.dependencies]
+async-graphql = { version = "5.0.10", default-features = false, features = [
+    "chrono",
+    "graphiql",
+    "tracing",
+    "uuid",
+] }
+async-graphql-axum = { version = "5.0.9" }
+axum = { version = "0.6.15", features = ["headers", "macros", "ws"] }
+chrono = { version = "0.4.26", default-features = false }
+clap = { version = "4.3.3", features = ["derive", "env"] }
+derive_more = { version = "0.99.17" }
+dotenvy = { version = "0.15.7" }
+itertools = { version = "0.10.5" }
+sea-orm = { version = "0.11.2", default-features = false, features = [
+    "macros",
+    "runtime-tokio-native-tls",
+    "with-chrono",
+    "with-uuid",
+] }
+thiserror = { version = "1.0.40" }
+tokio = { version = "1.28.2", features = ["macros", "rt-multi-thread"] }
+tracing = { version = "0.1.37" }
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+url = { version = "2.4.0" }
