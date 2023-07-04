@@ -3,7 +3,7 @@ FROM docker.io/library/rust:1.70.0-bullseye AS build
 WORKDIR /app
 
 # Build dependencies
-COPY Cargo.toml Cargo.lock .
+COPY Cargo.toml Cargo.lock ./
 COPY graphql_endpoints/Cargo.toml graphql_endpoints/Cargo.toml
 COPY graphql_event_broker/Cargo.toml graphql_event_broker/Cargo.toml
 COPY opa_client/Cargo.toml opa_client/Cargo.toml
