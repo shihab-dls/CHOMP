@@ -1,12 +1,19 @@
-# XChemLab SoakDB Interface
+# XChemLab
 
-An interface service, providing a mechanism to save & load data from the SoakDB format. This service is intended to be used during the transition period.
+This repository contains a collection of services which comprise the XChemLab deployment.
 
 ## Running
 
-To run this service, simply execute `cargo run`.
+To run any of the services, simply execute `cargo run -r <SERVICE_NAME>`.
 
-An [Open Policy Agent](https://www.openpolicyagent.org/) instance serving the polcies in `/policies` is required for authentication & authorization.
+Note, deployments of the following ancillary services are required:
+- An [Open Policy Agent](https://www.openpolicyagent.org/) instance serving the polcies in `/policies` is for authentication & authorization.
+- A [PostgreSQL](https://www.postgresql.org/) instance to provide a database backend for various services.
+- A [RabbitMQ](https://www.rabbitmq.com/) instance to communicate between services and analysis workers (e.g. `chimp_chomp`).
+
+## Developing
+
+A [devcontainer](https://containers.dev/) docker-compose configuration is provided in `.devcontainer` to aid development. If developing in VSCode this can be activated with the Dev Containers extension (`ms-vscode-remote.remote-containers`).
 
 ## Test Data
 
