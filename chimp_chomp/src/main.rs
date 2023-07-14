@@ -19,15 +19,13 @@ use clap::Parser;
 use futures::future::Either;
 use futures_timer::Delay;
 use postprocessing::Contents;
-use std::{collections::HashMap, path::PathBuf, time::Duration};
+use std::{collections::HashMap, time::Duration};
 use tokio::{select, spawn, task::JoinSet};
 use url::Url;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about=None)]
 struct Cli {
-    /// The path to the ONNX model file.
-    model: PathBuf,
     /// The URL of the RabbitMQ server.
     rabbitmq_url: Url,
     /// The RabbitMQ channel on which jobs are assigned.
@@ -57,7 +55,7 @@ fn main() {
 }
 
 async fn run(args: Cli) {
-    let session = setup_inference_session(args.model).unwrap();
+    let session = setup_inference_session().unwrap();
     let input_width = session.inputs[0].dimensions[3].unwrap();
     let input_height = session.inputs[0].dimensions[2].unwrap();
     let batch_size = session.inputs[0].dimensions[0].unwrap().try_into().unwrap();
