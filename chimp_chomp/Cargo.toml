@@ -21,7 +21,6 @@ opencv = { version = "0.82.1", default-features = false, features = [
 ] }
 ort = { version = "1.14.8", default-features = false, features = [
     "download-binaries",
-    "tensorrt",
     "copy-dylibs",
 ] }
 tokio = { workspace = true, features = ["sync"] }
