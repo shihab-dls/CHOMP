@@ -2,6 +2,10 @@ FROM docker.io/library/rust:1.71.0-bullseye AS build
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y \
+        libopencv-dev clang libclang-dev
+
 # Build dependencies
 COPY Cargo.toml Cargo.lock ./
 COPY chimp_chomp/Cargo.toml chimp_chomp/Cargo.toml
@@ -13,7 +17,7 @@ COPY pin_packing/Cargo.toml pin_packing/Cargo.toml
 COPY soakdb_io/Cargo.toml soakdb_io/Cargo.toml
 COPY soakdb_sync/Cargo.toml soakdb_sync/Cargo.toml
 RUN mkdir chimp_chomp/src \
-    && touch chimp_chomp/src/lib.rs \
+    && echo "fn main() {}" > chimp_chomp/src/main.rs \
     && mkdir chimp_protocol/src \
     && touch chimp_protocol/src/lib.rs \
     && mkdir graphql_endpoints/src \
@@ -42,9 +46,29 @@ RUN touch chimp_chomp/src/lib.rs \
     && touch soakdb_sync/src/main.rs \
     && cargo build --release
 
-FROM gcr.io/distroless/cc
-ARG SERVICE
+# Collate dynamically linked shared objects for chimp_chomp
+RUN mkdir /chimp_chomp_libraries \
+    && cp \
+        $(ldd /app/target/release/chimp_chomp | grep -o '/.*\.so\S*') \
+        /app/target/release/libonnxruntime.so.1.14.1 \
+        /chimp_chomp_libraries
 
-COPY --from=build /app/target/release/${SERVICE} /service
+FROM gcr.io/distroless/cc as chimp_chomp
 
-ENTRYPOINT ["./service"]
+COPY --from=build /chimp_chomp_libraries/* /lib
+COPY --from=build /app/target/release/chimp.onnx /chimp.onnx
+COPY --from=build /app/target/release/chimp_chomp /chimp_chomp
+
+ENTRYPOINT ["./chimp_chomp"]
+
+FROM gcr.io/distroless/cc as pin_packing
+
+COPY --from=build /app/target/release/pin_packing /pin_packing
+
+ENTRYPOINT ["./pin_packing"]
+
+FROM gcr.io/distroless/cc as soakdb_sync
+
+COPY --from=build /app/target/release/soakdb_sync /soakdb_sync
+
+ENTRYPOINT ["./soakdb_sync"]
