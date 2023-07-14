@@ -1,4 +1,4 @@
-FROM docker.io/library/rust:1.70.0-bullseye
+FROM docker.io/library/rust:1.71.0-bullseye
 
 RUN rustup component add rustfmt clippy
 
