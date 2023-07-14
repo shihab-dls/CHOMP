@@ -5,7 +5,7 @@ pub fn root_schema_builder() -> SchemaBuilder<RootQuery, RootMutation, EmptySubs
     Schema::build(
         RootQuery::default(),
         RootMutation::default(),
-        EmptySubscription::default(),
+        EmptySubscription,
     )
 }
 
