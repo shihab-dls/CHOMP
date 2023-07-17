@@ -27,3 +27,6 @@ ort = { version = "1.14.8", default-features = false, features = [
 tokio = { workspace = true, features = ["sync"] }
 url = { workspace = true }
 uuid = { workspace = true }
+
+[dev-dependencies]
+approx = { version = "0.5.1" }

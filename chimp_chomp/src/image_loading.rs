@@ -10,7 +10,7 @@ use opencv::{
 use std::path::Path;
 
 #[derive(Debug, Deref)]
-pub struct WellImage(Mat);
+pub struct WellImage(pub Mat);
 
 #[derive(Debug, Deref)]
 pub struct ChimpImage(Array<f32, Ix3>);
