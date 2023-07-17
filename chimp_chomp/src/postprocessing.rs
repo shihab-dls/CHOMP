@@ -5,7 +5,7 @@ use ndarray::{Array2, ArrayView, ArrayView2, Ix1};
 use opencv::{
     core::CV_8U,
     imgproc::{distance_transform, DIST_L1, DIST_MASK_3},
-    prelude::Mat,
+    prelude::{Mat, MatTraitConst},
 };
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -32,7 +32,21 @@ fn insertion_mask(
 }
 
 fn optimal_insert_position(insertion_mask: Array2<bool>) -> Point {
-    let mask = Mat::from_exact_iter(insertion_mask.mapv(|pixel| pixel as u8).into_iter()).unwrap();
+    let mask = Mat::from_exact_iter(
+        insertion_mask
+            .mapv(|pixel| if pixel { std::u8::MAX } else { 0 })
+            .into_iter(),
+    )
+    .unwrap()
+    .reshape_nd(
+        1,
+        &insertion_mask
+            .shape()
+            .iter()
+            .map(|&dim| dim as i32)
+            .collect::<Vec<_>>(),
+    )
+    .unwrap();
     let mut distances = Mat::default();
     distance_transform(&mask, &mut distances, DIST_L1, DIST_MASK_3, CV_8U).unwrap();
     let (furthest_point, _) = distances
