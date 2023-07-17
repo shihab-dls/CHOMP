@@ -1,4 +1,5 @@
 use crate::inference::{BBoxes, Labels, Masks};
+use anyhow::Context;
 use chimp_protocol::{BBox, Job, Point};
 use itertools::izip;
 use ndarray::{Array2, ArrayView, ArrayView2, Ix1};
@@ -31,7 +32,7 @@ fn insertion_mask(
     mask
 }
 
-fn optimal_insert_position(insertion_mask: Array2<bool>) -> Point {
+fn optimal_insert_position(insertion_mask: Array2<bool>) -> Result<Point, anyhow::Error> {
     let mask = Mat::from_exact_iter(
         insertion_mask
             .mapv(|pixel| if pixel { std::u8::MAX } else { 0 })
@@ -53,11 +54,11 @@ fn optimal_insert_position(insertion_mask: Array2<bool>) -> Point {
         .iter::<u8>()
         .unwrap()
         .max_by(|(_, a), (_, b)| a.cmp(b))
-        .unwrap();
-    Point {
+        .context("No valid insertion points")?;
+    Ok(Point {
         x: furthest_point.x as usize,
         y: furthest_point.y as usize,
-    }
+    })
 }
 
 fn bbox_from_array(bbox: ArrayView<f32, Ix1>) -> BBox {
@@ -73,9 +74,10 @@ fn find_drop_instance<'a>(
     labels: &Labels,
     bboxes: &BBoxes,
     masks: &'a Masks,
-) -> Option<(BBox, ArrayView2<'a, f32>)> {
+) -> Result<(BBox, ArrayView2<'a, f32>), anyhow::Error> {
     izip!(labels, bboxes.outer_iter(), masks.outer_iter())
         .find_map(|(label, bbox, mask)| (*label == 1).then_some((bbox_from_array(bbox), mask)))
+        .context("No drop instances in prediction")
 }
 
 fn find_crystal_instances<'a>(
@@ -88,24 +90,35 @@ fn find_crystal_instances<'a>(
         .collect()
 }
 
-pub async fn postprocess_inference(
+fn postprocess_inference(
+    bboxes: BBoxes,
+    labels: Labels,
+    masks: Masks,
+) -> Result<Contents, anyhow::Error> {
+    let (drop, drop_mask) = find_drop_instance(&labels, &bboxes, &masks)?;
+    let (crystals, crystal_masks) = find_crystal_instances(&labels, &bboxes, &masks)
+        .into_iter()
+        .unzip();
+    let insertion_mask = insertion_mask(drop_mask, crystal_masks);
+    let insertion_point = optimal_insert_position(insertion_mask)?;
+    Ok(Contents {
+        drop,
+        crystals,
+        insertion_point,
+    })
+}
+
+pub async fn inference_postprocessing(
     bboxes: BBoxes,
     labels: Labels,
     masks: Masks,
     job: Job,
     contents_tx: UnboundedSender<(Contents, Job)>,
+    error_tx: UnboundedSender<(anyhow::Error, Job)>,
 ) {
     println!("Postprocessing: {job:?}");
-    let (drop, drop_mask) = find_drop_instance(&labels, &bboxes, &masks).unwrap();
-    let (crystals, crystal_masks) = find_crystal_instances(&labels, &bboxes, &masks)
-        .into_iter()
-        .unzip();
-    let insertion_mask = insertion_mask(drop_mask, crystal_masks);
-    let insertion_point = optimal_insert_position(insertion_mask);
-    let contents = Contents {
-        drop,
-        crystals,
-        insertion_point,
-    };
-    contents_tx.send((contents, job)).unwrap();
+    match postprocess_inference(bboxes, labels, masks) {
+        Ok(contents) => contents_tx.send((contents, job)).unwrap(),
+        Err(err) => error_tx.send((err, job)).unwrap(),
+    }
 }

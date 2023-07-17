@@ -31,17 +31,27 @@ impl Job {
 
 /// A set of predictions which apply to a single image.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Response {
-    /// The unique identifier of the requesting [`Request`].
-    pub job_id: Uuid,
-    /// The proposed point for solvent insertion.
-    pub insertion_point: Point,
-    /// The location of the well centroid and radius.
-    pub well_location: Circle,
-    /// A bounding box emcompasing the solvent.
-    pub drop: BBox,
-    /// A set of bounding boxes, each emcompasing a crystal.
-    pub crystals: Vec<BBox>,
+pub enum Response {
+    /// The image was processed successfully, producing the contained predictions.
+    Success {
+        /// The unique identifier of the requesting [`Job`].
+        job_id: Uuid,
+        /// The proposed point for solvent insertion.
+        insertion_point: Point,
+        /// The location of the well centroid and radius.
+        well_location: Circle,
+        /// A bounding box emcompasing the solvent.
+        drop: BBox,
+        /// A set of bounding boxes, each emcompasing a crystal.
+        crystals: Vec<BBox>,
+    },
+    /// Image processing failed, with the contained error.
+    Failure {
+        /// The unique identifier of the requesting [`Job`].
+        job_id: Uuid,
+        /// A description of the error encountered.
+        error: String,
+    },
 }
 
 impl Response {

@@ -1,10 +1,11 @@
 use crate::image_loading::ChimpImage;
+use anyhow::Context;
 use chimp_protocol::Job;
 use itertools::{izip, Itertools};
 use ndarray::{Array1, Array2, Array3, Axis, Ix1, Ix2, Ix4};
 use ort::{
     tensor::{FromArray, InputTensor},
-    Environment, ExecutionProvider, GraphOptimizationLevel, OrtError, Session, SessionBuilder,
+    Environment, ExecutionProvider, GraphOptimizationLevel, Session, SessionBuilder,
 };
 use std::{env::current_exe, ops::Deref, sync::Arc};
 use tokio::sync::mpsc::{error::TryRecvError, Receiver, UnboundedSender};
@@ -14,16 +15,21 @@ pub type Labels = Array1<i64>;
 pub type Scores = Array1<f32>;
 pub type Masks = Array3<f32>;
 
-pub fn setup_inference_session() -> Result<Session, OrtError> {
+pub fn setup_inference_session() -> Result<Session, anyhow::Error> {
     let environment = Arc::new(
         Environment::builder()
             .with_name("CHiMP")
             .with_execution_providers([ExecutionProvider::cpu()])
             .build()?,
     );
-    SessionBuilder::new(&environment)?
+    Ok(SessionBuilder::new(&environment)?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
-        .with_model_from_file(current_exe().unwrap().parent().unwrap().join("chimp.onnx"))
+        .with_model_from_file(
+            current_exe()?
+                .parent()
+                .context("Executable has no parent directory")?
+                .join("chimp.onnx"),
+        )?)
 }
 
 fn do_inference(

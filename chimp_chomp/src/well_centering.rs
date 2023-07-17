@@ -1,4 +1,5 @@
 use crate::image_loading::WellImage;
+use anyhow::Context;
 use chimp_protocol::{Circle, Job, Point};
 use opencv::{
     core::{Vec4f, Vector},
@@ -8,12 +9,7 @@ use opencv::{
 use std::ops::Deref;
 use tokio::sync::mpsc::UnboundedSender;
 
-pub async fn find_well_center(
-    image: WellImage,
-    job: Job,
-    well_location_tx: UnboundedSender<(Circle, Job)>,
-) {
-    println!("Finding Well Center for {job:?}");
+fn find_well_center(image: WellImage) -> Result<Circle, anyhow::Error> {
     let min_side = *image.deref().mat_size().iter().min().unwrap();
     let mut circles = Vector::<Vec4f>::new();
     hough_circles(
@@ -31,13 +27,25 @@ pub async fn find_well_center(
     let well_location = circles
         .into_iter()
         .max_by(|&a, &b| a[3].total_cmp(&b[3]))
-        .unwrap();
-    let well_location = Circle {
+        .context("No circles found in image")?;
+    Ok(Circle {
         center: Point {
             x: well_location[0] as usize,
             y: well_location[1] as usize,
         },
         radius: well_location[2],
-    };
-    well_location_tx.send((well_location, job)).unwrap()
+    })
+}
+
+pub async fn well_centering(
+    image: WellImage,
+    job: Job,
+    well_location_tx: UnboundedSender<(Circle, Job)>,
+    error_tx: UnboundedSender<(anyhow::Error, Job)>,
+) {
+    println!("Finding Well Center for {job:?}");
+    match find_well_center(image) {
+        Ok(well_center) => well_location_tx.send((well_center, job)).unwrap(),
+        Err(err) => error_tx.send((err, job)).unwrap(),
+    }
 }

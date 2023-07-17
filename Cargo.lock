@@ -183,6 +183,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.72"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b13c32d80ecc7ab747b80c3784bce54ee8a7a0cc4fbda9bf4cda2cf6fe90854"
+
+[[package]]
 name = "async-channel"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -602,8 +608,10 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "chimp_chomp"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "chimp_protocol",
  "clap 4.3.14",
+ "derive_more",
  "dotenvy",
  "futures",
  "futures-timer",

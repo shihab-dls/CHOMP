@@ -1,3 +1,4 @@
+use anyhow::Context;
 use derive_more::Deref;
 use ndarray::{Array, Ix3};
 use opencv::{
@@ -67,11 +68,19 @@ pub fn load_image(
     path: impl AsRef<Path>,
     chimp_width: u32,
     chimp_height: u32,
-) -> (ChimpImage, WellImage) {
-    let image = imread(path.as_ref().to_str().unwrap(), IMREAD_COLOR).unwrap();
+) -> Result<(ChimpImage, WellImage), anyhow::Error> {
+    let image = imread(
+        path.as_ref()
+            .to_str()
+            .context("Image path contains non-UTF8 characters")?,
+        IMREAD_COLOR,
+    )?;
+    if image.empty() {
+        return Err(anyhow::Error::msg("No image data was loaded"));
+    }
 
     let well_image = prepare_well(&image);
     let chimp_image = prepare_chimp(&image, chimp_width as i32, chimp_height as i32);
 
-    (chimp_image, well_image)
+    Ok((chimp_image, well_image))
 }

@@ -10,9 +10,11 @@ mod well_centering;
 
 use crate::{
     inference::{inference_worker, setup_inference_session},
-    jobs::{consume_job, produce_response, setup_job_consumer, setup_rabbitmq_client},
-    postprocessing::postprocess_inference,
-    well_centering::find_well_center,
+    jobs::{
+        consume_job, produce_error, produce_response, setup_job_consumer, setup_rabbitmq_client,
+    },
+    postprocessing::inference_postprocessing,
+    well_centering::well_centering,
 };
 use chimp_protocol::{Circle, Job};
 use clap::Parser;
@@ -68,11 +70,12 @@ async fn run(args: Cli) {
         .unwrap();
 
     let (chimp_image_tx, chimp_image_rx) = tokio::sync::mpsc::channel(batch_size);
-    let (well_image_tx, mut well_image_rx) = tokio::sync::mpsc::channel(batch_size);
+    let (well_image_tx, mut well_image_rx) = tokio::sync::mpsc::unbounded_channel();
     let (well_location_tx, mut well_location_rx) =
         tokio::sync::mpsc::unbounded_channel::<(Circle, Job)>();
     let (prediction_tx, mut prediction_rx) = tokio::sync::mpsc::unbounded_channel();
     let (contents_tx, mut contents_rx) = tokio::sync::mpsc::unbounded_channel::<(Contents, Job)>();
+    let (error_tx, mut error_rx) = tokio::sync::mpsc::unbounded_channel();
 
     spawn(inference_worker(
         session,
@@ -96,6 +99,10 @@ async fn run(args: Cli) {
         select! {
             biased;
 
+            Some((error, job)) = error_rx.recv() => {
+                tasks.spawn(produce_error(error, job, response_channel.clone()));
+            }
+
             Some((well_location, job)) = well_location_rx.recv() => {
                 if let Some(contents) = well_contents.remove(&job.id) {
                     tasks.spawn(produce_response(contents, well_location, job, response_channel.clone()));
@@ -114,15 +121,15 @@ async fn run(args: Cli) {
 
             chimp_permit = chimp_image_tx.clone().reserve_owned() => {
                 let chimp_permit = chimp_permit.unwrap();
-                tasks.spawn(consume_job(job_consumer.clone(), input_width, input_height, chimp_permit, well_image_tx.clone()));
+                tasks.spawn(consume_job(job_consumer.clone(), input_width, input_height, chimp_permit, well_image_tx.clone(), error_tx.clone()));
             }
 
             Some((well_image, job)) = well_image_rx.recv() =>  {
-                tasks.spawn(find_well_center(well_image, job, well_location_tx.clone()));
+                tasks.spawn(well_centering(well_image, job, well_location_tx.clone(), error_tx.clone()));
             }
 
             Some((bboxes, labels, _, masks, job)) = prediction_rx.recv() => {
-                tasks.spawn(postprocess_inference(bboxes, labels, masks, job, contents_tx.clone()));
+                tasks.spawn(inference_postprocessing(bboxes, labels, masks, job, contents_tx.clone(), error_tx.clone()));
             }
 
             _ = timeout => {
