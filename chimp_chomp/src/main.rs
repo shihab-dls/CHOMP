@@ -1,11 +1,17 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
+#![warn(clippy::missing_docs_in_private_items)]
 #![doc=include_str!("../README.md")]
 
+/// Utilities for loading images.
 mod image_loading;
+/// Neural Netowrk inference with [`ort`].
 mod inference;
+/// RabbitMQ [`Job`] queue consumption and [`Response`] publishing.
 mod jobs;
+/// Neural Network inference postprocessing with optimal insertion point finding.
 mod postprocessing;
+/// Well localisation.
 mod well_centering;
 
 use crate::{
@@ -25,6 +31,7 @@ use std::{collections::HashMap, time::Duration};
 use tokio::{select, spawn, task::JoinSet};
 use url::Url;
 
+/// An inference worker for the Crystal Hits in My Plate (CHiMP) neural network.
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about=None)]
 struct Cli {
@@ -56,6 +63,7 @@ fn main() {
     runtime.block_on(run(args));
 }
 
+#[allow(clippy::missing_docs_in_private_items)]
 async fn run(args: Cli) {
     let session = setup_inference_session().unwrap();
     let input_width = session.inputs[0].dimensions[3].unwrap();

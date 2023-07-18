@@ -10,11 +10,18 @@ use ort::{
 use std::{env::current_exe, ops::Deref, sync::Arc};
 use tokio::sync::mpsc::{error::TryRecvError, Receiver, UnboundedSender};
 
+/// The raw box predictor output of a MaskRCNN.
 pub type BBoxes = Array2<f32>;
+/// The raw label output of a MaskRCNN.
 pub type Labels = Array1<i64>;
+/// The raw scores output of a MaskRCNN.
 pub type Scores = Array1<f32>;
+/// The raw masks output of a MaskRCNN.
 pub type Masks = Array3<f32>;
 
+/// Starts an inference session by setting up the ONNX Runtime environment and loading the model.
+///
+/// Returns an [`anyhow::Error`] if the environment could not be built or if the model could not be loaded.
 pub fn setup_inference_session() -> Result<Session, anyhow::Error> {
     let environment = Arc::new(
         Environment::builder()
@@ -32,6 +39,9 @@ pub fn setup_inference_session() -> Result<Session, anyhow::Error> {
         )?)
 }
 
+/// Performs inference on a batch of images, dummy images are used to pad the tesnor if underfull.
+///
+/// Returns a set of predictions, where each instances corresponds to the an input image, order is maintained.
 fn do_inference(
     session: &Session,
     images: &[ChimpImage],
@@ -85,6 +95,10 @@ fn do_inference(
         .collect()
 }
 
+/// Listens to a [`Receiver`] for instances of [`ChimpImage`] and performs batch inference on these.
+///
+/// Each pass, all available images in the [`tokio::sync::mpsc::channel`] - up to the batch size - are taken and passed to the model for inference.
+/// Model predictions are sent over a [`tokio::sync::mpsc::unbounded_channel`].
 pub async fn inference_worker(
     session: Session,
     batch_size: usize,

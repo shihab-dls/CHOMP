@@ -9,6 +9,12 @@ use opencv::{
 use std::ops::Deref;
 use tokio::sync::mpsc::UnboundedSender;
 
+/// Uses a canny edge detector and a hough circle transform to localise a [`Circle`] of high contrast in the image.
+///
+/// The circle is assumed to have a radius in [⅜ l, ½ l), where `l` denotes the shortest edge lenth of the image.
+/// The circle with the most counts is selected.
+///
+/// Returns an [`anyhow::Error`] if no circles were found.
 fn find_well_location(image: WellImage) -> Result<Circle, anyhow::Error> {
     let min_side = *image.deref().mat_size().iter().min().unwrap();
     let mut circles = Vector::<Vec4f>::new();
@@ -37,6 +43,10 @@ fn find_well_location(image: WellImage) -> Result<Circle, anyhow::Error> {
     })
 }
 
+/// Takes a grayscale image of the well and finds the center and radius.
+///
+/// The extracted [`Circle`] is sent over a [`tokio::sync::mpsc::unbounded_channel`] if sucessful.
+/// An [`anyhow::Error`] is sent if no circles were found.
 pub async fn well_centering(
     image: WellImage,
     job: Job,

@@ -13,10 +13,17 @@ use tokio::sync::mpsc::{OwnedPermit, UnboundedSender};
 use url::Url;
 use uuid::Uuid;
 
+/// Creates a RabbitMQ [`Connection`] with [`Default`] [`lapin::ConnectionProperties`].
+///
+/// Returns a [`lapin::Error`] if a connection could not be established.
 pub async fn setup_rabbitmq_client(address: Url) -> Result<Connection, lapin::Error> {
     lapin::Connection::connect(address.as_str(), lapin::ConnectionProperties::default()).await
 }
 
+/// Joins a RabbitMQ channel, creating a [`Consumer`] with [`Default`] [`BasicConsumeOptions`] and [`FieldTable`].
+/// The consumer tag is generated following the format `chimp_chomp_${`[`Uuid::new_v4`]`}`.
+///
+/// Returns a [`lapin::Error`] if the requested channel is not available.
 pub async fn setup_job_consumer(
     rabbitmq_channel: Channel,
     channel: impl AsRef<str>,
@@ -33,6 +40,12 @@ pub async fn setup_job_consumer(
         .await
 }
 
+/// Reads a message from the [`lapin::Consumer`] then loads and prepares the requested image for downstream processing.
+///
+/// An [`OwnedPermit`] to send to the chimp [`tokio::sync::mpsc::channel`] is required such that backpressure is be propagated to message consumption.
+///
+/// The prepared images are sent over a [`tokio::sync::mpsc::channel`] and [`tokio::sync::mpsc::unbounded_channel`] if sucessful.
+/// An [`anyhow::Error`] is sent if the image could not be read or is empty.
 pub async fn consume_job(
     mut consumer: Consumer,
     input_width: u32,
@@ -59,6 +72,7 @@ pub async fn consume_job(
     };
 }
 
+/// Takes the results of postprocessing and well centering and publishes a [`Response::Success`] to the RabbitMQ [`Channel`] provided by the [`Job`].
 pub async fn produce_response(
     contents: Contents,
     well_location: Circle,
@@ -88,6 +102,7 @@ pub async fn produce_response(
         .unwrap();
 }
 
+/// Takes an error generated in one of the prior stages and publishes a [`Response::Failure`] to the RabbitMQ [`Channel`] provided by the [`Job`].
 pub async fn produce_error(error: anyhow::Error, job: Job, rabbitmq_channel: Channel) {
     println!("Producing error for: {job:?}");
     rabbitmq_channel

@@ -10,15 +10,21 @@ use opencv::{
 };
 use tokio::sync::mpsc::UnboundedSender;
 
+/// The predicted contents of a well image.
 #[derive(Debug)]
 pub struct Contents {
+    /// The optimal point at which solvent should be inserted.
     pub insertion_point: Point,
+    /// A bounding box enclosing the drop of solution.
     pub drop: BBox,
+    /// A set of bounding boxes enclosing each crystal in the drop.
     pub crystals: Vec<BBox>,
 }
 
+/// The threshold to apply to the raw MaskRCNN [`Masks`] to generate a binary mask.
 const PREDICTION_THRESHOLD: f32 = 0.5;
 
+/// Creates a mask of valid insertion positions by adding all pixels in the drop mask and subsequently subtracting those in the crystal masks.
 fn insertion_mask(
     drop_mask: ArrayView2<f32>,
     crystal_masks: Vec<ArrayView2<'_, f32>>,
@@ -32,6 +38,7 @@ fn insertion_mask(
     mask
 }
 
+/// Converts an [`Array2<bool>`] into an [`Mat`] of type [`CV_8U`] with the same dimensions.
 fn ndarray_mask_into_opencv_mat(mask: Array2<bool>) -> Mat {
     Mat::from_exact_iter(
         mask.mapv(|pixel| if pixel { std::u8::MAX } else { 0 })
@@ -49,6 +56,9 @@ fn ndarray_mask_into_opencv_mat(mask: Array2<bool>) -> Mat {
     .unwrap()
 }
 
+/// Performs a distance transform to find the point in the mask which is furthest from any invalid region.
+///
+/// Returns an [`anyhow::Error`] if no valid insertion point was found.
 fn optimal_insert_position(insertion_mask: Mat) -> Result<Point, anyhow::Error> {
     let mut distances = Mat::default();
     distance_transform(&insertion_mask, &mut distances, DIST_L1, DIST_MASK_3, CV_8U).unwrap();
@@ -63,6 +73,7 @@ fn optimal_insert_position(insertion_mask: Mat) -> Result<Point, anyhow::Error> 
     })
 }
 
+/// Converts an [`ArrayView<f32, Ix1`] of length 4 into a [`BBox`] according to the layout of a MaskRCNN box prediction.
 fn bbox_from_array(bbox: ArrayView<f32, Ix1>) -> BBox {
     BBox {
         left: bbox[0],
@@ -72,6 +83,9 @@ fn bbox_from_array(bbox: ArrayView<f32, Ix1>) -> BBox {
     }
 }
 
+/// Finds the first instance which is labelled as a drop.
+///
+/// Returns an [`anyhow::Error`] if no drop instances were found.
 fn find_drop_instance<'a>(
     labels: &Labels,
     bboxes: &BBoxes,
@@ -82,6 +96,7 @@ fn find_drop_instance<'a>(
         .context("No drop instances in prediction")
 }
 
+/// Finds all instances which are labelled as crystals.
 fn find_crystal_instances<'a>(
     labels: &Labels,
     bboxes: &BBoxes,
@@ -92,6 +107,9 @@ fn find_crystal_instances<'a>(
         .collect()
 }
 
+/// Takes the results of inference on an image and uses it to produce useful regional data and an optimal insertion point.
+///
+/// Returns an [`anyhow::Error`] if no drop instances could be found or if no valid insertion point was found.
 fn postprocess_inference(
     bboxes: BBoxes,
     labels: Labels,
@@ -110,6 +128,10 @@ fn postprocess_inference(
     })
 }
 
+/// Takes the results of inference on an image and uses it to produce useful regional data and an optimal insertion point.
+///
+/// The extracted [`Contents`] are sent over a [`tokio::sync::mpsc::unbounded_channel`] if sucessful.
+/// An [`anyhow::Error`] is sent if no drop instances were found or if no valid insertion point was found.
 pub async fn inference_postprocessing(
     bboxes: BBoxes,
     labels: Labels,
