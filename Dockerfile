@@ -50,7 +50,7 @@ RUN touch chimp_chomp/src/lib.rs \
 RUN mkdir /chimp_chomp_libraries \
     && cp \
         $(ldd /app/target/release/chimp_chomp | grep -o '/.*\.so\S*') \
-        /app/target/release/libonnxruntime.so.1.14.1 \
+        /app/target/release/libonnxruntime.so.1.15.1 \
         /chimp_chomp_libraries
 
 FROM gcr.io/distroless/cc as chimp_chomp
