@@ -2,12 +2,9 @@ use crate::image_loading::ChimpImage;
 use anyhow::Context;
 use chimp_protocol::Job;
 use itertools::{izip, Itertools};
-use ndarray::{Array1, Array2, Array3, Axis, Ix1, Ix2, Ix4};
-use ort::{
-    tensor::{FromArray, InputTensor},
-    Environment, ExecutionProvider, GraphOptimizationLevel, Session, SessionBuilder,
-};
-use std::{env::current_exe, ops::Deref, sync::Arc};
+use ndarray::{Array1, Array2, Array3, Axis, CowArray, Ix1, Ix2, Ix4};
+use ort::{Environment, ExecutionProvider, GraphOptimizationLevel, Session, SessionBuilder, Value};
+use std::{env::current_exe, ops::Deref};
 use tokio::sync::mpsc::{error::TryRecvError, Receiver, UnboundedSender};
 
 /// The raw box predictor output of a MaskRCNN.
@@ -23,12 +20,11 @@ pub type Masks = Array3<f32>;
 ///
 /// Returns an [`anyhow::Error`] if the environment could not be built or if the model could not be loaded.
 pub fn setup_inference_session() -> Result<Session, anyhow::Error> {
-    let environment = Arc::new(
-        Environment::builder()
-            .with_name("CHiMP")
-            .with_execution_providers([ExecutionProvider::cpu()])
-            .build()?,
-    );
+    let environment = Environment::builder()
+        .with_name("CHiMP")
+        .with_execution_providers([ExecutionProvider::CPU(Default::default())])
+        .build()?
+        .into_arc();
     Ok(SessionBuilder::new(&environment)?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
         .with_model_from_file(
@@ -53,7 +49,8 @@ fn do_inference(
         .cycle()
         .take(batch_size)
         .collect::<Vec<_>>();
-    let input = InputTensor::from_array(ndarray::stack(Axis(0), &batch_images).unwrap().into_dyn());
+    let input_array = CowArray::from(ndarray::stack(Axis(0), &batch_images).unwrap().into_dyn());
+    let input = Value::from_array(session.allocator(), &input_array).unwrap();
     let outputs = session.run(vec![input]).unwrap();
     outputs
         .into_iter()
