@@ -7,7 +7,8 @@
       "extensions": [
         "rust-lang.rust-analyzer",
         "tamasfe.even-better-toml",
-        "tsandall.opa"
+        "tsandall.opa",
+        "ms-kubernetes-tools.vscode-kubernetes-tools"
       ],
       "settings": {
         "rust-analyzer.cargo.features": "all",
