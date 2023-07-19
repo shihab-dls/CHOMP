@@ -55,8 +55,8 @@ RUN mkdir /chimp_chomp_libraries \
 
 FROM gcr.io/distroless/cc as chimp_chomp
 
+COPY chimp_chomp/chimp.onnx /chimp.onnx
 COPY --from=build /chimp_chomp_libraries/* /lib
-COPY --from=build /app/target/release/chimp.onnx /chimp.onnx
 COPY --from=build /app/target/release/chimp_chomp /chimp_chomp
 
 ENTRYPOINT ["./chimp_chomp"]
