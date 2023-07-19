@@ -26,7 +26,7 @@ jobs:
           lfs: true
 
       - name: Generate Image Name
-        run: echo IMAGE_REPOSITORY=ghcr.io/$(tr '[:upper:]' '[:lower:]' <<< "${{ github.repository }}")-${{ matrix.target }} >> $GITHUB_ENV
+        run: echo IMAGE_REPOSITORY=ghcr.io/$(echo "${{ github.repository }}-${{ matrix.target }}" | tr '[:upper:]' '[:lower:]' | tr '[_]' '[\-]') >> $GITHUB_ENV
 
       - name: Log in to GitHub Docker Registry
         if: github.event_name != 'pull_request'
