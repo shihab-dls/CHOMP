@@ -16,6 +16,9 @@ jobs:
           - pin_packing
       max-parallel: 1
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Generate Image Name
         run: echo IMAGE_REPOSITORY=ghcr.io/$(tr '[:upper:]' '[:lower:]' <<< "${{ github.repository }}")-${{ matrix.target }} >> $GITHUB_ENV
