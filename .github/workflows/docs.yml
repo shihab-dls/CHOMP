@@ -61,4 +61,4 @@ jobs:
 
       - name: Publish docs to GitHub Pages
         id: deployment
-        uses: actions/github-pages@v2.0.1
+        uses: actions/deploy-pages@v2.0.3
