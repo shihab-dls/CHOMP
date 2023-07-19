@@ -28,7 +28,7 @@ jobs:
         uses: Swatinem/rust-cache@v2.2.1
 
       - name: Check Formatting
-        uses: actions-rs/cargo@v1.0.1
+        uses: actions-rs/cargo@v1.0.3
         with:
           command: fmt
           args: >
@@ -36,7 +36,7 @@ jobs:
             --check
 
       - name: Lint with Clippy
-        uses: actions-rs/cargo@v1.0.1
+        uses: actions-rs/cargo@v1.0.3
         with:
           command: clippy
           args: >
@@ -73,7 +73,7 @@ jobs:
         run: mkdir test_data
 
       - name: Test
-        uses: actions-rs/cargo@v1.0.1
+        uses: actions-rs/cargo@v1.0.3
         with:
           command: test
           args: >
