@@ -20,6 +20,11 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Checkout with LFS
+        uses: actions/checkout@v3.5.3
+        with:
+          lfs: true
+
       - name: Generate Image Name
         run: echo IMAGE_REPOSITORY=ghcr.io/$(tr '[:upper:]' '[:lower:]' <<< "${{ github.repository }}")-${{ matrix.target }} >> $GITHUB_ENV
 
