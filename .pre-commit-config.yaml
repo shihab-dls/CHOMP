@@ -4,6 +4,7 @@ repos:
     hooks:
       - id: check-added-large-files
       - id: check-yaml
+        exclude: ^charts\/.*\/templates\/.*\.yaml
       - id: check-merge-conflict
 
   - repo: https://github.com/doublify/pre-commit-rust
