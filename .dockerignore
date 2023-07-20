@@ -10,6 +10,9 @@ Dockerfile
 # Rust
 /target
 
+# Helm
+/charts
+
 # Test Data
 /test_data
 
