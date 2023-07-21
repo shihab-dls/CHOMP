@@ -10,6 +10,9 @@ rabbitmq:
     # Exposed as rmq.xchemlab.diamond.ac.uk
     loadBalancerIP: 172.23.169.229
 
+keda:
+  enabled: false
+
 serviceAccount:
   create: false
   annotations: {}
