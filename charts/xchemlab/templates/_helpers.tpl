@@ -43,6 +43,14 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
+Selector labels
+*/}}
+{{- define "xchemlab.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "xchemlab.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "xchemlab.serviceAccountName" -}}
