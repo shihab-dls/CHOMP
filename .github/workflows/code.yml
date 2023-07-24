@@ -19,7 +19,7 @@ jobs:
           packages: libopencv-dev clang libclang-dev
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1.0.6
+        uses: actions-rs/toolchain@v1.0.7
         with:
           toolchain: stable
           default: true
@@ -61,7 +61,7 @@ jobs:
           packages: libopencv-dev clang libclang-dev
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1.0.6
+        uses: actions-rs/toolchain@v1.0.7
         with:
           toolchain: stable
           default: true
