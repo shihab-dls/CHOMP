@@ -2049,9 +2049,9 @@ dependencies = [
 
 [[package]]
 name = "ort"
-version = "1.15.1"
+version = "1.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df8602d59762c7fad45311d370da7a8eeb089f6f983cd034a9ddf1d4ff2781d0"
+checksum = "c5e56c9c4185ee949ef961aca8777d1dbd52cb104b444669adad63e8181820a7"
 dependencies = [
  "flate2",
  "lazy_static",

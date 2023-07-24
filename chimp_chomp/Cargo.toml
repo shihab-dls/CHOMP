@@ -20,7 +20,7 @@ opencv = { version = "0.83.0", default-features = false, features = [
     "imgproc",
     "imgcodecs",
 ] }
-ort = { version = "1.15.1", default-features = false, features = [
+ort = { version = "1.15.2", default-features = false, features = [
     "download-binaries",
     "copy-dylibs",
 ] }
