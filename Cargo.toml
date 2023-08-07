@@ -17,7 +17,7 @@ async-graphql = { version = "5.0.10", default-features = false, features = [
     "tracing",
     "uuid",
 ] }
-axum = { version = "0.6.19", features = ["headers", "macros", "ws"] }
+axum = { version = "0.6.20", features = ["headers", "macros", "ws"] }
 chrono = { version = "0.4.26", default-features = false }
 clap = { version = "4.3.19", features = ["derive", "env"] }
 derive_more = { version = "0.99.17" }
