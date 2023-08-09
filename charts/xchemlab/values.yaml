@@ -10,6 +10,22 @@ rabbitmq:
   serviceBindings:
     enabled: true
 
+chimp-chomp:
+  enabled: true
+  queue:
+    host:
+      secretNameSuffix: rabbitmq-svcbind
+      secretKey: uri
+  volumes:
+    - name: labxchem
+      hostPath:
+        path: /dls/labxchem
+        type: Directory
+  containerVolumeMounts:
+    - name: labxchem
+      mountPath: /dls/labxchem
+      mountPropagation: HostToContainer
+
 keda:
   enabled: false
 

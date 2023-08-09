@@ -1,0 +1,37 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/diamondlightsource/xchemlab-chimp-chomp
+  pullPolicy: Always
+  tag: ""
+
+imagePullSecrets: []
+
+queue:
+  host:
+    secretNameSuffix: ""
+    secretKey: ""
+  channel: ""
+
+serviceAccount:
+  create: false
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+volumes: []
+
+containerVolumeMounts: []
+
+securityContext: {}
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
