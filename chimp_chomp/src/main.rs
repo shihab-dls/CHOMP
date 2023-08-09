@@ -37,12 +37,6 @@ use url::Url;
 struct Cli {
     /// The URL of the RabbitMQ server.
     rabbitmq_url: Url,
-    /// The username used to access the RabbitMQ server.
-    #[arg(long, env)]
-    rabbitmq_username: Option<String>,
-    /// The password used to authenticate with the RabbitMQ server.
-    #[arg(long, env)]
-    rabbitmq_password: Option<String>,
     /// The RabbitMQ channel on which jobs are assigned.
     rabbitmq_channel: String,
     /// The duration (in milliseconds) to wait after completing all jobs before shutting down.
@@ -76,13 +70,7 @@ async fn run(args: Cli) {
     let input_height = session.inputs[0].dimensions[2].unwrap();
     let batch_size = session.inputs[0].dimensions[0].unwrap().try_into().unwrap();
 
-    let rabbitmq_client = setup_rabbitmq_client(
-        args.rabbitmq_url,
-        args.rabbitmq_username.as_deref(),
-        args.rabbitmq_password.as_deref(),
-    )
-    .await
-    .unwrap();
+    let rabbitmq_client = setup_rabbitmq_client(args.rabbitmq_url).await.unwrap();
     let job_channel = rabbitmq_client.create_channel().await.unwrap();
     let response_channel = rabbitmq_client.create_channel().await.unwrap();
     let job_consumer = setup_job_consumer(job_channel, args.rabbitmq_channel)

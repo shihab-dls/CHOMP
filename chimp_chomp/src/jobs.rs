@@ -2,7 +2,6 @@ use crate::{
     image_loading::{load_image, ChimpImage, WellImage},
     postprocessing::Contents,
 };
-use anyhow::anyhow;
 use chimp_protocol::{Circle, Job, Response};
 use futures::StreamExt;
 use lapin::{
@@ -17,17 +16,7 @@ use uuid::Uuid;
 /// Creates a RabbitMQ [`Connection`] with [`Default`] [`lapin::ConnectionProperties`].
 ///
 /// Returns a [`anyhow::Error`] if the URL could not be built or a connection could not be established.
-pub async fn setup_rabbitmq_client(
-    mut address: Url,
-    username: Option<&str>,
-    password: Option<&str>,
-) -> Result<Connection, anyhow::Error> {
-    address
-        .set_username(username.unwrap_or_default())
-        .map_err(|_| anyhow!("Could not set username"))?;
-    address
-        .set_password(password)
-        .map_err(|_| anyhow!("Could not set password"))?;
+pub async fn setup_rabbitmq_client(address: Url) -> Result<Connection, anyhow::Error> {
     Ok(
         lapin::Connection::connect(address.as_str(), lapin::ConnectionProperties::default())
             .await?,
