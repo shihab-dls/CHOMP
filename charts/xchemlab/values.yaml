@@ -22,6 +22,15 @@ chimp-chomp:
 keda:
   enabled: false
 
+opa-kube-mgmt:
+  enabled: true
+  mgmt:
+    enabled: false
+  serviceAccount:
+    create: false
+  rbac:
+    create: false
+
 rabbitmq:
   enabled: true
   persistence:
