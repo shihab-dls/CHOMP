@@ -5,6 +5,8 @@ fullnameOverride: ""
 
 rabbitmq:
   enabled: true
+  persistence:
+    enabled: false
   serviceBindings:
     enabled: true
 
