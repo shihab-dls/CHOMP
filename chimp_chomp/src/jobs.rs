@@ -5,7 +5,7 @@ use crate::{
 use chimp_protocol::{Circle, Job, Response};
 use futures::StreamExt;
 use lapin::{
-    options::{BasicAckOptions, BasicConsumeOptions, BasicPublishOptions},
+    options::{BasicAckOptions, BasicConsumeOptions, BasicPublishOptions, QueueDeclareOptions},
     types::FieldTable,
     BasicProperties, Channel, Connection, Consumer,
 };
@@ -33,6 +33,13 @@ pub async fn setup_job_consumer(
 ) -> Result<Consumer, lapin::Error> {
     let worker_id = Uuid::new_v4();
     let worker_tag = format!("chimp_chomp_{worker_id}");
+    rabbitmq_channel
+        .queue_declare(
+            channel.as_ref(),
+            QueueDeclareOptions::default(),
+            FieldTable::default(),
+        )
+        .await?;
     rabbitmq_channel
         .basic_consume(
             channel.as_ref(),
