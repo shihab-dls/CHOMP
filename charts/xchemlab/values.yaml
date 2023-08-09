@@ -3,13 +3,6 @@ replicaCount: 1
 nameOverride: ""
 fullnameOverride: ""
 
-rabbitmq:
-  enabled: true
-  persistence:
-    enabled: false
-  serviceBindings:
-    enabled: true
-
 chimp-chomp:
   enabled: true
   queue:
@@ -28,6 +21,13 @@ chimp-chomp:
 
 keda:
   enabled: false
+
+rabbitmq:
+  enabled: true
+  persistence:
+    enabled: false
+  serviceBindings:
+    enabled: true
 
 serviceAccount:
   create: false
