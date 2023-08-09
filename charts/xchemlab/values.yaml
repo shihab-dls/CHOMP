@@ -19,6 +19,17 @@ chimp-chomp:
       mountPath: /dls/labxchem
       mountPropagation: HostToContainer
 
+pin-packing:
+  enabled: true
+  database:
+    host: postgres://postgresql-ha-pgpool
+    user: postgres
+    password:
+      secretName: postgres-passwords
+      secretKey: password
+  opa:
+    serviceSuffix: opa-kube-mgmt
+
 keda:
   enabled: false
 

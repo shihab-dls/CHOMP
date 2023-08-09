@@ -18,6 +18,9 @@ dependencies:
   - name: chimp-chomp
     version: 0.0.1
     condition: chimp-chomp.enabled
+  - name: pin-packing
+    version: 0.0.1
+    condition: pin-packing.enabled
   - name: keda
     repository: https://kedacore.github.io/charts
     version: 2.10.2
