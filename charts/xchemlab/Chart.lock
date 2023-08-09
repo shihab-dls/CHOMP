@@ -1,9 +1,18 @@
 dependencies:
+- name: chimp-chomp
+  repository: ""
+  version: 0.0.1
+- name: pin-packing
+  repository: ""
+  version: 0.0.1
 - name: keda
   repository: https://kedacore.github.io/charts
   version: 2.10.2
+- name: opa-kube-mgmt
+  repository: https://open-policy-agent.github.io/kube-mgmt/charts
+  version: 8.3.0
 - name: rabbitmq
   repository: oci://docker.io/bitnamicharts
   version: 12.0.7
-digest: sha256:842f1a73bae100ee88358f7d0d5ba1f4e8863286576e1484d6da6199588abf04
-generated: "2023-07-21T13:31:00.419506871Z"
+digest: sha256:a2fb48c058cd1b0d4b43b0d4d9c27174a7841724e9174fff63de9e5d1d865b8f
+generated: "2023-08-09T14:47:57.727687985+01:00"
