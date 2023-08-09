@@ -14,6 +14,11 @@ queue:
     secretKey: ""
   channel: ""
 
+autoscaling:
+  jobsPerReplica: 30
+  minReplicas: 0
+  maxReplicas: 10
+
 serviceAccount:
   create: false
   name: ""

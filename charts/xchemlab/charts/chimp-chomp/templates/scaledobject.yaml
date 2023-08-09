@@ -1,0 +1,31 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "chimpChomp.name" . }}
+  labels:
+    {{- include "chimpChomp.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "chimpChomp.name" . }}
+  triggers:
+  - type: rabbitmq
+    metadata:
+      queueName: {{ include "chimpChomp.queueChannel" . }}
+      mode: QueueLength
+      value: "{{ toString .Values.autoscaling.jobsPerReplica }}"
+      minReplicaCount: "{{ toString .Values.autoscaling.minReplicas }}"
+      maxReplicaCount: "{{ toString .Values.autoscaling.maxReplicas }}"
+    authenticationRef:
+      name: keda-trigger-auth-rabbitmq-conn
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-trigger-auth-rabbitmq-conn
+spec:
+  secretTargetRef:
+  - parameter: host
+    name: {{ include "chimpChomp.queueHostSecretName" . }} 
+    key: {{ .Values.queue.host.secretKey }}
