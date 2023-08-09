@@ -5,10 +5,6 @@ fullnameOverride: ""
 
 rabbitmq:
   enabled: true
-  service:
-    type: LoadBalancer
-    # Exposed as rmq.xchemlab.diamond.ac.uk
-    loadBalancerIP: 172.23.169.229
   serviceBindings:
     enabled: true
 
