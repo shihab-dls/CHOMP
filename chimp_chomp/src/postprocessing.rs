@@ -1,6 +1,6 @@
 use crate::inference::{BBoxes, Labels, Masks};
 use anyhow::Context;
-use chimp_protocol::{BBox, Job, Point};
+use chimp_protocol::{BBox, Point, Request};
 use itertools::izip;
 use ndarray::{Array2, ArrayView, ArrayView2, Ix1};
 use opencv::{
@@ -136,14 +136,14 @@ pub async fn inference_postprocessing(
     bboxes: BBoxes,
     labels: Labels,
     masks: Masks,
-    job: Job,
-    contents_tx: UnboundedSender<(Contents, Job)>,
-    error_tx: UnboundedSender<(anyhow::Error, Job)>,
+    request: Request,
+    contents_tx: UnboundedSender<(Contents, Request)>,
+    error_tx: UnboundedSender<(anyhow::Error, Request)>,
 ) {
-    println!("Postprocessing: {job:?}");
+    println!("Postprocessing: {request:?}");
     match postprocess_inference(bboxes, labels, masks) {
-        Ok(contents) => contents_tx.send((contents, job)).unwrap(),
-        Err(err) => error_tx.send((err, job)).unwrap(),
+        Ok(contents) => contents_tx.send((contents, request)).unwrap(),
+        Err(err) => error_tx.send((err, request)).unwrap(),
     }
 }
 

@@ -7,7 +7,7 @@
 mod image_loading;
 /// Neural Netowrk inference with [`ort`].
 mod inference;
-/// RabbitMQ [`Job`] queue consumption and [`Response`] publishing.
+/// RabbitMQ [`Request`] queue consumption and [`Response`] publishing.
 mod jobs;
 /// Neural Network inference postprocessing with optimal insertion point finding.
 mod postprocessing;
@@ -22,10 +22,11 @@ use crate::{
     postprocessing::inference_postprocessing,
     well_centering::well_centering,
 };
-use chimp_protocol::{Circle, Job};
+use chimp_protocol::{Circle, Request};
 use clap::Parser;
 use futures::future::Either;
 use futures_timer::Delay;
+use jobs::ResponseTarget;
 use postprocessing::Contents;
 use std::{collections::HashMap, time::Duration};
 use tokio::{select, spawn, task::JoinSet};
@@ -77,13 +78,17 @@ async fn run(args: Cli) {
         .await
         .unwrap();
 
+    let (response_target_tx, mut response_target_rx) =
+        tokio::sync::mpsc::unbounded_channel::<(ResponseTarget, Request)>();
     let (chimp_image_tx, chimp_image_rx) = tokio::sync::mpsc::channel(batch_size);
     let (well_image_tx, mut well_image_rx) = tokio::sync::mpsc::unbounded_channel();
     let (well_location_tx, mut well_location_rx) =
-        tokio::sync::mpsc::unbounded_channel::<(Circle, Job)>();
+        tokio::sync::mpsc::unbounded_channel::<(Circle, Request)>();
     let (prediction_tx, mut prediction_rx) = tokio::sync::mpsc::unbounded_channel();
-    let (contents_tx, mut contents_rx) = tokio::sync::mpsc::unbounded_channel::<(Contents, Job)>();
-    let (error_tx, mut error_rx) = tokio::sync::mpsc::unbounded_channel();
+    let (contents_tx, mut contents_rx) =
+        tokio::sync::mpsc::unbounded_channel::<(Contents, Request)>();
+    let (error_tx, mut error_rx) =
+        tokio::sync::mpsc::unbounded_channel::<(anyhow::Error, Request)>();
 
     spawn(inference_worker(
         session,
@@ -94,6 +99,7 @@ async fn run(args: Cli) {
 
     let mut tasks = JoinSet::new();
 
+    let mut response_targets = HashMap::new();
     let mut well_locations = HashMap::new();
     let mut well_contents = HashMap::new();
 
@@ -107,37 +113,48 @@ async fn run(args: Cli) {
         select! {
             biased;
 
-            Some((error, job)) = error_rx.recv() => {
-                tasks.spawn(produce_error(error, job, response_channel.clone()));
+            Some((response_target, request)) = response_target_rx.recv() => {
+                response_targets.insert(request.id, response_target);
             }
 
-            Some((well_location, job)) = well_location_rx.recv() => {
-                if let Some(contents) = well_contents.remove(&job.id) {
-                    tasks.spawn(produce_response(contents, well_location, job, response_channel.clone()));
-                } else {
-                    well_locations.insert(job.id, well_location);
+            Some((error, request)) = error_rx.recv() => {
+                let response_target = response_targets.remove(&request.id).unwrap();
+                tasks.spawn(produce_error(request, response_target, error, response_channel.clone()));
+            }
+
+            Some((well_location, request)) = well_location_rx.recv() => {
+                if response_targets.contains_key(&request.id) {
+                    if let Some(contents) = well_contents.remove(&request.id) {
+                        let response_target = response_targets.remove(&request.id).unwrap();
+                        tasks.spawn(produce_response(request, response_target, contents, well_location, response_channel.clone()));
+                    } else {
+                        well_locations.insert(request.id, well_location);
+                    }
                 }
             }
 
-            Some((contents, job)) = contents_rx.recv() => {
-                if let Some(well_location) = well_locations.remove(&job.id) {
-                    tasks.spawn(produce_response(contents, well_location, job, response_channel.clone()));
-                } else {
-                    well_contents.insert(job.id, contents);
+            Some((contents, request)) = contents_rx.recv() => {
+                if response_targets.contains_key(&request.id) {
+                    if let Some(well_location) = well_locations.remove(&request.id) {
+                        let response_target = response_targets.remove(&request.id).unwrap();
+                        tasks.spawn(produce_response(request, response_target, contents, well_location, response_channel.clone()));
+                    } else {
+                        well_contents.insert(request.id, contents);
+                    }
                 }
             }
 
             chimp_permit = chimp_image_tx.clone().reserve_owned() => {
                 let chimp_permit = chimp_permit.unwrap();
-                tasks.spawn(consume_job(job_consumer.clone(), input_width, input_height, chimp_permit, well_image_tx.clone(), error_tx.clone()));
+                tasks.spawn(consume_job(job_consumer.clone(), input_width, input_height, chimp_permit, well_image_tx.clone(), response_target_tx.clone(), error_tx.clone()));
             }
 
-            Some((well_image, job)) = well_image_rx.recv() =>  {
-                tasks.spawn(well_centering(well_image, job, well_location_tx.clone(), error_tx.clone()));
+            Some((well_image, request)) = well_image_rx.recv() =>  {
+                tasks.spawn(well_centering(well_image, request, well_location_tx.clone(), error_tx.clone()));
             }
 
-            Some((bboxes, labels, _, masks, job)) = prediction_rx.recv() => {
-                tasks.spawn(inference_postprocessing(bboxes, labels, masks, job, contents_tx.clone(), error_tx.clone()));
+            Some((bboxes, labels, _, masks, request)) = prediction_rx.recv() => {
+                tasks.spawn(inference_postprocessing(bboxes, labels, masks, request, contents_tx.clone(), error_tx.clone()));
             }
 
             _ = timeout => {

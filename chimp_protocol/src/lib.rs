@@ -6,18 +6,16 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use uuid::Uuid;
 
-/// A CHiMP job definition.
+/// A CHiMP processing request definition.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Job {
-    /// A unique identifier for the job, to be returned in the [`Response`].
+pub struct Request {
+    /// A unique identifier for the request, to be returned in the [`Response`].
     pub id: Uuid,
     /// The path of a file containing the image to perform inference on.
     pub file: PathBuf,
-    /// The channel to send predictions to.
-    pub predictions_channel: String,
 }
 
-impl Job {
+impl Request {
     /// Deserialize an instance [`Request`] from bytes of JSON text.
     pub fn from_slice(v: &[u8]) -> Result<Self, serde_json::Error> {
         serde_json::from_slice(v)

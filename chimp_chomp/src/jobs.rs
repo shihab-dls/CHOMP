@@ -2,11 +2,17 @@ use crate::{
     image_loading::{load_image, ChimpImage, WellImage},
     postprocessing::Contents,
 };
-use chimp_protocol::{Circle, Job, Response};
+use anyhow::anyhow;
+use chimp_protocol::{Circle, Request, Response};
+use derive_more::{Deref, From};
 use futures::StreamExt;
 use lapin::{
-    options::{BasicAckOptions, BasicConsumeOptions, BasicPublishOptions, QueueDeclareOptions},
-    types::FieldTable,
+    acker::Acker,
+    options::{
+        BasicAckOptions, BasicConsumeOptions, BasicPublishOptions, BasicRejectOptions,
+        QueueDeclareOptions,
+    },
+    types::{FieldTable, ShortString},
     BasicProperties, Channel, Connection, Consumer,
 };
 use tokio::sync::mpsc::{OwnedPermit, UnboundedSender};
@@ -50,6 +56,19 @@ pub async fn setup_job_consumer(
         .await
 }
 
+/// The target of a response.
+#[derive(Debug)]
+pub struct ResponseTarget {
+    /// The acker used to acknowledge the request.
+    acker: Acker,
+    /// The queue which should recieve the reply message.
+    reply_to: ReplyTo,
+}
+
+/// The reply channel specified by the requester.
+#[derive(Debug, Deref, From)]
+pub struct ReplyTo(ShortString);
+
 /// Reads a message from the [`lapin::Consumer`] then loads and prepares the requested image for downstream processing.
 ///
 /// An [`OwnedPermit`] to send to the chimp [`tokio::sync::mpsc::channel`] is required such that backpressure is be propagated to message consumption.
@@ -60,43 +79,65 @@ pub async fn consume_job(
     mut consumer: Consumer,
     input_width: u32,
     input_height: u32,
-    chimp_permit: OwnedPermit<(ChimpImage, Job)>,
-    well_image_tx: UnboundedSender<(WellImage, Job)>,
-    error_tx: UnboundedSender<(anyhow::Error, Job)>,
+    chimp_permit: OwnedPermit<(ChimpImage, Request)>,
+    well_image_tx: UnboundedSender<(WellImage, Request)>,
+    response_target_tx: UnboundedSender<(ResponseTarget, Request)>,
+    error_tx: UnboundedSender<(anyhow::Error, Request)>,
 ) {
     let delivery = consumer.next().await.unwrap().unwrap();
-    delivery.ack(BasicAckOptions::default()).await.unwrap();
 
-    let job = Job::from_slice(&delivery.data).unwrap();
-    println!("Consumed Job: {job:?}");
+    let acker = delivery.acker;
+    let reply_to = match delivery.properties.reply_to().clone() {
+        Some(reply_to) => Ok(reply_to),
+        None => {
+            acker.reject(BasicRejectOptions::default()).await.unwrap();
+            Err(anyhow!("Request did not define reply queue"))
+        }
+    }
+    .unwrap()
+    .into();
+    let request = match Request::from_slice(&delivery.data) {
+        Ok(request) => Ok(request),
+        Err(error) => {
+            acker.reject(BasicRejectOptions::default()).await.unwrap();
+            Err(error)
+        }
+    }
+    .unwrap();
+    println!("Consumed Request: {request:?}");
 
-    match load_image(job.file.clone(), input_width, input_height) {
+    response_target_tx
+        .send((ResponseTarget { acker, reply_to }, request.clone()))
+        .unwrap();
+
+    match load_image(request.file.clone(), input_width, input_height) {
         Ok((chimp_image, well_image)) => {
-            chimp_permit.send((chimp_image, job.clone()));
+            chimp_permit.send((chimp_image, request.clone()));
             well_image_tx
-                .send((well_image, job))
+                .send((well_image, request))
                 .map_err(|_| anyhow::Error::msg("Could not send well image"))
                 .unwrap()
         }
-        Err(err) => error_tx.send((err, job)).unwrap(),
+        Err(err) => error_tx.send((err, request)).unwrap(),
     };
 }
 
 /// Takes the results of postprocessing and well centering and publishes a [`Response::Success`] to the RabbitMQ [`Channel`] provided by the [`Job`].
 pub async fn produce_response(
+    request: Request,
+    response_target: ResponseTarget,
     contents: Contents,
     well_location: Circle,
-    job: Job,
     rabbitmq_channel: Channel,
 ) {
-    println!("Producing response for: {job:?}");
+    println!("Producing response for: {request:?}");
     rabbitmq_channel
         .basic_publish(
             "",
-            &job.predictions_channel,
+            response_target.reply_to.as_str(),
             BasicPublishOptions::default(),
             &Response::Success {
-                job_id: job.id,
+                job_id: request.id,
                 insertion_point: contents.insertion_point,
                 well_location,
                 drop: contents.drop,
@@ -110,18 +151,28 @@ pub async fn produce_response(
         .unwrap()
         .await
         .unwrap();
+    response_target
+        .acker
+        .ack(BasicAckOptions::default())
+        .await
+        .unwrap();
 }
 
 /// Takes an error generated in one of the prior stages and publishes a [`Response::Failure`] to the RabbitMQ [`Channel`] provided by the [`Job`].
-pub async fn produce_error(error: anyhow::Error, job: Job, rabbitmq_channel: Channel) {
-    println!("Producing error for: {job:?}");
+pub async fn produce_error(
+    request: Request,
+    response_target: ResponseTarget,
+    error: anyhow::Error,
+    rabbitmq_channel: Channel,
+) {
+    println!("Producing error for: {request:?}");
     rabbitmq_channel
         .basic_publish(
             "",
-            &job.predictions_channel,
+            response_target.reply_to.as_str(),
             BasicPublishOptions::default(),
             &Response::Failure {
-                job_id: job.id,
+                job_id: request.id,
                 error: error.to_string(),
             }
             .to_vec()
@@ -130,6 +181,11 @@ pub async fn produce_error(error: anyhow::Error, job: Job, rabbitmq_channel: Cha
         )
         .await
         .unwrap()
+        .await
+        .unwrap();
+    response_target
+        .acker
+        .ack(BasicAckOptions::default())
         .await
         .unwrap();
 }

@@ -1,6 +1,6 @@
 use crate::image_loading::WellImage;
 use anyhow::Context;
-use chimp_protocol::{Circle, Job, Point};
+use chimp_protocol::{Circle, Point, Request};
 use opencv::{
     core::{Vec4f, Vector},
     imgproc::{hough_circles, HOUGH_GRADIENT},
@@ -49,14 +49,14 @@ fn find_well_location(image: WellImage) -> Result<Circle, anyhow::Error> {
 /// An [`anyhow::Error`] is sent if no circles were found.
 pub async fn well_centering(
     image: WellImage,
-    job: Job,
-    well_location_tx: UnboundedSender<(Circle, Job)>,
-    error_tx: UnboundedSender<(anyhow::Error, Job)>,
+    request: Request,
+    well_location_tx: UnboundedSender<(Circle, Request)>,
+    error_tx: UnboundedSender<(anyhow::Error, Request)>,
 ) {
-    println!("Finding Well Center for {job:?}");
+    println!("Finding Well Center for {request:?}");
     match find_well_location(image) {
-        Ok(well_center) => well_location_tx.send((well_center, job)).unwrap(),
-        Err(err) => error_tx.send((err, job)).unwrap(),
+        Ok(well_center) => well_location_tx.send((well_center, request)).unwrap(),
+        Err(err) => error_tx.send((err, request)).unwrap(),
     }
 }
 

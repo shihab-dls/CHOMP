@@ -1,6 +1,6 @@
 use crate::image_loading::ChimpImage;
 use anyhow::Context;
-use chimp_protocol::Job;
+use chimp_protocol::Request;
 use itertools::{izip, Itertools};
 use ndarray::{Array1, Array2, Array3, Axis, CowArray, Ix1, Ix2, Ix4};
 use ort::{Environment, ExecutionProvider, GraphOptimizationLevel, Session, SessionBuilder, Value};
@@ -99,11 +99,11 @@ fn do_inference(
 pub async fn inference_worker(
     session: Session,
     batch_size: usize,
-    mut image_rx: Receiver<(ChimpImage, Job)>,
-    prediction_tx: UnboundedSender<(BBoxes, Labels, Scores, Masks, Job)>,
+    mut image_rx: Receiver<(ChimpImage, Request)>,
+    prediction_tx: UnboundedSender<(BBoxes, Labels, Scores, Masks, Request)>,
 ) {
     let mut images = Vec::new();
-    let mut jobs = Vec::<Job>::new();
+    let mut jobs = Vec::<Request>::new();
     loop {
         let (image, job) = image_rx.recv().await.unwrap();
         images.push(image);
