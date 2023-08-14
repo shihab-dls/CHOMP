@@ -25,7 +25,7 @@ jobs:
           default: true
 
       - name: Cache Rust Build
-        uses: Swatinem/rust-cache@v2.6.0
+        uses: Swatinem/rust-cache@v2.6.1
 
       - name: Generate Schema
         uses: actions-rs/cargo@v1.0.3
