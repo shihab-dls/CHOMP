@@ -12,8 +12,9 @@ jobs:
       matrix:
         target:
           - chimp_chomp
-          - soakdb_sync
           - pin_packing
+          - soakdb_sync
+          - targeting
       max-parallel: 1
     runs-on: ubuntu-latest
     permissions:

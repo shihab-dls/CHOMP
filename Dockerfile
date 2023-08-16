@@ -16,6 +16,7 @@ COPY opa_client/Cargo.toml opa_client/Cargo.toml
 COPY pin_packing/Cargo.toml pin_packing/Cargo.toml
 COPY soakdb_io/Cargo.toml soakdb_io/Cargo.toml
 COPY soakdb_sync/Cargo.toml soakdb_sync/Cargo.toml
+COPY targeting/Cargo.toml targeting/Cargo.toml
 RUN mkdir chimp_chomp/src \
     && echo "fn main() {}" > chimp_chomp/src/main.rs \
     && mkdir chimp_protocol/src \
@@ -32,6 +33,8 @@ RUN mkdir chimp_chomp/src \
     && touch soakdb_io/src/lib.rs \
     && mkdir soakdb_sync/src/ \
     && echo "fn main() {}" > soakdb_sync/src/main.rs \
+    && mkdir targeting/src/ \
+    && echo "fn main() {}" > targeting/src/main.rs \
     && cargo build --release
 
 # Build workspace crates
@@ -44,6 +47,7 @@ RUN touch chimp_chomp/src/lib.rs \
     && touch pin_packing/src/main.rs \
     && touch soakdb_io/src/lib.rs \
     && touch soakdb_sync/src/main.rs \
+    && touch targeting/src/main.rs \
     && cargo build --release
 
 # Collate dynamically linked shared objects for chimp_chomp
@@ -72,3 +76,9 @@ FROM gcr.io/distroless/cc as soakdb_sync
 COPY --from=build /app/target/release/soakdb_sync /soakdb_sync
 
 ENTRYPOINT ["./soakdb_sync"]
+
+FROM gcr.io/distroless/cc as targeting
+
+COPY --from=build /app/target/release/targeting /targeting
+
+ENTRYPOINT ["./targeting"]
