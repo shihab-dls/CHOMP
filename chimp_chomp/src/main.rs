@@ -26,6 +26,7 @@ use chimp_protocol::{Circle, Request};
 use clap::Parser;
 use futures::future::Either;
 use futures_timer::Delay;
+use image_loading::setup_s3_client;
 use jobs::ResponseTarget;
 use postprocessing::Contents;
 use std::{collections::HashMap, time::Duration};
@@ -40,6 +41,23 @@ struct Cli {
     rabbitmq_url: Url,
     /// The RabbitMQ channel on which jobs are assigned.
     rabbitmq_channel: String,
+    /// The S3 bucket which images are to be retrieved from.
+    s3_bucket: String,
+    /// The URL of the S3 endpoint to retrieve images from.
+    #[arg(long, env)]
+    s3_endpoint_url: Option<Url>,
+    /// The ID of the access key used for S3 authorization.
+    #[arg(long, env)]
+    s3_access_key_id: Option<String>,
+    /// The secret access key used for S3 authorization.
+    #[arg(long, env)]
+    s3_secret_access_key: Option<String>,
+    /// Forces path style endpoint URIs for S3 queries.
+    #[arg(long, env)]
+    s3_force_path_style: Option<bool>,
+    /// The AWS region of the S3 bucket.
+    #[arg(long, env)]
+    s3_region: Option<String>,
     /// The duration (in milliseconds) to wait after completing all jobs before shutting down.
     #[arg(long, env)]
     timeout: Option<u64>,
@@ -77,6 +95,14 @@ async fn run(args: Cli) {
     let job_consumer = setup_job_consumer(job_channel, args.rabbitmq_channel)
         .await
         .unwrap();
+
+    let s3_client = setup_s3_client(
+        args.s3_access_key_id,
+        args.s3_secret_access_key,
+        args.s3_endpoint_url,
+        args.s3_force_path_style,
+        args.s3_region,
+    );
 
     let (response_target_tx, mut response_target_rx) =
         tokio::sync::mpsc::unbounded_channel::<(ResponseTarget, Request)>();
@@ -146,7 +172,7 @@ async fn run(args: Cli) {
 
             chimp_permit = chimp_image_tx.clone().reserve_owned() => {
                 let chimp_permit = chimp_permit.unwrap();
-                tasks.spawn(consume_job(job_consumer.clone(), input_width, input_height, chimp_permit, well_image_tx.clone(), response_target_tx.clone(), error_tx.clone()));
+                tasks.spawn(consume_job(job_consumer.clone(), s3_client.clone(), args.s3_bucket.clone(), input_width, input_height, chimp_permit, well_image_tx.clone(), response_target_tx.clone(), error_tx.clone()));
             }
 
             Some((well_image, request)) = well_image_rx.recv() =>  {

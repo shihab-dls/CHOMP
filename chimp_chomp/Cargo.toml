@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.75" }
+aws-credential-types = "0.56.0"
+aws-sdk-s3 = { version = "0.29.0" }
 chimp_protocol = { path = "../chimp_protocol" }
 clap = { workspace = true }
 derive_more = { workspace = true }

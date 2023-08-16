@@ -3,7 +3,6 @@
 #![doc=include_str!("../README.md")]
 
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use uuid::Uuid;
 
 /// A CHiMP processing request definition.
@@ -11,8 +10,8 @@ use uuid::Uuid;
 pub struct Request {
     /// A unique identifier for the request, to be returned in the [`Response`].
     pub id: Uuid,
-    /// The path of a file containing the image to perform inference on.
-    pub file: PathBuf,
+    /// The key of an object containing the image to perform inference on.
+    pub key: String,
 }
 
 impl Request {
