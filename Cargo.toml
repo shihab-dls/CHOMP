@@ -8,6 +8,7 @@ members = [
     "pin_packing",
     "soakdb_io",
     "soakdb_sync",
+    "targeting",
 ]
 resolver = "2"
 
