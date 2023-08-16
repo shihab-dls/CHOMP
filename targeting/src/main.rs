@@ -1,5 +1,6 @@
 mod graphql;
 mod migrations;
+mod tables;
 
 use async_graphql::extensions::Tracing;
 use axum::{routing::get, Router, Server};
