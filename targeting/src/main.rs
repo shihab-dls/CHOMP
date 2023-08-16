@@ -1,11 +1,15 @@
 mod graphql;
+mod migrations;
 
 use async_graphql::extensions::Tracing;
 use axum::{routing::get, Router, Server};
 use clap::Parser;
 use graphql::{root_schema_builder, RootSchema};
 use graphql_endpoints::{GraphQLHandler, GraphQLSubscription, GraphiQLHandler};
+use migrations::Migrator;
 use opa_client::OPAClient;
+use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr, TransactionError};
+use sea_orm_migration::MigratorTrait;
 use std::{
     fs::File,
     io::Write,
@@ -28,6 +32,13 @@ fn setup_router(schema: RootSchema) -> Router {
             .post(GraphQLHandler::new(schema.clone())),
         )
         .route_service(SUBSCRIPTION_ENDPOINT, GraphQLSubscription::new(schema))
+}
+
+async fn setup_database(database_url: Url) -> Result<DatabaseConnection, TransactionError<DbErr>> {
+    let connection_options = ConnectOptions::new(database_url.to_string());
+    let connection = Database::connect(connection_options).await?;
+    Migrator::up(&connection, None).await?;
+    Ok(connection)
 }
 
 async fn serve(router: Router, port: u16) {
@@ -54,6 +65,9 @@ struct ServeArgs {
     /// The port number to serve on.
     #[arg(short, long, default_value_t = 80)]
     port: u16,
+    /// The URL of a postgres database which will be used to persist service data.
+    #[arg(long, env)]
+    database_url: Url,
     /// The URL of an Open Policy Agent instance serving the required policy endpoints.
     #[arg(long, env)]
     opa_url: Url,
@@ -79,9 +93,11 @@ async fn main() {
     match args {
         Cli::Serve(args) => {
             let opa_client = OPAClient::new(args.opa_url);
+            let database = setup_database(args.database_url).await.unwrap();
             let schema = root_schema_builder()
                 .extension(Tracing)
                 .data(opa_client)
+                .data(database)
                 .finish();
             let router = setup_router(schema);
             serve(router, args.port).await;

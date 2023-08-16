@@ -3586,6 +3586,8 @@ dependencies = [
  "dotenvy",
  "graphql_endpoints",
  "opa_client",
+ "sea-orm",
+ "sea-orm-migration",
  "tokio",
  "tracing",
  "tracing-subscriber",
