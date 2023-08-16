@@ -1,11 +1,13 @@
 mod graphql;
 mod migrations;
+mod resolvers;
 mod tables;
 
 use async_graphql::extensions::Tracing;
 use axum::{routing::get, Router, Server};
 use clap::Parser;
 use clap_for_s3::{FromS3ClientArgs, S3ClientArgs};
+use derive_more::{Deref, FromStr, Into};
 use graphql::{root_schema_builder, RootSchema};
 use graphql_endpoints::{GraphQLHandler, GraphQLSubscription, GraphiQLHandler};
 use migrations::Migrator;
@@ -43,6 +45,9 @@ async fn setup_database(database_url: Url) -> Result<DatabaseConnection, Transac
     Ok(connection)
 }
 
+#[derive(Debug, Clone, Deref, FromStr, Into)]
+pub struct S3Bucket(String);
+
 async fn serve(router: Router, port: u16) {
     let socket_addr: SocketAddr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port));
     println!("GraphiQL IDE: {}", socket_addr);
@@ -72,7 +77,7 @@ struct ServeArgs {
     database_url: Url,
     /// The S3 bucket which images are to be stored in.
     #[arg(long, env)]
-    s3_bucket: String,
+    s3_bucket: S3Bucket,
     /// Configuration argument of the S3 client.
     #[command(flatten)]
     s3_client: S3ClientArgs,

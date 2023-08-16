@@ -3607,6 +3607,7 @@ dependencies = [
  "chrono",
  "clap 4.4.4",
  "clap_for_s3",
+ "derive_more",
  "dotenvy",
  "graphql_endpoints",
  "opa_client",
