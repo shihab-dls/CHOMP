@@ -3602,8 +3602,10 @@ name = "targeting"
 version = "0.1.0"
 dependencies = [
  "async-graphql",
+ "aws-sdk-s3",
  "axum",
  "clap 4.4.4",
+ "clap_for_s3",
  "dotenvy",
  "graphql_endpoints",
  "opa_client",

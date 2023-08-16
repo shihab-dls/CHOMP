@@ -4,6 +4,7 @@ mod migrations;
 use async_graphql::extensions::Tracing;
 use axum::{routing::get, Router, Server};
 use clap::Parser;
+use clap_for_s3::{FromS3ClientArgs, S3ClientArgs};
 use graphql::{root_schema_builder, RootSchema};
 use graphql_endpoints::{GraphQLHandler, GraphQLSubscription, GraphiQLHandler};
 use migrations::Migrator;
@@ -68,6 +69,12 @@ struct ServeArgs {
     /// The URL of a postgres database which will be used to persist service data.
     #[arg(long, env)]
     database_url: Url,
+    /// The S3 bucket which images are to be stored in.
+    #[arg(long, env)]
+    s3_bucket: String,
+    /// Configuration argument of the S3 client.
+    #[command(flatten)]
+    s3_client: S3ClientArgs,
     /// The URL of an Open Policy Agent instance serving the required policy endpoints.
     #[arg(long, env)]
     opa_url: Url,
@@ -94,10 +101,13 @@ async fn main() {
         Cli::Serve(args) => {
             let opa_client = OPAClient::new(args.opa_url);
             let database = setup_database(args.database_url).await.unwrap();
+            let s3_client = aws_sdk_s3::Client::from_s3_client_args(args.s3_client);
             let schema = root_schema_builder()
                 .extension(Tracing)
                 .data(opa_client)
                 .data(database)
+                .data(s3_client)
+                .data(args.s3_bucket)
                 .finish();
             let router = setup_router(schema);
             serve(router, args.port).await;
