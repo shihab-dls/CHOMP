@@ -35,3 +35,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: rabbitmq
       RABBITMQ_DEFAULT_PASS: password
+
+  s3:
+    image: localstack/localstack:2.2.0
+    volumes:
+      - ./localstack-setup.sh:/etc/localstack/init/ready.d/setup.sh
