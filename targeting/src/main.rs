@@ -5,12 +5,14 @@ use axum::{routing::get, Router, Server};
 use clap::Parser;
 use graphql::{root_schema_builder, RootSchema};
 use graphql_endpoints::{GraphQLHandler, GraphQLSubscription, GraphiQLHandler};
+use opa_client::OPAClient;
 use std::{
     fs::File,
     io::Write,
     net::{Ipv4Addr, SocketAddr, SocketAddrV4},
     path::PathBuf,
 };
+use url::Url;
 
 fn setup_router(schema: RootSchema) -> Router {
     const GRAPHQL_ENDPOINT: &str = "/";
@@ -52,6 +54,9 @@ struct ServeArgs {
     /// The port number to serve on.
     #[arg(short, long, default_value_t = 80)]
     port: u16,
+    /// The URL of an Open Policy Agent instance serving the required policy endpoints.
+    #[arg(long, env)]
+    opa_url: Url,
 }
 
 #[derive(Debug, Parser)]
@@ -73,7 +78,11 @@ async fn main() {
 
     match args {
         Cli::Serve(args) => {
-            let schema = root_schema_builder().extension(Tracing).finish();
+            let opa_client = OPAClient::new(args.opa_url);
+            let schema = root_schema_builder()
+                .extension(Tracing)
+                .data(opa_client)
+                .finish();
             let router = setup_router(schema);
             serve(router, args.port).await;
         }

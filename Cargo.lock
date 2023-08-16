@@ -3585,6 +3585,7 @@ dependencies = [
  "clap 4.3.21",
  "dotenvy",
  "graphql_endpoints",
+ "opa_client",
  "tokio",
  "tracing",
  "tracing-subscriber",
