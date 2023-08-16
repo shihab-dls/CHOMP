@@ -24,9 +24,9 @@ use crate::{
 };
 use chimp_protocol::{Circle, Request};
 use clap::Parser;
+use clap_for_s3::{FromS3ClientArgs, S3ClientArgs};
 use futures::future::Either;
 use futures_timer::Delay;
-use image_loading::S3ClientArgs;
 use jobs::ResponseTarget;
 use postprocessing::Contents;
 use std::{collections::HashMap, time::Duration};
@@ -84,7 +84,7 @@ async fn run(args: Cli) {
         .await
         .unwrap();
 
-    let s3_client = args.s3_client.into_client();
+    let s3_client = aws_sdk_s3::Client::from_s3_client_args(args.s3_client);
 
     let (response_target_tx, mut response_target_rx) =
         tokio::sync::mpsc::unbounded_channel::<(ResponseTarget, Request)>();

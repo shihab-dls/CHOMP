@@ -1,7 +1,5 @@
 use anyhow::anyhow;
-use aws_credential_types::{provider::SharedCredentialsProvider, Credentials};
-use aws_sdk_s3::{config::Region, Client};
-use clap::Parser;
+use aws_sdk_s3::Client;
 use derive_more::Deref;
 use ndarray::{Array, Ix3};
 use opencv::{
@@ -10,51 +8,6 @@ use opencv::{
     imgproc::{cvt_color, resize, COLOR_BGR2GRAY, COLOR_BGR2RGB, INTER_LINEAR},
     prelude::{Mat, MatTraitConst},
 };
-use url::Url;
-
-/// Arguments for configuring the S3 Client.
-#[derive(Debug, Parser)]
-pub struct S3ClientArgs {
-    /// The URL of the S3 endpoint to retrieve images from.
-    #[arg(long, env)]
-    endpoint_url: Option<Url>,
-    /// The ID of the access key used for S3 authorization.
-    #[arg(long, env)]
-    access_key_id: Option<String>,
-    /// The secret access key used for S3 authorization.
-    #[arg(long, env)]
-    secret_access_key: Option<String>,
-    /// Forces path style endpoint URIs for S3 queries.
-    #[arg(long, env)]
-    force_path_style: Option<bool>,
-    /// The AWS region of the S3 bucket.
-    #[arg(long, env)]
-    region: Option<String>,
-}
-
-impl S3ClientArgs {
-    /// Creates a S3 [`Client`] with the supplied credentials using the supplied endpoint configuration.
-    pub fn into_client(self) -> Client {
-        let credentials = Credentials::new(
-            self.access_key_id.unwrap_or_default(),
-            self.secret_access_key.unwrap_or_default(),
-            None,
-            None,
-            "chimp-chomp-cli",
-        );
-        let credentials_provider = SharedCredentialsProvider::new(credentials);
-        let config = aws_sdk_s3::config::Builder::new()
-            .set_credentials_provider(Some(credentials_provider))
-            .set_endpoint_url(self.endpoint_url.map(String::from))
-            .set_force_path_style(self.force_path_style)
-            .set_region(Some(Region::new(
-                self.region.unwrap_or(String::from("undefined")),
-            )))
-            .clone()
-            .build();
-        Client::from_conf(config)
-    }
-}
 
 /// A grayscale image of the well in [W, H, C] format.
 #[derive(Debug, Deref)]
