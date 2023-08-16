@@ -3579,6 +3579,17 @@ dependencies = [
 [[package]]
 name = "targeting"
 version = "0.1.0"
+dependencies = [
+ "async-graphql",
+ "axum",
+ "clap 4.3.21",
+ "dotenvy",
+ "graphql_endpoints",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+]
 
 [[package]]
 name = "tcp-stream"
