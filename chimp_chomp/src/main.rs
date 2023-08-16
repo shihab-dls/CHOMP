@@ -26,7 +26,7 @@ use chimp_protocol::{Circle, Request};
 use clap::Parser;
 use futures::future::Either;
 use futures_timer::Delay;
-use image_loading::setup_s3_client;
+use image_loading::S3ClientArgs;
 use jobs::ResponseTarget;
 use postprocessing::Contents;
 use std::{collections::HashMap, time::Duration};
@@ -43,21 +43,9 @@ struct Cli {
     rabbitmq_channel: String,
     /// The S3 bucket which images are to be retrieved from.
     s3_bucket: String,
-    /// The URL of the S3 endpoint to retrieve images from.
-    #[arg(long, env)]
-    s3_endpoint_url: Option<Url>,
-    /// The ID of the access key used for S3 authorization.
-    #[arg(long, env)]
-    s3_access_key_id: Option<String>,
-    /// The secret access key used for S3 authorization.
-    #[arg(long, env)]
-    s3_secret_access_key: Option<String>,
-    /// Forces path style endpoint URIs for S3 queries.
-    #[arg(long, env)]
-    s3_force_path_style: Option<bool>,
-    /// The AWS region of the S3 bucket.
-    #[arg(long, env)]
-    s3_region: Option<String>,
+    /// Configuration arguments of the S3 client.
+    #[command(flatten)]
+    s3_client: S3ClientArgs,
     /// The duration (in milliseconds) to wait after completing all jobs before shutting down.
     #[arg(long, env)]
     timeout: Option<u64>,
@@ -96,13 +84,7 @@ async fn run(args: Cli) {
         .await
         .unwrap();
 
-    let s3_client = setup_s3_client(
-        args.s3_access_key_id,
-        args.s3_secret_access_key,
-        args.s3_endpoint_url,
-        args.s3_force_path_style,
-        args.s3_region,
-    );
+    let s3_client = args.s3_client.into_client();
 
     let (response_target_tx, mut response_target_rx) =
         tokio::sync::mpsc::unbounded_channel::<(ResponseTarget, Request)>();
