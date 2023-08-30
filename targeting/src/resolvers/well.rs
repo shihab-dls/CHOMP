@@ -3,7 +3,9 @@ use async_graphql::{Context, Object, SimpleObject};
 use aws_sdk_s3::presigning::PresigningConfig;
 use chrono::Utc;
 use opa_client::subject_authorization;
-use sea_orm::{prelude::Uuid, DatabaseConnection, EntityTrait};
+use sea_orm::{
+    prelude::Uuid, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryTrait,
+};
 use std::time::Duration;
 
 #[derive(Debug, Clone, Default)]
@@ -11,14 +13,17 @@ pub struct WellQuery;
 
 #[Object]
 impl WellQuery {
-    async fn well(
+    async fn wells(
         &self,
         ctx: &Context<'_>,
-        id: Uuid,
-    ) -> async_graphql::Result<Option<well::Model>> {
+        id: Option<Uuid>,
+    ) -> async_graphql::Result<Vec<well::Model>> {
         subject_authorization!("xchemlab.targeting.read_well", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
-        Ok(well::Entity::find_by_id(id).one(database).await?)
+        Ok(well::Entity::find()
+            .apply_if(id, |query, id| query.filter(well::Column::Id.eq(id)))
+            .all(database)
+            .await?)
     }
 }
 
