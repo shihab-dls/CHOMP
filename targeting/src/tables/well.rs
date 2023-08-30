@@ -9,13 +9,18 @@ use sea_orm::{
 #[sea_orm(table_name = "well")]
 #[graphql(name = "Well", complex)]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
-    pub id: Uuid,
-    pub crystal_plate_id: Uuid,
-    pub crystal_plate_well: i16,
-    pub image_object_key: Uuid,
+    #[sea_orm(primary_key)]
+    pub plate_id: Uuid,
+    #[sea_orm(primary_key)]
+    pub plate_well: i16,
     pub timestamp: DateTime<Utc>,
     pub operator_id: String,
+}
+
+impl Model {
+    pub fn image_object_key(&self) -> String {
+        format!("{}/{}", self.plate_id, self.plate_well)
+    }
 }
 
 #[derive(Debug, Clone, Copy, EnumIter, DeriveRelation)]
