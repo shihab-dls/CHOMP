@@ -3601,6 +3601,7 @@ dependencies = [
 name = "targeting"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-graphql",
  "aws-sdk-s3",
  "axum",

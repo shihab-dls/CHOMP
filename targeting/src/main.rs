@@ -3,7 +3,9 @@ mod migrations;
 mod resolvers;
 mod tables;
 
+use anyhow::Context;
 use async_graphql::extensions::Tracing;
+use aws_sdk_s3::Client;
 use axum::{routing::get, Router, Server};
 use clap::Parser;
 use clap_for_s3::{FromS3ClientArgs, S3ClientArgs};
@@ -43,6 +45,20 @@ async fn setup_database(database_url: Url) -> Result<DatabaseConnection, Transac
     let connection = Database::connect(connection_options).await?;
     Migrator::up(&connection, None).await?;
     Ok(connection)
+}
+
+async fn setup_bucket(s3_client: &Client, bucket: S3Bucket) -> Result<(), anyhow::Error> {
+    match s3_client.create_bucket().bucket(bucket).send().await {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            let err = err.into_service_error();
+            if err.is_bucket_already_owned_by_you() {
+                Ok(())
+            } else {
+                Err(err).context("Failed to create bucket")
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deref, FromStr, Into)]
@@ -108,6 +124,9 @@ async fn main() {
             let opa_client = OPAClient::new(args.opa_url);
             let database = setup_database(args.database_url).await.unwrap();
             let s3_client = aws_sdk_s3::Client::from_s3_client_args(args.s3_client);
+            setup_bucket(&s3_client, args.s3_bucket.clone())
+                .await
+                .unwrap();
             let schema = root_schema_builder()
                 .extension(Tracing)
                 .data(opa_client)
