@@ -7,7 +7,7 @@ use sea_orm::{
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
 #[sea_orm(table_name = "well")]
-#[graphql(name = "Well")]
+#[graphql(name = "Well", complex)]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
