@@ -10,7 +10,7 @@ services:
     command: sleep infinity
     environment:
       OPA_URL: http://opa:8181
-      POSTGRES_URL: postgres://postgres:password@postgres
+      DATABASE_URL: postgres://postgres:password@postgres
       RABBITMQ_URL: amqp://rabbitmq:password@rabbitmq
 
   opa:
