@@ -3,29 +3,29 @@ package xchemlab.pin_packing
 import data.xchemlab
 import future.keywords.if
 
-default read_crystal = {"allow": false}
+default read_crystal = {"allowed": false}
 
-default write_crystal = {"allow": false}
+default write_crystal = {"allowed": false}
 
-default read_pin_library = {"allow": false}
+default read_pin_library = {"allowed": false}
 
-default write_pin_library = {"allow": false}
+default write_pin_library = {"allowed": false}
 
 default read_pin_mount := {"allowed": false}
 
-default write_pin_mount := {"allow": false}
+default write_pin_mount := {"allowed": false}
 
-default read_puck_library = {"allow": false}
+default read_puck_library = {"allowed": false}
 
-default write_puck_library = {"allow": false}
+default write_puck_library = {"allowed": false}
 
 default read_puck_mount := {"allowed": false}
 
-default write_puck_mount = {"allow": false}
+default write_puck_mount = {"allowed": false}
 
-default read_cane_library = {"allow": false}
+default read_cane_library = {"allowed": false}
 
-default write_cane_library = {"allow": false}
+default write_cane_library = {"allowed": false}
 
 default read_cane_mount := {"allowed": false}
 
