@@ -34,5 +34,5 @@ thiserror = { version = "1.0.47" }
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
 tracing = { version = "0.1.37" }
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
-url = { version = "2.4.0" }
+url = { version = "2.4.1" }
 uuid = { version = "1.4.1", features = ["v4"] }
