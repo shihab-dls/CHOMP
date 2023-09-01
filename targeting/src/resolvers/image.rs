@@ -2,15 +2,17 @@ use crate::{
     tables::{image, prediction},
     S3Bucket,
 };
-use async_graphql::{ComplexObject, Context, Object, Upload};
+use async_graphql::{ComplexObject, Context, Object, Subscription, Upload};
 use aws_sdk_s3::presigning::PresigningConfig;
 use chrono::Utc;
+use graphql_event_broker::EventBroker;
 use opa_client::subject_authorization;
 use sea_orm::{
     prelude::Uuid, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter,
     QueryTrait,
 };
 use std::time::Duration;
+use tokio_stream::Stream;
 
 #[ComplexObject]
 impl image::Model {
@@ -63,6 +65,8 @@ impl ImageQuery {
     }
 }
 
+static IMAGE_CREATION_BROKER: EventBroker<image::Model> = EventBroker::new();
+
 #[derive(Debug, Clone, Default)]
 pub struct ImageMutation;
 
@@ -92,8 +96,20 @@ impl ImageMutation {
             .body(image.value(ctx)?.content.into())
             .send()
             .await?;
-        Ok(image::Entity::insert(well)
+        let inserted = image::Entity::insert(well)
             .exec_with_returning(database)
-            .await?)
+            .await?;
+        IMAGE_CREATION_BROKER.publish(inserted.clone());
+        Ok(inserted)
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ImageSubscription;
+
+#[Subscription]
+impl ImageSubscription {
+    async fn image_created(&self) -> impl Stream<Item = image::Model> {
+        IMAGE_CREATION_BROKER.subscribe()
     }
 }
