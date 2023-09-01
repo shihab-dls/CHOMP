@@ -1,8 +1,9 @@
+use super::prediction;
 use async_graphql::SimpleObject;
 use chrono::{DateTime, Utc};
 use sea_orm::{
     prelude::Uuid, ActiveModelBehavior, DeriveEntityModel, DerivePrimaryKey, DeriveRelation,
-    EntityTrait, EnumIter, PrimaryKeyTrait,
+    EntityTrait, EnumIter, PrimaryKeyTrait, Related, RelationTrait,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
@@ -24,6 +25,15 @@ impl Model {
 }
 
 #[derive(Debug, Clone, Copy, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    #[sea_orm(has_many = "prediction::Entity")]
+    Predictions,
+}
+
+impl Related<prediction::Entity> for Entity {
+    fn to() -> sea_orm::RelationDef {
+        Relation::Predictions.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}
