@@ -1,4 +1,4 @@
-use crate::resolvers::well::{WellMutation, WellQuery};
+use crate::resolvers::image::{ImageMutation, ImageQuery};
 use async_graphql::{EmptySubscription, MergedObject, Schema, SchemaBuilder};
 
 pub fn root_schema_builder() -> SchemaBuilder<RootQuery, RootMutation, EmptySubscription> {
@@ -12,7 +12,7 @@ pub fn root_schema_builder() -> SchemaBuilder<RootQuery, RootMutation, EmptySubs
 pub type RootSchema = Schema<RootQuery, RootMutation, EmptySubscription>;
 
 #[derive(Debug, Clone, Default, MergedObject)]
-pub struct RootQuery(WellQuery);
+pub struct RootQuery(ImageQuery);
 
 #[derive(Debug, Clone, Default, MergedObject)]
-pub struct RootMutation(WellMutation);
+pub struct RootMutation(ImageMutation);

@@ -6,20 +6,20 @@ use sea_orm::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
-#[sea_orm(table_name = "well")]
-#[graphql(name = "Well", complex)]
+#[sea_orm(table_name = "image")]
+#[graphql(name = "Image", complex)]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub plate_id: Uuid,
     #[sea_orm(primary_key)]
-    pub plate_well: i16,
+    pub well_number: i16,
     pub timestamp: DateTime<Utc>,
     pub operator_id: String,
 }
 
 impl Model {
-    pub fn image_object_key(&self) -> String {
-        format!("{}/{}", self.plate_id, self.plate_well)
+    pub fn object_key(&self) -> String {
+        format!("{}/{}", self.plate_id, self.well_number)
     }
 }
 
