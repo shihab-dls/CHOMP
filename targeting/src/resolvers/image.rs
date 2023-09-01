@@ -1,10 +1,14 @@
-use crate::{tables::image, S3Bucket};
+use crate::{
+    tables::{image, prediction},
+    S3Bucket,
+};
 use async_graphql::{ComplexObject, Context, Object, SimpleObject};
 use aws_sdk_s3::presigning::PresigningConfig;
 use chrono::Utc;
 use opa_client::subject_authorization;
 use sea_orm::{
-    prelude::Uuid, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryTrait,
+    prelude::Uuid, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter,
+    QueryTrait,
 };
 use std::time::Duration;
 
@@ -22,6 +26,15 @@ impl image::Model {
             .uri()
             .clone()
             .to_string())
+    }
+
+    async fn predictions(
+        &self,
+        ctx: &Context<'_>,
+    ) -> async_graphql::Result<Vec<prediction::Model>> {
+        subject_authorization!("xchemlab.targeting.read_prediction", ctx).await?;
+        let database = ctx.data::<DatabaseConnection>()?;
+        Ok(self.find_related(prediction::Entity).all(database).await?)
     }
 }
 
