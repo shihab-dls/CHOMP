@@ -2646,6 +2646,7 @@ dependencies = [
  "clap 4.4.4",
  "dotenvy",
  "graphql_endpoints",
+ "graphql_types",
  "opa_client",
  "sea-orm",
  "sea-orm-migration",

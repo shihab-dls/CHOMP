@@ -4,6 +4,7 @@ use crate::tables::{
 };
 use async_graphql::{ComplexObject, Context, Object};
 use chrono::Utc;
+use graphql_types::Well;
 use opa_client::subject_authorization;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, ModelTrait};
 use uuid::Uuid;
@@ -43,8 +44,7 @@ impl CrystalMutation {
     async fn create_crystal(
         &self,
         ctx: &Context<'_>,
-        plate_id: Uuid,
-        plate_well: i16,
+        well: Well,
         crystal_state: CrystalState,
         compound_state: CompoundState,
     ) -> async_graphql::Result<crystal::Model> {
@@ -52,8 +52,8 @@ impl CrystalMutation {
         let database = ctx.data::<DatabaseConnection>()?;
         let crystal = crystal::ActiveModel {
             id: ActiveValue::Set(Uuid::new_v4()),
-            crystal_plate_id: ActiveValue::Set(plate_id),
-            crystal_plate_well: ActiveValue::Set(plate_well),
+            plate_id: ActiveValue::Set(well.plate),
+            well_number: ActiveValue::Set(well.well),
             crystal_state: ActiveValue::Set(crystal_state),
             compound_state: ActiveValue::Set(compound_state),
             timestamp: ActiveValue::Set(Utc::now()),
