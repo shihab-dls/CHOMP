@@ -2,7 +2,7 @@ use crate::{
     tables::{image, prediction},
     S3Bucket,
 };
-use async_graphql::{ComplexObject, Context, Object, SimpleObject};
+use async_graphql::{ComplexObject, Context, Object, Upload};
 use aws_sdk_s3::presigning::PresigningConfig;
 use chrono::Utc;
 use opa_client::subject_authorization;
@@ -63,12 +63,6 @@ impl ImageQuery {
     }
 }
 
-#[derive(Debug, SimpleObject)]
-pub struct ImageCreation {
-    entity: image::Model,
-    upload_url: String,
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct ImageMutation;
 
@@ -79,7 +73,8 @@ impl ImageMutation {
         ctx: &Context<'_>,
         plate_id: Uuid,
         well_number: i16,
-    ) -> async_graphql::Result<ImageCreation> {
+        image: Upload,
+    ) -> async_graphql::Result<image::Model> {
         let operator_id = subject_authorization!("xchemlab.targeting.write_image", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
         let s3_client = ctx.data::<aws_sdk_s3::Client>()?;
@@ -90,20 +85,15 @@ impl ImageMutation {
             timestamp: sea_orm::ActiveValue::Set(Utc::now()),
             operator_id: sea_orm::ActiveValue::Set(operator_id),
         };
-        let inserted = image::Entity::insert(well)
-            .exec_with_returning(database)
-            .await?;
-        let s3_presigned_url = s3_client
+        s3_client
             .put_object()
-            .key(inserted.object_key())
+            .key(format!("{plate_id}/{well_number}"))
             .bucket(bucket.clone())
-            .presigned(PresigningConfig::expires_in(Duration::from_secs(10 * 60))?)
-            .await?
-            .uri()
-            .clone();
-        Ok(ImageCreation {
-            entity: inserted,
-            upload_url: s3_presigned_url.to_string(),
-        })
+            .body(image.value(ctx)?.content.into())
+            .send()
+            .await?;
+        Ok(image::Entity::insert(well)
+            .exec_with_returning(database)
+            .await?)
     }
 }
