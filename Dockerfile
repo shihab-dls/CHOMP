@@ -13,6 +13,7 @@ COPY chimp_protocol/Cargo.toml chimp_protocol/Cargo.toml
 COPY clap_for_s3/Cargo.toml clap_for_s3/Cargo.toml
 COPY graphql_endpoints/Cargo.toml graphql_endpoints/Cargo.toml
 COPY graphql_event_broker/Cargo.toml graphql_event_broker/Cargo.toml
+COPY graphql_types/Cargo.toml graphql_types/Cargo.toml
 COPY opa_client/Cargo.toml opa_client/Cargo.toml
 COPY pin_packing/Cargo.toml pin_packing/Cargo.toml
 COPY soakdb_io/Cargo.toml soakdb_io/Cargo.toml
@@ -28,6 +29,8 @@ RUN mkdir chimp_chomp/src \
     && touch graphql_endpoints/src/lib.rs \
     && mkdir graphql_event_broker/src \
     && touch graphql_event_broker/src/lib.rs \
+    && mkdir graphql_types/src \
+    && touch graphql_types/src/lib.rs \
     && mkdir opa_client/src \
     && touch opa_client/src/lib.rs \
     && mkdir pin_packing/src/ \
@@ -47,6 +50,7 @@ RUN touch chimp_chomp/src/lib.rs \
     && touch clap_for_s3/src/lib.rs \
     && touch graphql_endpoints/src/lib.rs \
     && touch graphql_event_broker/src/lib.rs \
+    && touch graphql_types/src/lib.rs \
     && touch opa_client/src/lib.rs \
     && touch pin_packing/src/main.rs \
     && touch soakdb_io/src/lib.rs \

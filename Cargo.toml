@@ -4,6 +4,7 @@ members = [
     "chimp_protocol",
     "graphql_endpoints",
     "graphql_event_broker",
+    "graphql_types",
     "opa_client",
     "pin_packing",
     "clap_for_s3",
