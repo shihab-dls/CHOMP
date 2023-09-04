@@ -6,6 +6,7 @@ use async_graphql::{ComplexObject, Context, Object, Subscription, Upload};
 use aws_sdk_s3::presigning::PresigningConfig;
 use chrono::Utc;
 use graphql_event_broker::EventBroker;
+use graphql_types::Well;
 use opa_client::subject_authorization;
 use sea_orm::{
     prelude::Uuid, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter,
@@ -75,31 +76,34 @@ impl ImageMutation {
     async fn create_image(
         &self,
         ctx: &Context<'_>,
-        plate_id: Uuid,
-        well_number: i16,
+        well: Well,
         image: Upload,
     ) -> async_graphql::Result<image::Model> {
         let operator_id = subject_authorization!("xchemlab.targeting.write_image", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
         let s3_client = ctx.data::<aws_sdk_s3::Client>()?;
         let bucket = ctx.data::<S3Bucket>()?;
-        let well = image::ActiveModel {
-            plate_id: sea_orm::ActiveValue::Set(plate_id),
-            well_number: sea_orm::ActiveValue::Set(well_number),
-            timestamp: sea_orm::ActiveValue::Set(Utc::now()),
-            operator_id: sea_orm::ActiveValue::Set(operator_id),
-        };
+
         s3_client
             .put_object()
-            .key(format!("{plate_id}/{well_number}"))
+            .key(well.to_string())
             .bucket(bucket.clone())
             .body(image.value(ctx)?.content.into())
             .send()
             .await?;
-        let inserted = image::Entity::insert(well)
+
+        let model = image::ActiveModel {
+            plate_id: sea_orm::ActiveValue::Set(well.plate),
+            well_number: sea_orm::ActiveValue::Set(well.well),
+            timestamp: sea_orm::ActiveValue::Set(Utc::now()),
+            operator_id: sea_orm::ActiveValue::Set(operator_id),
+        };
+        let inserted = image::Entity::insert(model)
             .exec_with_returning(database)
             .await?;
+
         IMAGE_CREATION_BROKER.publish(inserted.clone());
+
         Ok(inserted)
     }
 }
