@@ -1,5 +1,6 @@
-#![doc = include_str!("../../README.md")]
 #![forbid(unsafe_code)]
+#![doc = include_str!("../README.md")]
+
 mod graphql;
 mod models;
 mod resolvers;
