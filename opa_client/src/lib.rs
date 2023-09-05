@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
-#![doc = include_str!("../../README.md")]
+#![doc = include_str!("../README.md")]
 
 #[cfg(feature = "graphql")]
 /// Utilities for working with [`async_graphql`]
