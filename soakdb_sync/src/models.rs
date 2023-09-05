@@ -1,6 +1,6 @@
 use async_graphql::{Enum, ErrorExtensions, InputObject, SimpleObject};
 use chrono::{DateTime, Utc};
-use soakdb_io::models::Fallible;
+use soakdb_io::Fallible;
 use std::any::type_name;
 
 #[derive(Debug, Clone, SimpleObject)]
@@ -15,7 +15,7 @@ pub struct Metadata {
     pub protein: String,
 }
 
-impl From<Metadata> for soakdb_io::models::Metadata {
+impl From<Metadata> for soakdb_io::Metadata {
     fn from(value: Metadata) -> Self {
         Self {
             name: value.name,
@@ -30,8 +30,8 @@ pub struct MetadataReadback {
     pub protein: Option<String>,
 }
 
-impl From<soakdb_io::models::MetadataReadback> for MetadataReadback {
-    fn from(value: soakdb_io::models::MetadataReadback) -> Self {
+impl From<soakdb_io::MetadataReadback> for MetadataReadback {
+    fn from(value: soakdb_io::MetadataReadback) -> Self {
         Self {
             name: value.name,
             protein: value.protein,
@@ -59,7 +59,7 @@ pub struct Visit {
     visit_number: u32,
 }
 
-impl From<Visit> for soakdb_io::models::Visit {
+impl From<Visit> for soakdb_io::Visit {
     fn from(value: Visit) -> Self {
         Self {
             proposal_number: value.proposal_number,
@@ -79,7 +79,7 @@ pub struct Crystal {
     pub protein_name: String,
 }
 
-impl From<Crystal> for soakdb_io::models::Crystal {
+impl From<Crystal> for soakdb_io::Crystal {
     fn from(value: Crystal) -> Self {
         Self {
             plate: value.plate,
@@ -98,7 +98,7 @@ pub struct Position {
     pub y: f64,
 }
 
-impl From<Position> for soakdb_io::models::Position {
+impl From<Position> for soakdb_io::Position {
     fn from(value: Position) -> Self {
         Self {
             x: value.x,
@@ -122,7 +122,7 @@ pub struct Solvent {
     pub timestamp: DateTime<Utc>,
 }
 
-impl From<Solvent> for soakdb_io::models::Solvent {
+impl From<Solvent> for soakdb_io::Solvent {
     fn from(value: Solvent) -> Self {
         Self {
             plate: value.plate,
@@ -150,7 +150,7 @@ pub struct Cryo {
     pub timestamp: DateTime<Utc>,
 }
 
-impl From<Cryo> for soakdb_io::models::Cryo {
+impl From<Cryo> for soakdb_io::Cryo {
     fn from(value: Cryo) -> Self {
         Self {
             well: value.well,
@@ -174,7 +174,7 @@ pub struct Mount {
     pub result: MountingResult,
 }
 
-impl From<Mount> for soakdb_io::models::Mount {
+impl From<Mount> for soakdb_io::Mount {
     fn from(value: Mount) -> Self {
         Self {
             puck_barcode: value.puck_barcode,
@@ -195,7 +195,7 @@ pub enum Status {
     Pending,
 }
 
-impl From<Status> for soakdb_io::models::Status {
+impl From<Status> for soakdb_io::Status {
     fn from(value: Status) -> Self {
         match value {
             Status::Success => Self::Success,
@@ -205,12 +205,12 @@ impl From<Status> for soakdb_io::models::Status {
     }
 }
 
-impl From<soakdb_io::models::Status> for Status {
-    fn from(value: soakdb_io::models::Status) -> Self {
+impl From<soakdb_io::Status> for Status {
+    fn from(value: soakdb_io::Status) -> Self {
         match value {
-            soakdb_io::models::Status::Success => Self::Success,
-            soakdb_io::models::Status::Failure => Self::Failure,
-            soakdb_io::models::Status::Pending => Self::Pending,
+            soakdb_io::Status::Success => Self::Success,
+            soakdb_io::Status::Failure => Self::Failure,
+            soakdb_io::Status::Pending => Self::Pending,
         }
     }
 }
@@ -222,7 +222,7 @@ pub struct MountingResult {
     pub comment_2: String,
 }
 
-impl From<MountingResult> for soakdb_io::models::MountingResult {
+impl From<MountingResult> for soakdb_io::MountingResult {
     fn from(value: MountingResult) -> Self {
         Self {
             success: value.success,
@@ -238,7 +238,7 @@ pub enum ISPyBExport {
     Pending,
 }
 
-impl From<ISPyBExport> for soakdb_io::models::ISPyBExport {
+impl From<ISPyBExport> for soakdb_io::ISPyBExport {
     fn from(value: ISPyBExport) -> Self {
         match value {
             ISPyBExport::Exported => Self::Exported,
@@ -247,16 +247,16 @@ impl From<ISPyBExport> for soakdb_io::models::ISPyBExport {
     }
 }
 
-impl From<soakdb_io::models::ISPyBExport> for ISPyBExport {
-    fn from(value: soakdb_io::models::ISPyBExport) -> Self {
+impl From<soakdb_io::ISPyBExport> for ISPyBExport {
+    fn from(value: soakdb_io::ISPyBExport) -> Self {
         match value {
-            soakdb_io::models::ISPyBExport::Exported => Self::Exported,
-            soakdb_io::models::ISPyBExport::Pending => Self::Pending,
+            soakdb_io::ISPyBExport::Exported => Self::Exported,
+            soakdb_io::ISPyBExport::Pending => Self::Pending,
         }
     }
 }
 
-impl From<Well> for soakdb_io::models::Well {
+impl From<Well> for soakdb_io::Well {
     fn from(value: Well) -> Self {
         Self {
             lab_visit: value.lab_visit.into(),
@@ -298,8 +298,8 @@ pub struct WellReadback {
     pub comments: async_graphql::Result<Option<String>>,
 }
 
-impl From<soakdb_io::models::WellReadback> for WellReadback {
-    fn from(value: soakdb_io::models::WellReadback) -> Self {
+impl From<soakdb_io::WellReadback> for WellReadback {
+    fn from(value: soakdb_io::WellReadback) -> Self {
         Self {
             id: value.id,
             lab_visit_name: into_parsing_error(value.lab_visit_name.map_opt(VisitReadback::from)),
@@ -324,8 +324,8 @@ pub struct VisitReadback {
     visit_number: u32,
 }
 
-impl From<soakdb_io::models::Visit> for VisitReadback {
-    fn from(value: soakdb_io::models::Visit) -> Self {
+impl From<soakdb_io::Visit> for VisitReadback {
+    fn from(value: soakdb_io::Visit) -> Self {
         Self {
             proposal_type: value.proposal_type,
             proposal_number: value.proposal_number,
@@ -344,8 +344,8 @@ pub struct CrystalReadback {
     pub protein_name: async_graphql::Result<Option<String>>,
 }
 
-impl From<soakdb_io::models::CrystalReadback> for CrystalReadback {
-    fn from(value: soakdb_io::models::CrystalReadback) -> Self {
+impl From<soakdb_io::CrystalReadback> for CrystalReadback {
+    fn from(value: soakdb_io::CrystalReadback) -> Self {
         Self {
             plate: into_parsing_error(value.plate),
             well: into_parsing_error(value.well),
@@ -363,8 +363,8 @@ pub struct PositionReadback {
     pub y: f64,
 }
 
-impl From<soakdb_io::models::Position> for PositionReadback {
-    fn from(value: soakdb_io::models::Position) -> Self {
+impl From<soakdb_io::Position> for PositionReadback {
+    fn from(value: soakdb_io::Position) -> Self {
         Self {
             x: value.x,
             y: value.y,
@@ -387,8 +387,8 @@ pub struct SolventReadback {
     pub timestamp: async_graphql::Result<Option<DateTime<Utc>>>,
 }
 
-impl From<soakdb_io::models::SolventReadback> for SolventReadback {
-    fn from(value: soakdb_io::models::SolventReadback) -> Self {
+impl From<soakdb_io::SolventReadback> for SolventReadback {
+    fn from(value: soakdb_io::SolventReadback) -> Self {
         Self {
             plate: into_parsing_error(value.plate),
             well: into_parsing_error(value.well),
@@ -415,8 +415,8 @@ pub struct CryoReadback {
     pub timestamp: async_graphql::Result<Option<DateTime<Utc>>>,
 }
 
-impl From<soakdb_io::models::CryoReadback> for CryoReadback {
-    fn from(value: soakdb_io::models::CryoReadback) -> Self {
+impl From<soakdb_io::CryoReadback> for CryoReadback {
+    fn from(value: soakdb_io::CryoReadback) -> Self {
         Self {
             well: into_parsing_error(value.well),
             stock_fraction: into_parsing_error(value.stock_fraction),
@@ -439,8 +439,8 @@ pub struct MountReadback {
     pub result: async_graphql::Result<Option<MountingResultReadback>>,
 }
 
-impl From<soakdb_io::models::MountReadback> for MountReadback {
-    fn from(value: soakdb_io::models::MountReadback) -> Self {
+impl From<soakdb_io::MountReadback> for MountReadback {
+    fn from(value: soakdb_io::MountReadback) -> Self {
         Self {
             puck_barcode: into_parsing_error(value.puck_barcode),
             puck_well: into_parsing_error(value.puck_well),
@@ -460,8 +460,8 @@ pub struct MountingResultReadback {
     pub comment_2: String,
 }
 
-impl From<soakdb_io::models::MountingResult> for MountingResultReadback {
-    fn from(value: soakdb_io::models::MountingResult) -> Self {
+impl From<soakdb_io::MountingResult> for MountingResultReadback {
+    fn from(value: soakdb_io::MountingResult) -> Self {
         Self {
             success: value.success,
             comment_1: value.comment_1,

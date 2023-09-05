@@ -2,10 +2,14 @@
 #![doc = include_str!("../README.md")]
 
 pub(crate) mod datatypes;
-pub mod models;
+mod models;
 pub(crate) mod tables;
 
-use models::{Metadata, MetadataReadback, Well, WellReadback};
+pub use models::{
+    Cryo, CryoReadback, Crystal, CrystalReadback, Fallible, ISPyBExport, Metadata,
+    MetadataReadback, Mount, MountReadback, MountingResult, Position, Solvent, SolventReadback,
+    Status, Visit, Well, WellReadback,
+};
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, EntityTrait, Schema};
 use std::path::Path;
 

@@ -2,7 +2,7 @@ use crate::models::SoakDBReadback;
 use async_graphql::{Context, Object};
 use itertools::Itertools;
 use opa_client::subject_authorization;
-use soakdb_io::{models::MetadataReadback, SoakDB};
+use soakdb_io::{MetadataReadback, SoakDB};
 
 #[derive(Debug, Clone, Default)]
 pub struct ImportQuery;
