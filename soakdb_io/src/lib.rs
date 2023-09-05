@@ -1,5 +1,6 @@
-#![doc = include_str!("../../README.md")]
 #![forbid(unsafe_code)]
+#![doc = include_str!("../README.md")]
+
 pub(crate) mod datatypes;
 pub mod models;
 pub(crate) mod tables;
