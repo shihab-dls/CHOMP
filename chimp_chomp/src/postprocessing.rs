@@ -73,7 +73,7 @@ fn optimal_insert_position(insertion_mask: Mat) -> Result<Point, anyhow::Error> 
     })
 }
 
-/// Converts an [`ArrayView<f32, Ix1`] of length 4 into a [`BBox`] according to the layout of a MaskRCNN box prediction.
+/// Converts an [`ArrayView<f32, Ix1>`] of length 4 into a [`BBox`] according to the layout of a MaskRCNN box prediction.
 fn bbox_from_array(bbox: ArrayView<f32, Ix1>) -> BBox {
     BBox {
         left: bbox[0],

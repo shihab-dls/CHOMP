@@ -32,7 +32,7 @@ impl Request {
 pub enum Response {
     /// The image was processed successfully, producing the contained predictions.
     Success {
-        /// The unique identifier of the requesting [`Job`].
+        /// The unique identifier of the [`Request`].
         job_id: Uuid,
         /// The proposed point for solvent insertion.
         insertion_point: Point,
@@ -45,7 +45,7 @@ pub enum Response {
     },
     /// Image processing failed, with the contained error.
     Failure {
-        /// The unique identifier of the requesting [`Job`].
+        /// The unique identifier of the [`Request`].
         job_id: Uuid,
         /// A description of the error encountered.
         error: String,
@@ -53,12 +53,12 @@ pub enum Response {
 }
 
 impl Response {
-    /// Deserialize an instance [`Predictions`] from bytes of JSON text.
+    /// Deserialize an instance [`Response`] from bytes of JSON text.
     pub fn from_slice(v: &[u8]) -> Result<Self, serde_json::Error> {
         serde_json::from_slice(v)
     }
 
-    /// Serialize the [`Predictions`] as a JSON byte vector
+    /// Serialize the [`Response`] as a JSON byte vector
     pub fn to_vec(&self) -> Result<Vec<u8>, serde_json::Error> {
         serde_json::to_vec(&self)
     }

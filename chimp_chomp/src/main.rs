@@ -7,7 +7,7 @@
 mod image_loading;
 /// Neural Netowrk inference with [`ort`].
 mod inference;
-/// RabbitMQ [`Request`] queue consumption and [`Response`] publishing.
+/// RabbitMQ [`chimp_protocol::Request`] queue consumption and [`chimp_protocol::Response`] publishing.
 mod jobs;
 /// Neural Network inference postprocessing with optimal insertion point finding.
 mod postprocessing;

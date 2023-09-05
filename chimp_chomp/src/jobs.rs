@@ -122,7 +122,7 @@ pub async fn consume_job(
     };
 }
 
-/// Takes the results of postprocessing and well centering and publishes a [`Response::Success`] to the RabbitMQ [`Channel`] provided by the [`Job`].
+/// Takes the results of postprocessing and well centering and publishes a [`Response::Success`] to the RabbitMQ [`Channel`] provided by the [`ResponseTarget`].
 pub async fn produce_response(
     request: Request,
     response_target: ResponseTarget,
@@ -158,7 +158,7 @@ pub async fn produce_response(
         .unwrap();
 }
 
-/// Takes an error generated in one of the prior stages and publishes a [`Response::Failure`] to the RabbitMQ [`Channel`] provided by the [`Job`].
+/// Takes an error generated in one of the prior stages and publishes a [`Response::Failure`] to the RabbitMQ [`Channel`] provided by the [`ResponseTarget`].
 pub async fn produce_error(
     request: Request,
     response_target: ResponseTarget,

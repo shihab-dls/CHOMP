@@ -124,7 +124,7 @@ pub enum SubjectDecision {
         subject: String,
     },
     /// A decision has been made to forbid the operation.
-    Forbiden {
+    Forbidden {
         /// A sentinal representing that the decision has been made to forbid the operation.
         allowed: Allowed<false>,
     },
@@ -161,7 +161,7 @@ impl SubjectDecision {
                 allowed: _,
                 subject,
             } => Ok(subject),
-            SubjectDecision::Forbiden { allowed: _ } => Err(Unauhtorized),
+            SubjectDecision::Forbidden { allowed: _ } => Err(Unauhtorized),
         }
     }
 }
