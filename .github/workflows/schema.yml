@@ -37,7 +37,7 @@ jobs:
             --path ${{ matrix.service }}.graphql
 
       - name: Upload Schema Artifact
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: ${{ matrix.service }}.graphql
           path: ${{ matrix.service }}.graphql
