@@ -130,6 +130,10 @@ prometheus:
       tls:
         - hosts:
             - xchemlab-alertmanager.diamond.ac.uk
+      annotations:
+        nginx.ingress.kuberentes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/auth-url: https://xchemlab-alertmanager.diamond.ac.uk/oauth2/auth
+        nginx.ingress.kubernetes.io/auth-signin: https://xchemlab-alertmanager.diamond.ac.uk/oauth2/start?rd=$escaped_request_uri
     extraArgs:
       web.external-url: https://xchemlab-alertmanager.diamond.ac.uk
     configmapReload:
@@ -373,3 +377,41 @@ serviceAccount:
 podAnnotations: {}
 
 podSecurityContext: {}
+
+oauth2-proxy-thanos:
+  enabled: true
+  ingress:
+    enabled: true
+    hostname: xchemlab-thanos.diamond.ac.uk
+    path: /oauth2
+  redis:
+    enabled: false
+  configuration:
+    existingSecret: oauth-provider
+    oidcIssuerUrl: https://authbeta.diamond.ac.uk/cas/oidc
+  extraEnvVars:
+    - name: OAUTH2_PROXY_PROVIDER
+      value: oidc
+    - name: OAUTH2_PROXY_EMAIL_DOMAIN
+      value: "*"
+    - name: OAUTH2_PROXY_OIDC_EMAIL_CLAIM
+      value: id
+
+oauth2-proxy-alertmanager:
+  enabled: true
+  ingress:
+    enabled: true
+    hostname: xchemlab-alertmanager.diamond.ac.uk
+    path: /oauth2
+  redis:
+    enabled: false
+  configuration:
+    existingSecret: oauth-provider
+    oidcIssuerUrl: https://authbeta.diamond.ac.uk/cas/oidc
+  extraEnvVars:
+    - name: OAUTH2_PROXY_PROVIDER
+      value: oidc
+    - name: OAUTH2_PROXY_EMAIL_DOMAIN
+      value: "*"
+    - name: OAUTH2_PROXY_OIDC_EMAIL_CLAIM
+      value: id

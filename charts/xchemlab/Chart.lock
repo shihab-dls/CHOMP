@@ -23,5 +23,11 @@ dependencies:
 - name: rabbitmq
   repository: oci://docker.io/bitnamicharts
   version: 12.0.7
-digest: sha256:4ba713c858795f9002912462f8ea5de75dc5c81e75f1e0c1dc2f53ce1172fd78
-generated: "2023-09-19T11:35:50.582092593+01:00"
+- name: oauth2-proxy
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 3.7.4
+- name: oauth2-proxy
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 3.7.4
+digest: sha256:a7784a53d07c78b969967922ca8cfbd9941fdff88adfa54a8a8216c4eeb6ac6e
+generated: "2023-09-13T13:44:28.878446331+01:00"
