@@ -136,8 +136,23 @@ prometheus:
         nginx.ingress.kubernetes.io/auth-signin: https://xchemlab-alertmanager.diamond.ac.uk/oauth2/start?rd=$escaped_request_uri
     extraArgs:
       web.external-url: https://xchemlab-alertmanager.diamond.ac.uk
+    resources:
+      limits:
+        cpu: 250m
+        memory: 2Gi
     configmapReload:
       enabled: true
+      resources:
+        limits:
+          cpu: 50m
+          memory: 400Mi
+
+  configmapReload:
+    prometheus:
+      resources:
+        limits:
+          cpu: 50m
+          memory: 400Mi
 
   server:
     remoteWrite:
