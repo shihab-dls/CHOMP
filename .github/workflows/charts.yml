@@ -1,0 +1,36 @@
+name: Helm
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    # Deduplicate jobs from pull requests and branch pushes within the same repo.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3.5
+
+      - name: Setup chart-testing
+        uses: helm/chart-testing-action@v2.4.0
+
+      - name: Install chart dependencies
+        run: |
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo add keda https://kedacore.github.io/charts
+          helm repo add opa https://open-policy-agent.github.io/kube-mgmt/charts
+          helm repo add prometheus https://prometheus-community.github.io/helm-charts
+
+      - name: Lint
+        run: >
+          ct
+          lint
+          --target-branch=${{ github.event.repository.default_branch }}
+          --validate-maintainers=false
