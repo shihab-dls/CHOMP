@@ -14,8 +14,11 @@ dependencies:
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts
   version: 23.3.0
+- name: thanos
+  repository: oci://docker.io/bitnamicharts
+  version: 12.11.0
 - name: rabbitmq
   repository: oci://docker.io/bitnamicharts
   version: 12.0.7
-digest: sha256:e010f36611080d1817a64707cffc62f851aae33941bb4fe992c09d8666edb9d3
-generated: "2023-09-19T11:29:31.743719203+01:00"
+digest: sha256:bc4618740ab0b2f8436b1e290f55c1b3eb8c120fd2997d2df168f0020ce80a82
+generated: "2023-09-19T11:34:54.406006742+01:00"

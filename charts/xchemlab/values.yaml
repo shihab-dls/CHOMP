@@ -77,6 +77,8 @@ prometheus:
       enabled: true
 
   server:
+    remoteWrite:
+      - url: http://{{ .Release.Name }}-thanos-receive.xchemlab.svc.cluster.local:19291/api/v1/receive
     affinity:
       podAntiAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -223,6 +225,73 @@ prometheus:
             - source_labels: [__meta_kubernetes_pod_phase]
               regex: Pending|Succeeded|Failed|Completed
               action: drop
+
+thanos:
+  enabled: true
+
+  existingServiceAccount: default-full-access-mounted
+
+  existingObjstoreSecret: prometheus-s3-secret
+
+  query:
+    enabled: true
+    ingress:
+      enabled: false
+    resources:
+      limits:
+        cpu: 250m
+        memory: 2Gi
+
+  queryFrontend:
+    ingress:
+      enabled: true
+      hostname: xchemlab-thanos.diamond.ac.uk
+      path: /
+      tls: true
+      annotations:
+        nginx.ingress.kuberentes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/auth-url: https://xchemlab-thanos.diamond.ac.uk/oauth2/auth
+        nginx.ingress.kubernetes.io/auth-signin: https://xchemlab-thanos.diamond.ac.uk/oauth2/start?rd=$escaped_request_uri
+    resources:
+      limits:
+        cpu: 250m
+        memory: 2Gi
+
+  storegateway:
+    enabled: true
+    persistence:
+      enabled: false
+    resources:
+      limits:
+        cpu: 250m
+        memory: 2Gi
+
+  receive:
+    enabled: true
+    tsdbRetention: 1d
+    persistence:
+      enabled: false
+    service:
+      type: LoadBalancer
+    ingress:
+      enabled: false
+    resources:
+      limits:
+        cpu: 250m
+        memory: 2Gi
+
+  compactor:
+    enabled: true
+    retentionResolutionRaw: 90d
+    retentionResolution5m: 90d
+    retentionResolution1h: 90d
+    consistencyDelay: 30m
+    persistence:
+      enabled: false
+    resources:
+      limits:
+        cpu: 250m
+        memory: 2Gi
 
 rabbitmq:
   enabled: true
