@@ -15,13 +15,23 @@ pub struct DateTimeAsEuroText(DateTime<Utc>);
 
 static DATE_TIME_FORMAT: &str = "%d/%m/%Y %H:%M:%S";
 
+#[derive(Debug, thiserror::Error)]
+pub enum DateTimeAsEuroTextError {
+    #[error("Could not parse date time string")]
+    ParseError(#[from] chrono::ParseError),
+    #[error("Parsed time is invalid")]
+    TimeZoneError,
+}
+
 impl FromStr for DateTimeAsEuroText {
-    type Err = chrono::ParseError;
+    type Err = DateTimeAsEuroTextError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(
-            London
-                .datetime_from_str(s, DATE_TIME_FORMAT)?
+            NaiveDateTime::parse_from_str(s, DATE_TIME_FORMAT)?
+                .and_local_timezone(London)
+                .single()
+                .ok_or(DateTimeAsEuroTextError::TimeZoneError)?
                 .with_timezone(&Utc),
         ))
     }
