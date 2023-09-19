@@ -16,7 +16,7 @@ dependencies:
   version: 8.3.0
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts
-  version: 23.3.0
+  version: 25.0.0
 - name: thanos
   repository: oci://docker.io/bitnamicharts
   version: 12.11.0
@@ -29,5 +29,5 @@ dependencies:
 - name: oauth2-proxy
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 3.7.4
-digest: sha256:a7784a53d07c78b969967922ca8cfbd9941fdff88adfa54a8a8216c4eeb6ac6e
-generated: "2023-09-13T13:44:28.878446331+01:00"
+digest: sha256:24e8fef3d198766bf837c3f3c421c7e35642467d3868fb703976cebf1a3c2a3e
+generated: "2023-09-19T09:41:25.741976127+01:00"
