@@ -29,6 +29,10 @@ dependencies:
     repository: https://open-policy-agent.github.io/kube-mgmt/charts
     version: 8.3.0
     condition: opa-kube-mgmt.enabled
+  - name: prometheus
+    repository: https://prometheus-community.github.io/helm-charts
+    version: 23.3.0
+    condition: prometheus.enabled
   - name: rabbitmq
     repository: oci://docker.io/bitnamicharts
     version: 12.0.7
