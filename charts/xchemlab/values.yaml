@@ -30,6 +30,59 @@ pin-packing:
   opa:
     serviceSuffix: opa-kube-mgmt
 
+grafana:
+  enabled: true
+
+  rbac:
+    create: false
+
+  serviceAccount:
+    create: false
+    name: default-full-access-mounted
+
+  ingress:
+    enabled: true
+    hosts:
+      - xchemlab-grafana.diamond.ac.uk
+    path: /
+    tls:
+      - hosts:
+          - xchemlab-grafana.diamond.ac.uk
+
+  grafana.ini:
+    server:
+      domain: xchemlab-grafana.diamond.ac.uk
+      root_url: https://xchemlab-grafana.diamond.ac.uk
+      serve_from_sub_path: true
+    auth.generic_oauth:
+      enabled: true
+      auto_login: true
+      client_id: $__file{/etc/secrets/oauth_provider/client-id}
+      client_secret: $__file{/etc/secrets/oauth_provider/client-secret}
+      scopes: openid profile email offline_access
+      auth_url: https://authbeta.diamond.ac.uk/cas/oidc/authorize
+      token_url: https://authbeta.diamond.ac.uk/cas/oidc/accessToken
+      api_url: https://authbeta.diamond.ac.uk/cas/oidc/profile
+      use_pkce: true
+      use_refresh_token: true
+      email_attribute_path: id
+
+  extraSecretMounts:
+    - name: oauth-provider
+      secretName: oauth-provider
+      defaultMode: 0440
+      mountPath: /etc/secrets/oauth_provider
+      readOnly: true
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: https://xchemlab-thanos.diamond.ac.uk
+          isDefault: true
+
 keda:
   enabled: false
 

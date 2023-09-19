@@ -21,6 +21,10 @@ dependencies:
   - name: pin-packing
     version: 0.0.1
     condition: pin-packing.enabled
+  - name: grafana
+    repository: https://grafana.github.io/helm-charts
+    version: 6.58.8
+    condition: grafana.enabled
   - name: keda
     repository: https://kedacore.github.io/charts
     version: 2.10.2
