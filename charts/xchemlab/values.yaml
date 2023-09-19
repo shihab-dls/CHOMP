@@ -354,6 +354,12 @@ thanos:
 
 rabbitmq:
   enabled: true
+  metrics:
+    enabled: true
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: /metrics
+      prometheus.io/port: "9419"
   persistence:
     enabled: false
   serviceBindings:
