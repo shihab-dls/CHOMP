@@ -9,6 +9,7 @@ members = [
     "soakdb_io",
     "soakdb_sync",
 ]
+resolver = "2"
 
 [workspace.dependencies]
 async-graphql = { version = "5.0.10", default-features = false, features = [
