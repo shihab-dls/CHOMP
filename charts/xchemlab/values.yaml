@@ -88,8 +88,14 @@ keda:
 
 opa-kube-mgmt:
   enabled: true
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8182"
   mgmt:
     enabled: false
+  prometheus:
+    enabled: true
   serviceAccount:
     create: false
   rbac:
