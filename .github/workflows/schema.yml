@@ -13,6 +13,7 @@ jobs:
         service:
           - soakdb_sync
           - pin_packing
+          - targeting
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
