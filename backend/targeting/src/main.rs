@@ -7,7 +7,7 @@ use anyhow::Context;
 use async_graphql::extensions::Tracing;
 use aws_sdk_s3::Client;
 use axum::{routing::get, Router, Server};
-use clap::Parser;
+use clap::{ArgAction::SetTrue, Parser};
 use clap_for_s3::{FromS3ClientArgs, S3ClientArgs};
 use derive_more::{Deref, FromStr, Into};
 use graphql::{root_schema_builder, RootSchema};
@@ -94,6 +94,9 @@ struct ServeArgs {
     /// The S3 bucket which images are to be stored in.
     #[arg(long, env)]
     s3_bucket: S3Bucket,
+    /// Skip creation of the S3 bucket.
+    #[arg(long, env, action = SetTrue)]
+    s3_create_bucket: bool,
     /// Configuration argument of the S3 client.
     #[command(flatten)]
     s3_client: S3ClientArgs,
@@ -124,9 +127,11 @@ async fn main() {
             let opa_client = OPAClient::new(args.opa_url);
             let database = setup_database(args.database_url).await.unwrap();
             let s3_client = aws_sdk_s3::Client::from_s3_client_args(args.s3_client);
-            setup_bucket(&s3_client, args.s3_bucket.clone())
-                .await
-                .unwrap();
+            if args.s3_create_bucket {
+                setup_bucket(&s3_client, args.s3_bucket.clone())
+                    .await
+                    .unwrap();
+            }
             let schema = root_schema_builder()
                 .extension(Tracing)
                 .data(opa_client)
