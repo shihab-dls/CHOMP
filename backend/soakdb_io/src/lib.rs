@@ -122,7 +122,7 @@ mod tests {
 
     pub fn connect_test_databases() -> impl Iterator<Item = impl Future<Output = (SoakDB, PathBuf)>>
     {
-        let mut paths = std::fs::read_dir("../test_data")
+        let mut paths = std::fs::read_dir("test_data/")
             .unwrap()
             .map(|entry| entry.unwrap().path())
             .collect::<Vec<_>>();

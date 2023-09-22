@@ -1,20 +1,14 @@
 # Development Environment
 .devcontainer
 .dockerignore
-.git
-.github
 .gitignore
-.pre-commit-config.yaml
 Dockerfile
 
 # Rust
-/target
-
-# Helm
-/charts
+target/
 
 # Test Data
-/test_data
+soakdb_io/test_data/
 
 # Environment Variables
 .env

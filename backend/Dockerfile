@@ -71,22 +71,22 @@ COPY chimp_chomp/chimp.onnx /chimp.onnx
 COPY --from=build /chimp_chomp_libraries/* /lib
 COPY --from=build /app/target/release/chimp_chomp /chimp_chomp
 
-ENTRYPOINT ["./chimp_chomp"]
+ENTRYPOINT ["/chimp_chomp"]
 
 FROM gcr.io/distroless/cc as pin_packing
 
 COPY --from=build /app/target/release/pin_packing /pin_packing
 
-ENTRYPOINT ["./pin_packing"]
+ENTRYPOINT ["/pin_packing"]
 
 FROM gcr.io/distroless/cc as soakdb_sync
 
 COPY --from=build /app/target/release/soakdb_sync /soakdb_sync
 
-ENTRYPOINT ["./soakdb_sync"]
+ENTRYPOINT ["/soakdb_sync"]
 
 FROM gcr.io/distroless/cc as targeting
 
 COPY --from=build /app/target/release/targeting /targeting
 
-ENTRYPOINT ["./targeting"]
+ENTRYPOINT ["/targeting"]

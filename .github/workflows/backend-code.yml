@@ -1,4 +1,4 @@
-name: Code
+name: Backend Code
 
 on:
   push:
@@ -34,18 +34,20 @@ jobs:
           args: >
             --all
             --check
+            --manifest-path backend/Cargo.toml
 
       - name: Lint with Clippy
         uses: actions-rs/cargo@v1.0.3
         with:
           command: clippy
           args: >
+            --manifest-path backend/Cargo.toml
             --workspace
             --no-deps
             --all-targets
             --all-features
             --
-            --deny warnings
+            --deny warnings  
 
   test:
     # Deduplicate jobs from pull requests and branch pushes within the same repo.
@@ -70,7 +72,7 @@ jobs:
         uses: Swatinem/rust-cache@v2.7.0
 
       - name: Create test_data directory
-        run: mkdir test_data
+        run: mkdir backend/soakdb_io/test_data/
 
       - name: Test
         uses: actions-rs/cargo@v1.0.3
@@ -79,3 +81,5 @@ jobs:
           args: >
             --all-targets
             --all-features
+            --manifest-path backend/Cargo.toml
+            

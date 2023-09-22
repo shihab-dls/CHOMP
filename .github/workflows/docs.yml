@@ -8,7 +8,7 @@ jobs:
   build:
     # Deduplicate jobs from pull requests and branch pushes within the same repo.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON('["ubuntu-latest", "self-hosted"]')[github.repository == 'github/docs-internal'] }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v4.0.0
@@ -36,6 +36,7 @@ jobs:
             --no-deps
             --all-features
             --document-private-items
+            --manifest-path backend/Cargo.toml
         env:
           RUSTDOCFLAGS: >
             -D warnings
@@ -43,12 +44,12 @@ jobs:
             --enable-index-page
 
       - name: Fix file permissions for pages
-        run: chmod -R +rX target/doc
+        run: chmod -R +rX backend/target/doc
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v2.0.0
         with:
-          path: target/doc
+          path: backend/target/doc
 
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
-#![doc = include_str!("../../README.md")]
+#![doc = include_str!("../README.md")]
 
 use async_graphql::{http::GraphiQLSource, Executor};
 pub use async_graphql_axum::GraphQLSubscription;

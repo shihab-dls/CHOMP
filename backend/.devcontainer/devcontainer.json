@@ -1,0 +1,34 @@
+{
+  "name": "XChemLab Backend",
+  "dockerComposeFile": "docker-compose.yaml",
+  "service": "backend",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "tsandall.opa",
+        "ms-kubernetes-tools.vscode-kubernetes-tools"
+      ],
+      "settings": {
+        "rust-analyzer.cargo.features": "all",
+        "rust-analyzer.check.command": "clippy"
+      }
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "none",
+      "upgradePackages": false
+    },
+    "ghcr.io/devcontainers/features/git-lfs:1": {}
+  },
+  // Make sure the files we are mapping into the container exist on the host
+  "initializeCommand": "bash -c 'for i in $HOME/.inputrc; do [ -f $i ] || touch $i; done'",
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind",
+    "source=${localEnv:HOME}/.inputrc,target=/root/.inputrc,type=bind"
+  ],
+  "workspaceFolder": "/workspace",
+  "postCreateCommand": "pre-commit install"
+}
