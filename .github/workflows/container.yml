@@ -22,7 +22,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout with LFS
-        uses: actions/checkout@v4.0.0
+        uses: actions/checkout@v4.1.0
         with:
           lfs: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
 
