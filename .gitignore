@@ -1,8 +1,2 @@
-# Rust
-backend/target
-
-# Test Data
-backend/soakdb_io/test_data
-
 # Environment Variables
-.devcontainer/.env
+.env

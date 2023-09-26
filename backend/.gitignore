@@ -1,0 +1,5 @@
+# Rust
+target/
+
+# Test Data
+soakdb_io/test_data/
