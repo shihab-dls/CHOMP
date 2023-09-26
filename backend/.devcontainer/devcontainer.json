@@ -1,6 +1,6 @@
 {
   "name": "XChemLab Backend",
-  "dockerComposeFile": "docker-compose.yaml",
+  "dockerComposeFile": "../../.devcontainer/docker-compose.yaml",
   "service": "backend",
   "customizations": {
     "vscode": {

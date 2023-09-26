@@ -1,11 +1,29 @@
 {
 	"name": "Debian",
-	"image": "mcr.microsoft.com/devcontainers/base:bullseye",
+	"image": "docker.io/library/debian:bookworm",
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"tsandall.opa",
+        		"ms-kubernetes-tools.vscode-kubernetes-tools"
 			]
 		}
-	}
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/common-utils:2": {
+		  "username": "none",
+		  "upgradePackages": false
+		},
+		"ghcr.io/devcontainers/features/git-lfs:1": {}
+	},
+	"runArgs": [
+		"--security-opt=label=type:container_runtime_t"
+	],
+	"mounts": [
+		"source=${localEnv:HOME}/.ssh,target=/root/.shh,type=bind",
+		"source=${localEnv:HOME}/.inputrc,target=/root/.inputrc,type=bind"
+	],
+	"workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
+	"workspaceFolder": "${localWorkspaceFolder}"
 }

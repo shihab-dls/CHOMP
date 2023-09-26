@@ -82,4 +82,3 @@ jobs:
             --all-targets
             --all-features
             --manifest-path backend/Cargo.toml
-            
