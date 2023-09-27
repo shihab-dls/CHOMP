@@ -3,6 +3,14 @@ name = "targeting"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "targeting"
+path = "src/lib.rs"
+
+[[bin]]
+name = "targeting"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = { workspace = true }
 async-graphql = { workspace = true }
