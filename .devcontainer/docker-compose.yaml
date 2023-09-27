@@ -13,6 +13,12 @@ services:
       DATABASE_URL: postgres://postgres:password@postgres
       RABBITMQ_URL: amqp://rabbitmq:password@rabbitmq
 
+  frontend:
+    image: docker.io/library/node:20.6.0-bookworm
+    volumes:
+      - ..:/workspace:z
+    command: sleep infinity
+
   opa:
     image: docker.io/openpolicyagent/opa:0.53.1
     volumes:

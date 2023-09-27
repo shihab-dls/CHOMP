@@ -1,0 +1,68 @@
+name: Frontend Code
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    # Deduplicate jobs from pull requests and branch pushes within the same repo.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    name: Frontend Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4.1.0
+
+      - name: Node Action
+        uses: actions/setup-node@v3.8.1
+        with:
+          node-version: 18.x
+          cache: "npm"
+          cache-dependency-path: frontend/
+
+      - name: yarn install
+        uses: borales/actions-yarn@v4.2.0
+        with:
+          cmd: install
+          dir: "frontend"
+
+      - name: yarn test
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: test --passWithNoTests
+          dir: "frontend"
+
+  lint:
+    # Deduplicate jobs from pull requests and branch pushes within the same repo.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    name: Lint and Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4.1.0
+
+      - name: Node Action
+        uses: actions/setup-node@v3.8.1
+        with:
+          node-version: 18.x
+          cache: "npm"
+          cache-dependency-path: frontend/
+
+      - name: yarn install
+        uses: borales/actions-yarn@v4.2.0
+        with:
+          cmd: install
+          dir: "frontend"
+
+      - name: yarn eslint-lint
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: eslint-lint
+          dir: "frontend"
+
+      - name: yarn format
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: format
+          dir: "frontend"
