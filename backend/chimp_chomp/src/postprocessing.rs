@@ -68,18 +68,18 @@ fn optimal_insert_position(insertion_mask: Mat) -> Result<Point, anyhow::Error> 
         .max_by(|(_, a), (_, b)| a.cmp(b))
         .context("No valid insertion points")?;
     Ok(Point {
-        x: furthest_point.x as usize,
-        y: furthest_point.y as usize,
+        x: furthest_point.x,
+        y: furthest_point.y,
     })
 }
 
 /// Converts an [`ArrayView<f32, Ix1>`] of length 4 into a [`BBox`] according to the layout of a MaskRCNN box prediction.
 fn bbox_from_array(bbox: ArrayView<f32, Ix1>) -> BBox {
     BBox {
-        left: bbox[0],
-        top: bbox[1],
-        right: bbox[2],
-        bottom: bbox[3],
+        left: bbox[0] as i32,
+        top: bbox[1] as i32,
+        right: bbox[2] as i32,
+        bottom: bbox[3] as i32,
     }
 }
 

@@ -67,9 +67,9 @@ impl Response {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Point {
     /// The position of the point in the X axis.
-    pub x: usize,
+    pub x: i32,
     /// The position of the point in the Y axis.
-    pub y: usize,
+    pub y: i32,
 }
 
 /// A circle, defined by the center point and radius.
@@ -78,18 +78,18 @@ pub struct Circle {
     /// The position of the circles center.
     pub center: Point,
     /// The radius of the circle.
-    pub radius: f32,
+    pub radius: i32,
 }
 
 /// A bounding box which encompasing a region.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BBox {
     /// The position of the upper bound in the Y axis.
-    pub top: f32,
+    pub top: i32,
     /// The position of the lower bound in the Y axis.
-    pub bottom: f32,
+    pub bottom: i32,
     /// The position of the upper bound in the X axis.
-    pub right: f32,
+    pub right: i32,
     /// The position of the lower bound in the X axis.
-    pub left: f32,
+    pub left: i32,
 }

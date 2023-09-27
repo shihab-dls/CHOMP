@@ -36,10 +36,10 @@ fn find_well_location(image: WellImage) -> Result<Circle, anyhow::Error> {
         .context("No circles found in image")?;
     Ok(Circle {
         center: Point {
-            x: well_location[0] as usize,
-            y: well_location[1] as usize,
+            x: well_location[0] as i32,
+            y: well_location[1] as i32,
         },
-        radius: well_location[2],
+        radius: well_location[2] as i32,
     })
 }
 
@@ -113,6 +113,6 @@ mod tests {
             location.center.y as f64,
             max_relative = 8.0
         );
-        assert_relative_eq!(RADIUS, location.radius, max_relative = 8.0)
+        assert_relative_eq!(RADIUS, location.radius as f32, max_relative = 8.0)
     }
 }
