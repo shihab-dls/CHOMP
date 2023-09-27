@@ -1,6 +1,6 @@
 use aws_credential_types::{provider::SharedCredentialsProvider, Credentials};
 use aws_sdk_s3::{config::Region, Client};
-use clap::Parser;
+use clap::{ArgAction::SetTrue, Parser};
 use url::Url;
 
 /// Arguments for configuring the S3 Client.
@@ -16,8 +16,8 @@ pub struct S3ClientArgs {
     #[arg(long, env)]
     secret_access_key: Option<String>,
     /// Forces path style endpoint URIs for S3 queries.
-    #[arg(long, env)]
-    force_path_style: Option<bool>,
+    #[arg(long, env, action = SetTrue)]
+    force_path_style: bool,
     /// The AWS region of the S3 bucket.
     #[arg(long, env)]
     region: Option<String>,
@@ -38,15 +38,14 @@ impl FromS3ClientArgs for Client {
             "chimp-chomp-cli",
         );
         let credentials_provider = SharedCredentialsProvider::new(credentials);
-        let config = aws_sdk_s3::config::Builder::new()
-            .set_credentials_provider(Some(credentials_provider))
-            .set_endpoint_url(args.endpoint_url.map(String::from))
-            .set_force_path_style(args.force_path_style)
-            .set_region(Some(Region::new(
-                args.region.unwrap_or(String::from("undefined")),
-            )))
-            .clone()
-            .build();
+        let mut config_builder = aws_sdk_s3::config::Builder::new();
+        config_builder.set_credentials_provider(Some(credentials_provider));
+        config_builder.set_endpoint_url(args.endpoint_url.map(String::from));
+        config_builder.set_force_path_style(Some(args.force_path_style));
+        config_builder.set_region(Some(Region::new(
+            args.region.unwrap_or(String::from("undefined")),
+        )));
+        let config = config_builder.build();
         Client::from_conf(config)
     }
 }
