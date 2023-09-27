@@ -1,5 +1,4 @@
 use anyhow::anyhow;
-use aws_sdk_s3::Client;
 use derive_more::Deref;
 use ndarray::{Array, Ix3};
 use opencv::{
@@ -8,6 +7,7 @@ use opencv::{
     imgproc::{cvt_color, resize, COLOR_BGR2GRAY, COLOR_BGR2RGB, INTER_LINEAR},
     prelude::{Mat, MatTraitConst},
 };
+use url::Url;
 
 /// A grayscale image of the well in [W, H, C] format.
 #[derive(Debug, Deref)]
@@ -68,12 +68,12 @@ fn prepare_well(image: &Mat) -> WellImage {
     WellImage(well_image)
 }
 
-/// Reads an image from a S3 bucket.
+/// Reads an image from a URL.
 ///
 /// Returns and [`anyhow::Error`] if the image could not be read or is empty.
-async fn read_image_s3(client: Client, bucket: String, key: String) -> Result<Mat, anyhow::Error> {
-    let object = client.get_object().bucket(bucket).key(key).send().await?;
-    let bytes = Vector::from_slice(&object.body.collect().await.unwrap().to_vec());
+async fn read_image(download_url: Url) -> Result<Mat, anyhow::Error> {
+    let body = reqwest::get(download_url).await?.bytes().await?;
+    let bytes = Vector::from_slice(&body);
     let image = imdecode(&bytes, IMREAD_COLOR)?;
 
     if image.empty() {
@@ -86,13 +86,11 @@ async fn read_image_s3(client: Client, bucket: String, key: String) -> Result<Ma
 ///
 /// Returns an [`anyhow::Error`] if the image could not be read or is empty.
 pub async fn load_image(
-    client: Client,
-    bucket: String,
-    key: String,
+    download_url: Url,
     chimp_width: u32,
     chimp_height: u32,
 ) -> Result<(ChimpImage, WellImage), anyhow::Error> {
-    let image = read_image_s3(client, bucket, key).await?;
+    let image = read_image(download_url).await?;
     let well_image = prepare_well(&image);
     let chimp_image = prepare_chimp(&image, chimp_width as i32, chimp_height as i32);
 

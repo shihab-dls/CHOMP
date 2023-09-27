@@ -3,6 +3,7 @@
 #![doc=include_str!("../README.md")]
 
 use serde::{Deserialize, Serialize};
+use url::Url;
 use uuid::Uuid;
 
 /// A CHiMP processing request definition.
@@ -10,8 +11,8 @@ use uuid::Uuid;
 pub struct Request {
     /// A unique identifier for the request, to be returned in the [`Response`].
     pub id: Uuid,
-    /// The key of an object containing the image to perform inference on.
-    pub key: String,
+    /// The pre-signed URL of an object containing the image to perform inference on.
+    pub download_url: Url,
 }
 
 impl Request {

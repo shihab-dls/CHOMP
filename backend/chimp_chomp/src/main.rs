@@ -24,7 +24,6 @@ use crate::{
 };
 use chimp_protocol::{Circle, Request};
 use clap::Parser;
-use clap_for_s3::{FromS3ClientArgs, S3ClientArgs};
 use futures::future::Either;
 use futures_timer::Delay;
 use jobs::ResponseTarget;
@@ -41,11 +40,6 @@ struct Cli {
     rabbitmq_url: Url,
     /// The RabbitMQ channel on which jobs are assigned.
     rabbitmq_channel: String,
-    /// The S3 bucket which images are to be retrieved from.
-    s3_bucket: String,
-    /// Configuration arguments of the S3 client.
-    #[command(flatten)]
-    s3_client: S3ClientArgs,
     /// The duration (in milliseconds) to wait after completing all jobs before shutting down.
     #[arg(long, env)]
     timeout: Option<u64>,
@@ -83,8 +77,6 @@ async fn run(args: Cli) {
     let job_consumer = setup_job_consumer(job_channel, args.rabbitmq_channel)
         .await
         .unwrap();
-
-    let s3_client = aws_sdk_s3::Client::from_s3_client_args(args.s3_client);
 
     let (response_target_tx, mut response_target_rx) =
         tokio::sync::mpsc::unbounded_channel::<(ResponseTarget, Request)>();
@@ -154,7 +146,7 @@ async fn run(args: Cli) {
 
             chimp_permit = chimp_image_tx.clone().reserve_owned() => {
                 let chimp_permit = chimp_permit.unwrap();
-                tasks.spawn(consume_job(job_consumer.clone(), s3_client.clone(), args.s3_bucket.clone(), input_width, input_height, chimp_permit, well_image_tx.clone(), response_target_tx.clone(), error_tx.clone()));
+                tasks.spawn(consume_job(job_consumer.clone(), input_width, input_height, chimp_permit, well_image_tx.clone(), response_target_tx.clone(), error_tx.clone()));
             }
 
             Some((well_image, request)) = well_image_rx.recv() =>  {

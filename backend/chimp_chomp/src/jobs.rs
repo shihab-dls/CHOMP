@@ -3,7 +3,6 @@ use crate::{
     postprocessing::Contents,
 };
 use anyhow::anyhow;
-use aws_sdk_s3::Client;
 use chimp_protocol::{Circle, Request, Response};
 use derive_more::{Deref, From};
 use futures::StreamExt;
@@ -79,8 +78,6 @@ pub struct ReplyTo(ShortString);
 #[allow(clippy::too_many_arguments)]
 pub async fn consume_job(
     mut consumer: Consumer,
-    s3_client: Client,
-    s3_bucket: String,
     input_width: u32,
     input_height: u32,
     chimp_permit: OwnedPermit<(ChimpImage, Request)>,
@@ -114,15 +111,7 @@ pub async fn consume_job(
         .send((ResponseTarget { acker, reply_to }, request.clone()))
         .unwrap();
 
-    match load_image(
-        s3_client,
-        s3_bucket,
-        request.key.clone(),
-        input_width,
-        input_height,
-    )
-    .await
-    {
+    match load_image(request.download_url.clone(), input_width, input_height).await {
         Ok((chimp_image, well_image)) => {
             chimp_permit.send((chimp_image, request.clone()));
             well_image_tx

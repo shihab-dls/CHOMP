@@ -14,21 +14,23 @@ use sea_orm::{
 };
 use std::time::Duration;
 use tokio_stream::Stream;
+use url::Url;
 
 #[ComplexObject]
 impl image::Model {
-    async fn download_url(&self, ctx: &Context<'_>) -> async_graphql::Result<String> {
+    async fn download_url(&self, ctx: &Context<'_>) -> async_graphql::Result<Url> {
         let s3_client = ctx.data::<aws_sdk_s3::Client>()?;
         let bucket = ctx.data::<S3Bucket>()?;
-        Ok(s3_client
+        let object_uri = s3_client
             .get_object()
             .bucket(bucket.clone())
             .key(self.object_key())
             .presigned(PresigningConfig::expires_in(Duration::from_secs(10 * 60))?)
             .await?
             .uri()
-            .clone()
-            .to_string())
+            .clone();
+        let object_url = Url::parse(&object_uri.to_string())?;
+        Ok(object_url)
     }
 
     async fn predictions(
