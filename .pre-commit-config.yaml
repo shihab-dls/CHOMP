@@ -6,10 +6,33 @@ repos:
       - id: check-yaml
         exclude: ^charts\/.*\/templates\/.*\.yaml
       - id: check-merge-conflict
-
-  - repo: https://github.com/doublify/pre-commit-rust
-    rev: v1.0
+  - repo: local
     hooks:
-      - id: cargo-check
       - id: fmt
-      - id: clippy
+        name: fmt
+        entry: cargo fmt
+        args:
+          - --manifest-path=backend/Cargo.toml
+          - --check
+          - --all
+          - --
+        language: system
+        files: \.rs$
+      - id: cargo-check
+        name: cargo check
+        entry: cargo check
+        args:
+          - --manifest-path=backend/Cargo.toml
+        language: system
+        files: \.rs$
+        pass_filenames: false
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: cargo clippy
+        args:
+          - --manifest-path=backend/Cargo.toml
+          - --
+          - -Dwarnings
+        language: system
+        files: \.rs$
+        pass_filenames: false
