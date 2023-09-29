@@ -2,19 +2,29 @@
 #![warn(missing_docs)]
 #![doc = include_str!("../README.md")]
 
-use async_graphql::{http::GraphiQLSource, Executor};
-pub use async_graphql_axum::GraphQLSubscription;
-use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
+use async_graphql::{
+    http::{GraphiQLSource, ALL_WEBSOCKET_PROTOCOLS},
+    Data, Executor,
+};
+use async_graphql_axum::{GraphQLProtocol, GraphQLRequest, GraphQLResponse, GraphQLWebSocket};
 use axum::{
-    body::{Bytes, HttpBody},
+    body::{boxed, BoxBody, Bytes, HttpBody},
+    extract::{FromRequestParts, WebSocketUpgrade},
     handler::Handler,
-    headers::{authorization::Bearer, Authorization},
+    headers::{authorization::Bearer, Authorization, HeaderMapExt},
     http::{Request, StatusCode},
     response::{Html, IntoResponse, Response},
     BoxError, RequestExt, TypedHeader,
 };
+use futures_core::future::BoxFuture;
 use opa_client::AuthorizationToken;
-use std::{future::Future, pin::Pin};
+use std::{
+    convert::Infallible,
+    future::Future,
+    pin::Pin,
+    task::{Context, Poll},
+};
+use tower_service::Service;
 
 /// An [`axum`] [`Handler`] which provides the GraphiQL user interface, pre-configured for use with given GraphQL and websocket subscription endpoints.
 ///
@@ -59,8 +69,6 @@ impl<S, B> Handler<((),), S, B> for GraphiQLHandler {
 /// An [`axum`] [`Handler`] which provides a GraphQL endpoint.
 ///
 /// This endpoint extracts the [`AuthorizationToken`] and injects it into the GraphQL execution.
-/// Additionally, a request mutation may be applied to add additional external data, such as database connections,
-/// to the GraphQL Request.
 ///
 /// # Examples
 /// ```
@@ -85,7 +93,7 @@ impl<S, B> Handler<((),), S, B> for GraphiQLHandler {
 ///     )
 /// }
 /// ```
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct GraphQLHandler<E: Executor> {
     executor: E,
 }
@@ -127,6 +135,93 @@ where
                 }
                 Err(err) => (StatusCode::BAD_REQUEST, err.0.to_string()).into_response(),
             }
+        })
+    }
+}
+
+/// An [`axum`] [`Service`] which provides a GraphQL WebSocket Subscription endpoint.
+///
+/// This endpoint extracts the [`AuthorizationToken`] and injects it into the GraphQL execution.
+///
+/// # Examples
+/// ```
+/// use async_graphql::{ObjectType, Schema, SubscriptionType};
+/// use axum::{routing::post, Router};
+/// use graphql_endpoints::GraphQLSubscription;
+/// use opa_client::OPAClient;
+/// use url::Url;
+///
+/// fn add_graphql_route<Query, Mutation, Subscription>(
+///     router: Router
+/// ) -> Router
+/// where
+///     Query: ObjectType + Clone + Default + 'static,
+///     Mutation: ObjectType + Clone + Default + 'static,
+///     Subscription: SubscriptionType + Clone + Default + 'static,
+///  {
+///     let schema = Schema::<Query, Mutation, Subscription>::default();
+///     router.route_service(
+///         "/graphql",
+///         GraphQLSubscription::new(schema)
+///     )
+/// }
+/// ```
+#[derive(Debug, Clone)]
+pub struct GraphQLSubscription<E> {
+    executor: E,
+}
+
+impl<E> GraphQLSubscription<E>
+where
+    E: Executor,
+{
+    /// Create a GraphQL subscription service.
+    pub fn new(executor: E) -> Self {
+        Self { executor }
+    }
+}
+
+impl<B, E> Service<Request<B>> for GraphQLSubscription<E>
+where
+    B: HttpBody + Send + 'static,
+    E: Executor,
+{
+    type Response = Response<BoxBody>;
+    type Error = Infallible;
+    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
+
+    fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        Poll::Ready(Ok(()))
+    }
+
+    fn call(&mut self, req: Request<B>) -> Self::Future {
+        let executor = self.executor.clone();
+
+        Box::pin(async move {
+            let (mut parts, _body) = req.into_parts();
+
+            let protocol = match GraphQLProtocol::from_request_parts(&mut parts, &()).await {
+                Ok(protocol) => protocol,
+                Err(err) => return Ok(err.into_response().map(boxed)),
+            };
+            let upgrade = match WebSocketUpgrade::from_request_parts(&mut parts, &()).await {
+                Ok(protocol) => protocol,
+                Err(err) => return Ok(err.into_response().map(boxed)),
+            };
+
+            let executor = executor.clone();
+
+            let mut data = Data::default();
+            data.insert(parts.headers.typed_get::<Authorization<Bearer>>());
+
+            let resp = upgrade
+                .protocols(ALL_WEBSOCKET_PROTOCOLS)
+                .on_upgrade(move |stream| {
+                    GraphQLWebSocket::new(stream, executor, protocol)
+                        .with_data(data)
+                        .serve()
+                });
+            Ok(resp.into_response().map(boxed))
         })
     }
 }
