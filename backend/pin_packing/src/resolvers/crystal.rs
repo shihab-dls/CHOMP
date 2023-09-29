@@ -52,8 +52,8 @@ impl CrystalMutation {
         let database = ctx.data::<DatabaseConnection>()?;
         let crystal = crystal::ActiveModel {
             id: ActiveValue::Set(Uuid::new_v4()),
-            plate_id: ActiveValue::Set(well.plate),
-            well_number: ActiveValue::Set(well.well),
+            plate: ActiveValue::Set(well.plate),
+            well: ActiveValue::Set(well.well),
             crystal_state: ActiveValue::Set(crystal_state),
             compound_state: ActiveValue::Set(compound_state),
             timestamp: ActiveValue::Set(Utc::now()),

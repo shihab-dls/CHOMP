@@ -13,9 +13,9 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     #[graphql(skip)]
-    pub plate_id: Uuid,
+    pub plate: Uuid,
     #[graphql(skip)]
-    pub well_number: i16,
+    pub well: i16,
     #[graphql(skip)]
     pub well_centroid_x: i32,
     #[graphql(skip)]
@@ -29,8 +29,8 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(
         belongs_to = "image::Entity",
-        from = "(Column::PlateId, Column::WellNumber)",
-        to = "(image::Column::PlateId, image::Column::WellNumber)"
+        from = "(Column::Plate, Column::Well)",
+        to = "(image::Column::Plate, image::Column::Well)"
     )]
     Well,
     #[sea_orm(has_many = "prediction_drop::Entity")]

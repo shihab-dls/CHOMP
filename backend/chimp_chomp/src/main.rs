@@ -114,32 +114,32 @@ async fn run(args: Cli) {
             biased;
 
             Some((response_target, request)) = response_target_rx.recv() => {
-                response_targets.insert(request.id, response_target);
+                response_targets.insert((request.plate, request.well), response_target);
             }
 
             Some((error, request)) = error_rx.recv() => {
-                let response_target = response_targets.remove(&request.id).unwrap();
+                let response_target = response_targets.remove(&(request.plate, request.well)).unwrap();
                 tasks.spawn(produce_error(request, response_target, error, response_channel.clone()));
             }
 
             Some((well_location, request)) = well_location_rx.recv() => {
-                if response_targets.contains_key(&request.id) {
-                    if let Some(contents) = well_contents.remove(&request.id) {
-                        let response_target = response_targets.remove(&request.id).unwrap();
+                if response_targets.contains_key(&(request.plate, request.well)) {
+                    if let Some(contents) = well_contents.remove(&(request.plate, request.well)) {
+                        let response_target = response_targets.remove(&(request.plate, request.well)).unwrap();
                         tasks.spawn(produce_response(request, response_target, contents, well_location, response_channel.clone()));
                     } else {
-                        well_locations.insert(request.id, well_location);
+                        well_locations.insert((request.plate, request.well), well_location);
                     }
                 }
             }
 
             Some((contents, request)) = contents_rx.recv() => {
-                if response_targets.contains_key(&request.id) {
-                    if let Some(well_location) = well_locations.remove(&request.id) {
-                        let response_target = response_targets.remove(&request.id).unwrap();
+                if response_targets.contains_key(&(request.plate, request.well)) {
+                    if let Some(well_location) = well_locations.remove(&(request.plate, request.well)) {
+                        let response_target = response_targets.remove(&(request.plate, request.well)).unwrap();
                         tasks.spawn(produce_response(request, response_target, contents, well_location, response_channel.clone()));
                     } else {
-                        well_contents.insert(request.id, contents);
+                        well_contents.insert((request.plate, request.well), contents);
                     }
                 }
             }

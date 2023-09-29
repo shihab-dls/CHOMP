@@ -110,8 +110,8 @@ impl prediction_drop::ActiveModel {
 impl prediction::Model {
     async fn image(&self) -> Well {
         Well {
-            plate: self.plate_id,
-            well: self.well_number,
+            plate: self.plate,
+            well: self.well,
         }
     }
 
@@ -140,19 +140,19 @@ impl PredictionQuery {
         &self,
         ctx: &Context<'_>,
         id: Option<Uuid>,
-        plate_id: Option<Uuid>,
-        well_number: Option<i16>,
+        plate: Option<Uuid>,
+        well: Option<i16>,
         operator_id: Option<String>,
     ) -> async_graphql::Result<Vec<prediction::Model>> {
         subject_authorization!("xchemlab.targeting.read_prediction", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
         Ok(prediction::Entity::find()
             .apply_if(id, |query, id| query.filter(prediction::Column::Id.eq(id)))
-            .apply_if(plate_id, |query, plate_id| {
-                query.filter(prediction::Column::PlateId.eq(plate_id))
+            .apply_if(plate, |query, plate| {
+                query.filter(prediction::Column::Plate.eq(plate))
             })
-            .apply_if(well_number, |query, well_number| {
-                query.filter(prediction::Column::WellNumber.eq(well_number))
+            .apply_if(well, |query, well| {
+                query.filter(prediction::Column::Well.eq(well))
             })
             .apply_if(operator_id, |query, operator_id| {
                 query.filter(prediction::Column::OperatorId.eq(operator_id))
@@ -184,8 +184,8 @@ impl PredicitonMutation {
                 Box::pin(async move {
                     let prediction = prediction::Entity::insert(prediction::ActiveModel {
                         id: ActiveValue::Set(Uuid::new_v4()),
-                        plate_id: ActiveValue::Set(plate.plate),
-                        well_number: ActiveValue::Set(plate.well),
+                        plate: ActiveValue::Set(plate.plate),
+                        well: ActiveValue::Set(plate.well),
                         well_centroid_x: ActiveValue::Set(well_centroid.x),
                         well_centroid_y: ActiveValue::Set(well_centroid.y),
                         well_radius: ActiveValue::Set(well_radius),

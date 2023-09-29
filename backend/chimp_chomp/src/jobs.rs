@@ -138,7 +138,8 @@ pub async fn produce_response(
             response_target.reply_to.as_str(),
             BasicPublishOptions::default(),
             &Response::Success {
-                job_id: request.id,
+                plate: request.plate,
+                well: request.well,
                 insertion_point: contents.insertion_point,
                 well_location,
                 drop: contents.drop,
@@ -173,7 +174,8 @@ pub async fn produce_error(
             response_target.reply_to.as_str(),
             BasicPublishOptions::default(),
             &Response::Failure {
-                job_id: request.id,
+                plate: request.plate,
+                well: request.well,
                 error: error.to_string(),
             }
             .to_vec()

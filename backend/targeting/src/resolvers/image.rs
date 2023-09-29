@@ -51,17 +51,17 @@ impl ImageQuery {
     async fn images(
         &self,
         ctx: &Context<'_>,
-        plate_id: Option<Uuid>,
-        well_number: Option<i16>,
+        plate: Option<Uuid>,
+        well: Option<i16>,
     ) -> async_graphql::Result<Vec<image::Model>> {
         subject_authorization!("xchemlab.targeting.read_image", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
         Ok(image::Entity::find()
-            .apply_if(plate_id, |query, plate_id| {
-                query.filter(image::Column::PlateId.eq(plate_id))
+            .apply_if(plate, |query, plate| {
+                query.filter(image::Column::Plate.eq(plate))
             })
-            .apply_if(well_number, |query, well_number| {
-                query.filter(image::Column::WellNumber.eq(well_number))
+            .apply_if(well, |query, well| {
+                query.filter(image::Column::Well.eq(well))
             })
             .all(database)
             .await?)
@@ -95,8 +95,8 @@ impl ImageMutation {
             .await?;
 
         let model = image::ActiveModel {
-            plate_id: sea_orm::ActiveValue::Set(well.plate),
-            well_number: sea_orm::ActiveValue::Set(well.well),
+            plate: sea_orm::ActiveValue::Set(well.plate),
+            well: sea_orm::ActiveValue::Set(well.well),
             timestamp: sea_orm::ActiveValue::Set(Utc::now()),
             operator_id: sea_orm::ActiveValue::Set(operator_id),
         };

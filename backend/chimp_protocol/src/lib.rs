@@ -9,8 +9,10 @@ use uuid::Uuid;
 /// A CHiMP processing request definition.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Request {
-    /// A unique identifier for the request, to be returned in the [`Response`].
-    pub id: Uuid,
+    /// The plate of the imaged well.
+    pub plate: Uuid,
+    /// The number of the imaged well.
+    pub well: i32,
     /// The pre-signed URL of an object containing the image to perform inference on.
     pub download_url: Url,
 }
@@ -32,8 +34,10 @@ impl Request {
 pub enum Response {
     /// The image was processed successfully, producing the contained predictions.
     Success {
-        /// The unique identifier of the [`Request`].
-        job_id: Uuid,
+        /// The plate of the imaged well.
+        plate: Uuid,
+        /// The number of the imaged well.
+        well: i32,
         /// The proposed point for solvent insertion.
         insertion_point: Point,
         /// The location of the well centroid and radius.
@@ -45,8 +49,10 @@ pub enum Response {
     },
     /// Image processing failed, with the contained error.
     Failure {
-        /// The unique identifier of the [`Request`].
-        job_id: Uuid,
+        /// The plate of the imaged well.
+        plate: Uuid,
+        /// The number of the imaged well.
+        well: i32,
         /// A description of the error encountered.
         error: String,
     },

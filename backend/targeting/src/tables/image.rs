@@ -11,16 +11,16 @@ use sea_orm::{
 #[graphql(name = "Image", complex)]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub plate_id: Uuid,
+    pub plate: Uuid,
     #[sea_orm(primary_key)]
-    pub well_number: i16,
+    pub well: i16,
     pub timestamp: DateTime<Utc>,
     pub operator_id: String,
 }
 
 impl Model {
     pub fn object_key(&self) -> String {
-        format!("{}/{}", self.plate_id, self.well_number)
+        format!("{}/{}", self.plate, self.well)
     }
 }
 

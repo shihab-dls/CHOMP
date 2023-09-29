@@ -44,8 +44,8 @@ pub enum CompoundState {
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub plate_id: Uuid,
-    pub well_number: i16,
+    pub plate: Uuid,
+    pub well: i16,
     pub crystal_state: CrystalState,
     pub compound_state: CompoundState,
     pub timestamp: DateTime<Utc>,
