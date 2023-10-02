@@ -36,14 +36,16 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            - "$(RABBITMQ_URL)" 
-            - {{ include "chimpChomp.queueChannel" . }}
+            - "$(RABBITMQ_URL)"
+            - "$(RABBITMQ_CHANNEL)"
           env:
             - name: RABBITMQ_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ include "chimpChomp.queueHostSecretName" . }} 
                   key: {{ .Values.queue.host.secretKey }}
+            - name: RABBITMQ_CHANNEL
+              value: {{ include "chimpChomp.queueChannel" . }}
           volumeMounts:
             {{- toYaml .Values.containerVolumeMounts | nindent 12 }}
           resources:
