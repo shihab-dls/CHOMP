@@ -1,10 +1,10 @@
 dependencies:
 - name: chimp-chomp
   repository: ""
-  version: 0.0.1
+  version: 0.0.2
 - name: pin-packing
   repository: ""
-  version: 0.0.2
+  version: 0.0.3
 - name: grafana
   repository: https://grafana.github.io/helm-charts
   version: 6.58.8
@@ -29,5 +29,5 @@ dependencies:
 - name: oauth2-proxy
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 3.7.4
-digest: sha256:5bf432b6cd6218e1f65410a5881a1bbd9135549ec237213ac84b1e08e044424e
-generated: "2023-10-02T13:09:43.22687347+01:00"
+digest: sha256:61a4a1de659356a61696bea15c5b916b8e85cb297162f689c435a50357869c44
+generated: "2023-10-02T13:37:21.504008114+01:00"
