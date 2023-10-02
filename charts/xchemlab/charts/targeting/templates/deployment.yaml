@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "targeting.fullname" . }}
+  labels:
+    {{- include "targeting.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "targeting.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "targeting.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "targeting.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: 
+            - serve
+          env:
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.password.secretName }}
+                  key: {{ .Values.database.password.secretKey }}
+            - name: DATABASE_URL
+              value: {{ include "targeting.databaseURL" . }}
+            - name: S3_BUCKET
+              value: {{ .Values.objectstore.bucket.name }}
+            - name: ENDPOINT_URL
+              value: {{ tpl .Values.objectstore.url . }}
+            - name: ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.objectstore.accessKeyID.secretName }}
+                  key: {{ .Values.objectstore.accessKeyID.secretKey }}
+            - name: SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.objectstore.secretAccessKey.secretName }}
+                  key: {{ .Values.objectstore.secretAccessKey.secretKey }}
+            - name: FORCE_PATH_STYLE
+              value: {{ quote .Values.objectstore.forcePathStyle }} 
+            - name: S3_CREATE_BUCKET
+              value: {{ quote .Values.objectstore.bucket.create }}
+            - name: OPA_URL
+              value: {{ tpl .Values.opa.url . }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -5,6 +5,9 @@ dependencies:
 - name: pin-packing
   repository: ""
   version: 0.0.3
+- name: targeting
+  repository: ""
+  version: 0.0.1
 - name: grafana
   repository: https://grafana.github.io/helm-charts
   version: 6.58.8
@@ -29,5 +32,5 @@ dependencies:
 - name: oauth2-proxy
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 3.7.4
-digest: sha256:ec1bf648ac55ba660a18615b0fecd6d424381798e22af00cc942a57368fdeb25
-generated: "2023-10-02T16:53:21.46515017+01:00"
+digest: sha256:79670818165d40b6505a5ed74ca71d4fb6e67f649b6f429b852ebeebe74dc73a
+generated: "2023-10-02T17:19:53.130393215+01:00"

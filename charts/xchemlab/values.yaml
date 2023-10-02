@@ -30,6 +30,28 @@ pin-packing:
   opa:
     url: http://{{ .Release.Name }}-opa-kube-mgmt:8181
 
+targeting:
+  enabled: true
+  objectstore:
+    bucket:
+      name: xchemlab-targeting
+    url: https://sci-nas-s3.diamond.ac.uk
+    forcePathStyle: true
+    accessKeyID:
+      secretName: targeting-s3-secret
+      secretKey: access-key-id
+    secretAccessKey:
+      secretName: targeting-s3-secret
+      secretKey: secret-access-key
+  database:
+    host: postgres://postgresql-ha-pgpool
+    user: postgres
+    password:
+      secretName: postgres-passwords
+      secretKey: password
+  opa:
+    url: http://{{ .Release.Name }}-opa-kube-mgmt:8181
+
 grafana:
   enabled: true
 

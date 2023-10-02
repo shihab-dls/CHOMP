@@ -1,0 +1,56 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/diamondlightsource/xchemlab-targeting
+  pullPolicy: Always
+  tag: ""
+
+imagePullSecrets: []
+
+database:
+  host: ""
+  user: ""
+  password:
+    secretName: ""
+    secretKey: ""
+
+objectstore:
+  bucket:
+    name: ""
+    create: false
+  url: ""
+  forcePathStyle: false
+  accessKeyID:
+    secretName: ""
+    secretKey: ""
+  secretAccessKey:
+    secretName: ""
+    secretKey: ""
+
+opa:
+  url: ""
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80
+
+serviceAccount:
+  create: false
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
