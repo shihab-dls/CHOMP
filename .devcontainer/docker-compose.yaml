@@ -22,8 +22,6 @@ services:
       - --server
       - --watch
       - /policies
-    env_file:
-      - .env
 
   postgres:
     image: docker.io/library/postgres:15.3-bookworm
