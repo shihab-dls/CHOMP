@@ -28,7 +28,7 @@ pin-packing:
       secretName: postgres-passwords
       secretKey: password
   opa:
-    serviceSuffix: opa-kube-mgmt
+    url: http://{{ .Release.Name }}-opa-kube-mgmt:8181
 
 grafana:
   enabled: true

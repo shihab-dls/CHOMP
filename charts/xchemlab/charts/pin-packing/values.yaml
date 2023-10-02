@@ -16,7 +16,7 @@ database:
     secretKey: ""
 
 opa:
-  serviceSuffix: ""
+  url: ""
 
 replicaCount: 1
 

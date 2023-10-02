@@ -71,11 +71,3 @@ Create the database URL string
 {{- $raw_database_url := urlJoin $url_parts }}
 {{- replace "$DATABASE_PASSWORD" "$(DATABASE_PASSWORD)" $raw_database_url }}
 {{- end }}
-
-{{/*
-Create the OPA URL string
-*/}}
-{{- define "pinPacking.opaURL" -}}
-{{- $host := printf "%s-%s:8181" .Release.Name .Values.opa.serviceSuffix }}
-{{- urlJoin ( dict "scheme" "http" "host" $host ) }}
-{{- end }}
