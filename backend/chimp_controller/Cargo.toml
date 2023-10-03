@@ -4,3 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+cynic = { version = "3.2.2", features = ["http-reqwest"] }
+url = { workspace = true }
+uuid = { workspace = true }
+
+[build-dependencies]
+cynic-codegen = { version = "3.2.2" }
+targeting = { path = "../targeting" }
