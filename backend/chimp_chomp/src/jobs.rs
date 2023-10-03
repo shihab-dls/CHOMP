@@ -3,7 +3,7 @@ use crate::{
     postprocessing::Contents,
 };
 use anyhow::anyhow;
-use chimp_protocol::{Circle, Request, Response};
+use chimp_protocol::{Circle, FailedResponse, Request, Response, SuccesfulResponse};
 use derive_more::{Deref, From};
 use futures::StreamExt;
 use lapin::{
@@ -137,14 +137,14 @@ pub async fn produce_response(
             "",
             response_target.reply_to.as_str(),
             BasicPublishOptions::default(),
-            &Response::Success {
+            &Response::Success(SuccesfulResponse {
                 plate: request.plate,
                 well: request.well,
                 insertion_point: contents.insertion_point,
                 well_location,
                 drop: contents.drop,
                 crystals: contents.crystals,
-            }
+            })
             .to_vec()
             .unwrap(),
             BasicProperties::default(),
@@ -173,11 +173,11 @@ pub async fn produce_error(
             "",
             response_target.reply_to.as_str(),
             BasicPublishOptions::default(),
-            &Response::Failure {
+            &Response::Failure(FailedResponse {
                 plate: request.plate,
                 well: request.well,
                 error: error.to_string(),
-            }
+            })
             .to_vec()
             .unwrap(),
             BasicProperties::default(),

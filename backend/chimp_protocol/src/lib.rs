@@ -28,34 +28,41 @@ impl Request {
         serde_json::to_vec(&self)
     }
 }
+/// The image was processed successfully, producing the contained predictions.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SuccesfulResponse {
+    /// The plate of the imaged well.
+    pub plate: Uuid,
+    /// The number of the imaged well.
+    pub well: i32,
+    /// The proposed point for solvent insertion.
+    pub insertion_point: Point,
+    /// The location of the well centroid and radius.
+    pub well_location: Circle,
+    /// A bounding box emcompasing the solvent.
+    pub drop: BBox,
+    /// A set of bounding boxes, each emcompasing a crystal.
+    pub crystals: Vec<BBox>,
+}
+
+/// Image processing failed, with the contained error.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FailedResponse {
+    /// The plate of the imaged well.
+    pub plate: Uuid,
+    /// The number of the imaged well.
+    pub well: i32,
+    /// A description of the error encountered.
+    pub error: String,
+}
 
 /// A set of predictions which apply to a single image.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Response {
     /// The image was processed successfully, producing the contained predictions.
-    Success {
-        /// The plate of the imaged well.
-        plate: Uuid,
-        /// The number of the imaged well.
-        well: i32,
-        /// The proposed point for solvent insertion.
-        insertion_point: Point,
-        /// The location of the well centroid and radius.
-        well_location: Circle,
-        /// A bounding box emcompasing the solvent.
-        drop: BBox,
-        /// A set of bounding boxes, each emcompasing a crystal.
-        crystals: Vec<BBox>,
-    },
+    Success(SuccesfulResponse),
     /// Image processing failed, with the contained error.
-    Failure {
-        /// The plate of the imaged well.
-        plate: Uuid,
-        /// The number of the imaged well.
-        well: i32,
-        /// A description of the error encountered.
-        error: String,
-    },
+    Failure(FailedResponse),
 }
 
 impl Response {
