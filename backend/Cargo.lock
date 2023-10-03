@@ -981,6 +981,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "chimp_controller"
+version = "0.1.0"
+
+[[package]]
 name = "chimp_protocol"
 version = "0.1.0"
 dependencies = [
