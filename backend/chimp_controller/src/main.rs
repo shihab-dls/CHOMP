@@ -3,6 +3,8 @@
 #![warn(missing_docs)]
 #![warn(clippy::missing_docs_in_private_items)]
 
+/// Utilities for handling messages from CHiMP
+mod chimp_messages;
 /// Utilities for handling new images from the targeting service
 mod new_image;
 /// A collection of GraphQL queries.
@@ -10,10 +12,13 @@ pub mod queries;
 /// A collection of GraphQL schemas.
 mod schemas;
 
+use crate::new_image::{
+    handle_new_image, setup_image_creation_stream, setup_targeting_subscription_client,
+};
+use chimp_messages::setup_chimp_client;
 use clap::Parser;
 use futures_util::StreamExt;
-use new_image::{setup_image_creation_stream, setup_targeting_subscription_client};
-use tokio::select;
+use tokio::{select, task::JoinSet};
 use url::Url;
 
 /// An shim service instructing CHiMP to perform inference on new targeting images.
@@ -27,6 +32,10 @@ struct Cli {
     /// The authorization token to make requests to the targeting service with.
     #[arg(long, env)]
     targeting_token: String,
+    /// The URL of the RabbitMQ server.
+    rabbitmq_url: Url,
+    /// The RabbitMQ queue on which jobs are assigned.
+    rabbitmq_channel: String,
 }
 
 #[tokio::main]
@@ -44,11 +53,17 @@ async fn main() {
         .await
         .unwrap();
 
+    let request_publisher = setup_chimp_client(args.rabbitmq_url, args.rabbitmq_channel)
+        .await
+        .unwrap();
+
+    let mut tasks = JoinSet::new();
+
     loop {
         select! {
             Some(image_created) = image_creation_stream.next() => {
-                println!("Image created: {image_created:?}")
-            }
+                tasks.spawn(handle_new_image(image_created, request_publisher.clone()));
+            },
         }
     }
 }

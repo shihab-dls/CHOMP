@@ -6,11 +6,13 @@ edition = "2021"
 [dependencies]
 anyhow = { workspace = true }
 async-tungstenite = { version = "0.22.0", features = ["tokio-runtime"] }
+chimp_protocol = { path = "../chimp_protocol" }
 clap = { workspace = true }
 cynic = { version = "3.2.2", features = ["http-reqwest"] }
 dotenvy = { workspace = true }
 futures-util = { version = "0.3.28" }
 graphql-ws-client = { version = "0.5.0", features = ["cynic"] }
+lapin = { version = "2.2.1", default-features = false, features = ["rustls"] }
 tokio = { workspace = true, features = ["sync"] }
 url = { workspace = true }
 uuid = { workspace = true }
