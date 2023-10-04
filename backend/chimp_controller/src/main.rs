@@ -7,13 +7,18 @@
 mod chimp_messages;
 /// Utilities for handling new images from the targeting service
 mod new_image;
+/// Utilities for handling new predictions from CHiMP
+mod new_prediction;
 /// A collection of GraphQL queries.
 pub mod queries;
 /// A collection of GraphQL schemas.
 mod schemas;
 
-use crate::new_image::{
-    handle_new_image, setup_image_creation_stream, setup_targeting_subscription_client,
+use crate::{
+    new_image::{
+        handle_new_image, setup_image_creation_stream, setup_targeting_subscription_client,
+    },
+    new_prediction::handle_new_prediction,
 };
 use chimp_messages::setup_chimp_client;
 use clap::Parser;
@@ -43,6 +48,7 @@ async fn main() {
     dotenvy::dotenv().ok();
     let args = Cli::parse();
 
+    let targeting_client = reqwest::Client::new();
     let mut targeting_subscription_client = setup_targeting_subscription_client(
         &args.targeting_subscription_url,
         &args.targeting_token,
@@ -53,9 +59,11 @@ async fn main() {
         .await
         .unwrap();
 
-    let request_publisher = setup_chimp_client(args.rabbitmq_url, args.rabbitmq_channel)
-        .await
-        .unwrap();
+    let (request_publisher, prediction_consumer) =
+        setup_chimp_client(args.rabbitmq_url, args.rabbitmq_channel)
+            .await
+            .unwrap();
+    let mut prediction_stream = prediction_consumer.into_prediction_stream();
 
     let mut tasks = JoinSet::new();
 
@@ -64,6 +72,10 @@ async fn main() {
             Some(image_created) = image_creation_stream.next() => {
                 tasks.spawn(handle_new_image(image_created, request_publisher.clone()));
             },
+
+            Some(prediction) = prediction_stream.next() => {
+                tasks.spawn(handle_new_prediction(prediction, targeting_client.clone(), args.targeting_url.clone(), &args.targeting_token));
+            }
         }
     }
 }

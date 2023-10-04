@@ -1014,6 +1014,7 @@ dependencies = [
  "futures-util",
  "graphql-ws-client",
  "lapin",
+ "reqwest",
  "targeting",
  "tokio",
  "url",
