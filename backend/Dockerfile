@@ -9,6 +9,7 @@ RUN apt-get update \
 # Build dependencies
 COPY Cargo.toml Cargo.lock ./
 COPY chimp_chomp/Cargo.toml chimp_chomp/Cargo.toml
+COPY chimp_controller/Cargo.toml chimp_controller/Cargo.toml
 COPY chimp_protocol/Cargo.toml chimp_protocol/Cargo.toml
 COPY clap_for_s3/Cargo.toml clap_for_s3/Cargo.toml
 COPY graphql_endpoints/Cargo.toml graphql_endpoints/Cargo.toml
@@ -23,6 +24,8 @@ RUN mkdir chimp_chomp/src \
     && echo "fn main() {}" > chimp_chomp/src/main.rs \
     && mkdir chimp_protocol/src \
     && touch chimp_protocol/src/lib.rs \
+    && mkdir chimp_controller/src \
+    && echo "fn main() {}" > chimp_controller/src/main.rs \
     && mkdir clap_for_s3/src \
     && touch clap_for_s3/src/lib.rs \
     && mkdir graphql_endpoints/src \
@@ -38,6 +41,7 @@ RUN mkdir chimp_chomp/src \
     && mkdir soakdb_sync/src/ \
     && echo "fn main() {}" > soakdb_sync/src/main.rs \
     && mkdir targeting/src/ \
+    && touch targeting/src/lib.rs \
     && echo "fn main() {}" > targeting/src/main.rs \
     && mkdir the_paginator/src \
     && touch the_paginator/src/lib.rs \
@@ -45,8 +49,9 @@ RUN mkdir chimp_chomp/src \
 
 # Build workspace crates
 COPY . /app
-RUN touch chimp_chomp/src/lib.rs \
+RUN touch chimp_chomp/src/main.rs \
     && touch chimp_protocol/src/lib.rs \
+    && touch chimp_controller/src/main.rs \
     && touch clap_for_s3/src/lib.rs \
     && touch graphql_endpoints/src/lib.rs \
     && touch graphql_event_broker/src/lib.rs \
@@ -54,6 +59,7 @@ RUN touch chimp_chomp/src/lib.rs \
     && touch pin_packing/src/main.rs \
     && touch soakdb_io/src/lib.rs \
     && touch soakdb_sync/src/main.rs \
+    && touch targeting/src/lib.rs \
     && touch targeting/src/main.rs \
     && touch the_paginator/src/lib.rs \
     && cargo build --release
@@ -72,6 +78,12 @@ COPY --from=build /chimp_chomp_libraries/* /lib
 COPY --from=build /app/target/release/chimp_chomp /chimp_chomp
 
 ENTRYPOINT ["/chimp_chomp"]
+
+FROM gcr.io/distroless/cc as chimp_controller
+
+COPY --from=build /app/target/release/chimp_controller /chimp_controller
+
+ENTRYPOINT ["/chimp_controller"]
 
 FROM gcr.io/distroless/cc as pin_packing
 
