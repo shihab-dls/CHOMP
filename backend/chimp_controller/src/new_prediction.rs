@@ -10,8 +10,8 @@ pub async fn handle_new_prediction(
     targeting_client: reqwest::Client,
     targeting_url: Url,
     authorization_token: &str,
-) -> Result<(), anyhow::Error> {
-    if let Response::Success(succesful_response) = prediction? {
+) {
+    if let Response::Success(succesful_response) = prediction.unwrap() {
         let variables = CreatePredictionVariables::from(succesful_response);
         let mutation = CreatePredictionMutation::build(variables);
         let response = targeting_client
@@ -24,5 +24,4 @@ pub async fn handle_new_prediction(
             panic!("Targeting service returned error(s): {errs:?}");
         }
     }
-    Ok(())
 }

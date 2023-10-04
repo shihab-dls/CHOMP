@@ -71,7 +71,7 @@ pub async fn setup_image_creation_stream(
 pub async fn handle_new_image(
     image_created: Result<GraphQlResponse<ImageCreatedSubscription>, graphql_ws_client::Error>,
     job_publisher: RequestPublisher,
-) -> Result<(), anyhow::Error> {
+) {
     let Image {
         plate,
         well,
@@ -83,5 +83,4 @@ pub async fn handle_new_image(
         download_url,
     };
     job_publisher.publish(request).await.unwrap();
-    Ok(())
 }
