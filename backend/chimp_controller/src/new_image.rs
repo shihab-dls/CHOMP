@@ -1,9 +1,5 @@
-use crate::{
-    chimp_messages::RequestPublisher,
-    queries::image_created::{Image, ImageCreatedSubscription},
-};
+use crate::{chimp_messages::RequestPublisher, queries::image_created::ImageCreatedSubscription};
 use async_tungstenite::tungstenite::{client::IntoClientRequest, http::HeaderValue, Message};
-use chimp_protocol::Request;
 use cynic::{GraphQlResponse, StreamingOperation, SubscriptionBuilder};
 use futures_util::{
     task::{FutureObj, Spawn, SpawnError},
@@ -67,20 +63,11 @@ pub async fn setup_image_creation_stream(
         .await?)
 }
 
-/// Recieves an image created event and produces [`Request`] for CHiMP to perform prediction.
+/// Recieves an image created event and produces [`chimp_protocol::Request`] for CHiMP to perform prediction.
 pub async fn handle_new_image(
-    image_created: Result<GraphQlResponse<ImageCreatedSubscription>, graphql_ws_client::Error>,
+    created_image: Result<GraphQlResponse<ImageCreatedSubscription>, graphql_ws_client::Error>,
     job_publisher: RequestPublisher,
 ) {
-    let Image {
-        plate,
-        well,
-        download_url,
-    } = image_created.unwrap().data.unwrap().image_created;
-    let request = Request {
-        plate,
-        well,
-        download_url,
-    };
-    job_publisher.publish(request).await.unwrap();
+    let image = created_image.unwrap().data.unwrap().image_created;
+    job_publisher.publish(image.into()).await.unwrap()
 }
