@@ -9,14 +9,17 @@ pub async fn handle_new_prediction(
     prediction: Result<Response, anyhow::Error>,
     targeting_client: reqwest::Client,
     targeting_url: Url,
-    authorization_token: &str,
+    authorization_token: impl AsRef<str>,
 ) {
     if let Response::Success(succesful_response) = prediction.unwrap() {
         let variables = CreatePredictionVariables::from(succesful_response);
         let mutation = CreatePredictionMutation::build(variables);
         let response = targeting_client
             .request(Method::POST, targeting_url)
-            .header("Authorization", format!("Bearer {authorization_token}"))
+            .header(
+                "Authorization",
+                format!("Bearer {}", authorization_token.as_ref()),
+            )
             .run_graphql(mutation)
             .await
             .unwrap();

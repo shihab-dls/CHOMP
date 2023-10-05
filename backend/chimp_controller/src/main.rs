@@ -5,7 +5,9 @@
 
 /// Utilities for handling messages from CHiMP
 mod chimp_messages;
-/// Utilities for handling new images from the targeting service
+/// Utilities for handling images which existed before this started
+mod existing_images;
+/// Utilities for handling redictionmages from the targeting service
 mod new_image;
 /// Utilities for handling new predictions from CHiMP
 mod new_prediction;
@@ -15,12 +17,13 @@ pub mod queries;
 mod schemas;
 
 use crate::{
+    chimp_messages::setup_chimp_client,
+    existing_images::{get_unprocessed_images, handle_existing_image},
     new_image::{
         handle_new_image, setup_image_creation_stream, setup_targeting_subscription_client,
     },
     new_prediction::handle_new_prediction,
 };
-use chimp_messages::setup_chimp_client;
 use clap::Parser;
 use futures_util::StreamExt;
 use tokio::{select, task::JoinSet};
@@ -67,6 +70,22 @@ async fn main() {
 
     let mut tasks = JoinSet::new();
 
+    let unprocessed_images = get_unprocessed_images(
+        &targeting_client,
+        args.targeting_url.clone(),
+        &args.targeting_token.clone(),
+    )
+    .await
+    .unwrap();
+
+    for unprocessed_image in unprocessed_images {
+        println!("Processing: {unprocessed_image:?}");
+        tasks.spawn(handle_existing_image(
+            unprocessed_image,
+            request_publisher.clone(),
+        ));
+    }
+
     loop {
         select! {
             Some(image_created) = image_creation_stream.next() => {
@@ -74,7 +93,7 @@ async fn main() {
             },
 
             Some(prediction) = prediction_stream.next() => {
-                tasks.spawn(handle_new_prediction(prediction, targeting_client.clone(), args.targeting_url.clone(), &args.targeting_token));
+                tasks.spawn(handle_new_prediction(prediction, targeting_client.clone(), args.targeting_url.clone(), args.targeting_token.clone()));
             }
         }
     }
