@@ -11,7 +11,6 @@ COPY Cargo.toml Cargo.lock ./
 COPY chimp_chomp/Cargo.toml chimp_chomp/Cargo.toml
 COPY chimp_controller/Cargo.toml chimp_controller/Cargo.toml
 COPY chimp_protocol/Cargo.toml chimp_protocol/Cargo.toml
-COPY clap_for_s3/Cargo.toml clap_for_s3/Cargo.toml
 COPY graphql_endpoints/Cargo.toml graphql_endpoints/Cargo.toml
 COPY graphql_event_broker/Cargo.toml graphql_event_broker/Cargo.toml
 COPY opa_client/Cargo.toml opa_client/Cargo.toml
@@ -26,8 +25,6 @@ RUN mkdir chimp_chomp/src \
     && touch chimp_protocol/src/lib.rs \
     && mkdir chimp_controller/src \
     && echo "fn main() {}" > chimp_controller/src/main.rs \
-    && mkdir clap_for_s3/src \
-    && touch clap_for_s3/src/lib.rs \
     && mkdir graphql_endpoints/src \
     && touch graphql_endpoints/src/lib.rs \
     && mkdir graphql_event_broker/src \
@@ -52,7 +49,6 @@ COPY . /app
 RUN touch chimp_chomp/src/main.rs \
     && touch chimp_protocol/src/lib.rs \
     && touch chimp_controller/src/main.rs \
-    && touch clap_for_s3/src/lib.rs \
     && touch graphql_endpoints/src/lib.rs \
     && touch graphql_event_broker/src/lib.rs \
     && touch opa_client/src/lib.rs \

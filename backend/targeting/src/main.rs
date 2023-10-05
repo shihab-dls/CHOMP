@@ -1,6 +1,7 @@
 use async_graphql::extensions::Tracing;
+use aws_credential_types::{provider::SharedCredentialsProvider, Credentials};
+use aws_sdk_s3::{config::Region, Client};
 use clap::{ArgAction::SetTrue, Parser};
-use clap_for_s3::{FromS3ClientArgs, S3ClientArgs};
 use opa_client::OPAClient;
 use std::{fs::File, io::Write, path::PathBuf};
 use targeting::{root_schema_builder, serve, setup_bucket, setup_database, setup_router, S3Bucket};
@@ -36,6 +37,53 @@ struct ServeArgs {
     /// The URL of an Open Policy Agent instance serving the required policy endpoints.
     #[arg(long, env)]
     opa_url: Url,
+}
+
+/// Arguments for configuring the S3 Client.
+#[derive(Debug, Parser)]
+pub struct S3ClientArgs {
+    /// The URL of the S3 endpoint to retrieve images from.
+    #[arg(long, env)]
+    s3_endpoint_url: Option<Url>,
+    /// The ID of the access key used for S3 authorization.
+    #[arg(long, env)]
+    s3_access_key_id: Option<String>,
+    /// The secret access key used for S3 authorization.
+    #[arg(long, env)]
+    s3_secret_access_key: Option<String>,
+    /// Forces path style endpoint URIs for S3 queries.
+    #[arg(long, env, action = SetTrue)]
+    s3_force_path_style: bool,
+    /// The AWS region of the S3 bucket.
+    #[arg(long, env)]
+    s3_region: Option<String>,
+}
+
+pub trait FromS3ClientArgs {
+    /// Creates a S3 [`Client`] with the supplied credentials using the supplied endpoint configuration.
+    fn from_s3_client_args(args: S3ClientArgs) -> Self;
+}
+
+impl FromS3ClientArgs for Client {
+    fn from_s3_client_args(args: S3ClientArgs) -> Self {
+        let credentials = Credentials::new(
+            args.s3_access_key_id.unwrap_or_default(),
+            args.s3_secret_access_key.unwrap_or_default(),
+            None,
+            None,
+            "chimp-chomp-cli",
+        );
+        let credentials_provider = SharedCredentialsProvider::new(credentials);
+        let mut config_builder = aws_sdk_s3::config::Builder::new();
+        config_builder.set_credentials_provider(Some(credentials_provider));
+        config_builder.set_endpoint_url(args.s3_endpoint_url.map(String::from));
+        config_builder.set_force_path_style(Some(args.s3_force_path_style));
+        config_builder.set_region(Some(Region::new(
+            args.s3_region.unwrap_or(String::from("undefined")),
+        )));
+        let config = config_builder.build();
+        Client::from_conf(config)
+    }
 }
 
 #[derive(Debug, Parser)]

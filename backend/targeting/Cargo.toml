@@ -14,11 +14,11 @@ path = "src/main.rs"
 [dependencies]
 anyhow = { workspace = true }
 async-graphql = { workspace = true }
+aws-credential-types = { workspace = true }
 aws-sdk-s3 = { workspace = true }
 axum = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true }
-clap_for_s3 = { path = "../clap_for_s3" }
 derive_more = { workspace = true }
 dotenvy = { workspace = true }
 graphql_endpoints = { path = "../graphql_endpoints" }
