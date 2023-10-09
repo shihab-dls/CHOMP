@@ -11,6 +11,7 @@ members = [
     "soakdb_io",
     "soakdb_sync",
     "targeting",
+    "the_paginator",
 ]
 resolver = "2"
 
