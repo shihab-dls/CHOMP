@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-no-undef */
 import { useQuery, gql, DocumentNode } from "@apollo/client";
 import React from "react";
 import { theme } from "@diamondlightsource/ui-components"
@@ -26,44 +25,38 @@ query pinInfo ($after: String) {
 }
 `;
 
+// Displays libraryPins query in table component. The table can load more data if required 
 function DisplayPinInfo(): React.JSX.Element {
-  const { loading, error, data, fetchMore } = useQuery(GET_INFO);
+  const { loading, error, data, fetchMore } = useQuery(
+    GET_INFO,
+    {
+      notifyOnNetworkStatusChange: true,
+    });
 
-  if (loading) return <p>Loading...</p>;
   if (error) return <p>Error : {error.message} {error.extraInfo}</p>;
 
-  // function to load more content and update query result
   const loadMore = () => {
-    // fetchMore function from `useQuery` to fetch more content with `updateQuery`
     fetchMore({
 
-      // update `after` variable with `endCursor` from previous result
       variables: {
         after: data.libraryPins.pageInfo.endCursor,
       },
 
-      // pass previous query result and the new results to `updateQuery`
       updateQuery: (previousQueryResult, { fetchMoreResult }) => {
-        // define edges and pageInfo from new results
         const newEdges = fetchMoreResult.libraryPins.edges;
         const pageInfo = fetchMoreResult.libraryPins.pageInfo;
-        console.log(pageInfo)
 
         // if newEdges actually have items,
         return newEdges.length
           ? // return a reconstruction of the query result with updated values
             {
-              // spread the value of the previous result
               ...previousQueryResult,
 
               libraryPins: {
-                // spread the value of the previous `allStarhips` data into this object
                 ...previousQueryResult.libraryPins,
 
-                // concatenate edges
                 edges: [...previousQueryResult.libraryPins.edges, ...newEdges],
 
-                // override with new pageInfo
                 pageInfo,
               },
             }
@@ -74,26 +67,29 @@ function DisplayPinInfo(): React.JSX.Element {
   };
 
   return (
-    <>
     <LoadMoreTable
       headers={[
         {
           key: 'barcode',
-          label: 'Barcode'
+          label: 'Barcode',
+          skeletonWidth: 12
         },
         {
           key: 'loopSize',
-          label: 'Loop Size'
+          label: 'Loop Size',
+          skeletonWidth: 3
         },
         {
           key: 'status',
-          label: 'Status'
+          label: 'Status',
+          skeletonWidth: 7
         }
       ]}
-      data={data.libraryPins.edges.map((edge) => edge.node)} 
+      data={data ? data.libraryPins.edges.map((edge) => edge.node): []} 
       onButtonClick={loadMore}
+      loadingRows={loading ? 2 : 0}
+      isDisabled={data ? !data.libraryPins.pageInfo.hasNextPage : false}
       />
-    </>
   );
 }
 

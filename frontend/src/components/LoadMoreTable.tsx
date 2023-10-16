@@ -1,76 +1,28 @@
-import { Box, BoxProps, Heading, Table, Tbody, Td, Th, Thead, Tr, Button, HStack } from "@chakra-ui/react";
+import { Button, HStack } from "@chakra-ui/react";
+import {Table, TableProps} from "./Table"
 import React from "react";
-import { useCallback } from "react";
 
-export interface TableProps extends Omit<BoxProps, "onClick"> {
-  /** Table data */
-  data: Record<string, any>[] | null;
-  /** Table headers and mapping to record keys */
-  headers: { key: string; label: string }[];
-  /** Callback when row is clicked */
-  onRowClick?: (item: Record<string, any>, index: number) => void;
-  /** Label to be used when displaying "no data available" message */
-  label?: string;
-  /** Styling variant to use for the rows */
-  rowVariant?: string;
+export interface LoadMoreTableProps extends TableProps {
   /** feed click behaviour into Load More button */
   onButtonClick?: React.MouseEventHandler<HTMLButtonElement>
+  // number of rows to be added while the table is loading
+  loadingRows?: number
+  //disable button once all data is loaded
+  isDisabled: boolean
 }
 
-const TableView = ({
-  data,
-  headers,
-  onRowClick,
-  label = "data",
-  rowVariant = "diamondStriped",
+const LoadMoreTable = ({
   onButtonClick,
+  loadingRows = 0,
+  isDisabled = false,
   ...props
-}: TableProps) => {
-  const handleClick = useCallback(
-    (row: React.MouseEvent<HTMLTableRowElement>) => {
-      if (onRowClick && data) {
-        const target = (row.target as HTMLTableCellElement).dataset.id;
-        if (target) {
-          const intTarget = parseInt(target);
-          onRowClick(data[intTarget], intTarget);
-        }
-      }
-    },
-    [data, onRowClick],
-  );
+}: LoadMoreTableProps) => {
 
   return (
     <>
-    <Box overflowY='scroll' {...props}>
-      {data === null || data.length === 0 ? (
-        <Heading py={10} w='100%' variant='notFound'>
-          No {label.toLowerCase()} found
-        </Heading>
-      ) : (
-        <Table size='sm' variant={rowVariant}>
-          <Thead>
-            <Tr>
-              {headers.map((header) => (
-                <Th key={header.label}>{header.label}</Th>
-              ))}
-            </Tr>
-          </Thead>
-          <Tbody cursor='pointer'>
-            {data.map((item, i) => (
-              <Tr h='2vh' key={i} onClick={handleClick}>
-                {headers.map((header) => (
-                  <Td data-id={i} key={header.key}>
-                    {item[header.key]}
-                  </Td>
-                ))}
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      )}
-    </Box>
+    <Table {...props} loadingRows={loadingRows}/>
     <HStack justify='center' width='100%'>
-      <Button colorScheme='teal' variant='outline' onClick={onButtonClick}>
+      <Button colorScheme='teal' variant='outline' onClick={onButtonClick} isLoading={loadingRows !== 0} loadingText='Loading' isDisabled={isDisabled}>
         Load More
       </Button>
     </HStack>
@@ -78,4 +30,4 @@ const TableView = ({
   );
 };
 
-export { TableView as LoadMoreTable };
+export { LoadMoreTable };
