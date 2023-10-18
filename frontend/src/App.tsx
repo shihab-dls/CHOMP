@@ -1,10 +1,11 @@
-import { useQuery, gql, DocumentNode } from "@apollo/client";
+import { useQuery } from "@apollo/client";
+import { gql } from './__generated__/gql';
 import React from "react";
 import { theme } from "@diamondlightsource/ui-components"
-import { ChakraProvider } from "@chakra-ui/react";
-import { LoadMoreTable } from "./components/LoadMoreTable";
+import { ChakraProvider, Alert, AlertIcon, AlertTitle, AlertDescription, Button, HStack } from "@chakra-ui/react";
+import { Table } from "./components/Table";
 
-const GET_INFO: DocumentNode = gql`
+const GET_INFO = gql(`
 query pinInfo ($after: String) {
   libraryPins(first: 2, after: $after) {
     pageInfo {
@@ -23,7 +24,7 @@ query pinInfo ($after: String) {
     }
   }
 }
-`;
+`);
 
 // Displays libraryPins query in table component. The table can load more data if required 
 function DisplayPinInfo(): React.JSX.Element {
@@ -33,7 +34,15 @@ function DisplayPinInfo(): React.JSX.Element {
       notifyOnNetworkStatusChange: true,
     });
 
-  if (error) return <p>Error : {error.message} {error.extraInfo}</p>;
+  var loadingRows = loading ? 2 : 0
+
+  if (error) return (
+    <Alert status='error'>
+      <AlertIcon />
+      <AlertTitle>{error.message}</AlertTitle>
+      <AlertDescription>{error.extraInfo}</AlertDescription>
+    </Alert>
+  )
 
   const loadMore = () => {
     fetchMore({
@@ -67,29 +76,41 @@ function DisplayPinInfo(): React.JSX.Element {
   };
 
   return (
-    <LoadMoreTable
-      headers={[
-        {
-          key: 'barcode',
-          label: 'Barcode',
-          skeletonWidth: 12
-        },
-        {
-          key: 'loopSize',
-          label: 'Loop Size',
-          skeletonWidth: 3
-        },
-        {
-          key: 'status',
-          label: 'Status',
-          skeletonWidth: 7
-        }
-      ]}
-      data={data ? data.libraryPins.edges.map((edge) => edge.node): []} 
-      onButtonClick={loadMore}
-      loadingRows={loading ? 2 : 0}
-      isDisabled={data ? !data.libraryPins.pageInfo.hasNextPage : false}
+    <>
+      <Table 
+        headers={[
+          {
+            key: 'barcode',
+            label: 'Barcode',
+            skeletonWidth: 12
+          },
+          {
+            key: 'loopSize',
+            label: 'Loop Size',
+            skeletonWidth: 3
+          },
+          {
+            key: 'status',
+            label: 'Status',
+            skeletonWidth: 7
+          }
+        ]}
+        data={data ? data.libraryPins.edges.map((edge) => edge.node): []}
+        loadingRows={loadingRows}
       />
+      <HStack justify='center' width='100%'>
+        <Button 
+          colorScheme='teal' 
+          variant='outline' 
+          onClick={loadMore} 
+          isLoading={loadingRows !== 0} 
+          loadingText='Loading' 
+          isDisabled={data ? !data.libraryPins.pageInfo.hasNextPage : false}
+        >
+          Load More
+        </Button>
+      </HStack>
+    </>
   );
 }
 

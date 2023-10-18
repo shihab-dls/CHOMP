@@ -3,3 +3,6 @@
 
 # Developer Tooling
 .vscode
+
+# Generated Schema
+pin_packing.graphql
