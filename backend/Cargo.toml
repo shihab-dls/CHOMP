@@ -30,7 +30,7 @@ chrono = { version = "0.4.28", default-features = false }
 clap = { version = "4.4.6", features = ["derive", "env"] }
 derive_more = { version = "0.99.17" }
 dotenvy = { version = "0.15.7" }
-itertools = { version = "0.10.5" }
+itertools = { version = "0.11.0" }
 reqwest = { version = "0.11.22" }
 sea-orm = { version = "0.11.2", default-features = false, features = [
     "macros",
