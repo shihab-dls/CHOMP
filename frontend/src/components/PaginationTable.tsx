@@ -16,7 +16,7 @@ export interface TableProps extends Omit<BoxProps, "onClick"> {
   loadingRows?: number
 }
 
-const TableView = ({
+export const PaginationTable = ({
   data,
   headers,
   onClick,
@@ -78,5 +78,3 @@ const TableView = ({
     </Box>
   );
 };
-
-export { TableView as Table };

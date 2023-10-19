@@ -3,7 +3,7 @@ import { gql } from './__generated__/gql';
 import React from "react";
 import { theme } from "@diamondlightsource/ui-components"
 import { ChakraProvider, Alert, AlertIcon, AlertTitle, AlertDescription, Button, HStack } from "@chakra-ui/react";
-import { Table } from "./components/Table";
+import { PaginationTable } from "./components/Table";
 
 const GET_INFO = gql(`
 query pinInfo ($after: String) {
@@ -77,7 +77,7 @@ function DisplayPinInfo(): React.JSX.Element {
 
   return (
     <>
-      <Table 
+      <PaginationTable 
         headers={[
           {
             key: 'barcode',

@@ -8,8 +8,7 @@
         "rust-lang.rust-analyzer",
         "tamasfe.even-better-toml",
         "tsandall.opa",
-        "ms-kubernetes-tools.vscode-kubernetes-tools",
-        "cweijan.vscode-database-client2"
+        "ms-kubernetes-tools.vscode-kubernetes-tools"
       ],
       "settings": {
         "rust-analyzer.cargo.features": "all",

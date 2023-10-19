@@ -1,7 +1,7 @@
 import { CodegenConfig } from '@graphql-codegen/cli';
 
  const config: CodegenConfig = {
-  schema: '../pin_packing.graphql',
+  schema: process.env.SCHEMA_PATH,
   documents: ['src/**/*.{ts,tsx}'],
   generates: {
     './src/__generated__/': {
