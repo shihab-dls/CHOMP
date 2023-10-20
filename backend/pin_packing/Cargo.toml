@@ -20,3 +20,4 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 url = { workspace = true }
 uuid = { workspace = true }
+the_paginator = { version = "0.1.0", path = "../the_paginator" }

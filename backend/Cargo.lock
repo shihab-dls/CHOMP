@@ -2742,6 +2742,7 @@ dependencies = [
  "opa_client",
  "sea-orm",
  "sea-orm-migration",
+ "the_paginator",
  "tokio",
  "tracing",
  "tracing-subscriber",

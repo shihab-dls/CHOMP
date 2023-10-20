@@ -7,9 +7,8 @@ use async_graphql::{
     ComplexObject, Context, Object,
 };
 use opa_client::subject_authorization;
-use sea_orm::{
-    ActiveValue, CursorTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait,
-};
+use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait};
+use the_paginator::QueryCursorPage;
 
 #[ComplexObject]
 impl pin_library::Model {
@@ -36,28 +35,25 @@ impl PinLibraryQuery {
     {
         subject_authorization!("xchemlab.pin_packing.read_pin_library", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
-        let pin_query = pin_library::Entity::find();
         query(
             after,
             before,
             first,
             last,
-            |after, before, first, last| async move {
-                let mut pin_cursor = pin_query.cursor_by(pin_library::Column::Barcode);
-                if let Some(after) = after {
-                    pin_cursor.after(after);
-                }
-                if let Some(before) = before {
-                    pin_cursor.before(before);
-                }
-                if let Some(first) = first {
-                    pin_cursor.first(first as u64);
-                }
-                if let Some(last) = last {
-                    pin_cursor.last(last as u64);
-                }
-
-                let pins = pin_cursor.all(database).await?;
+            |after, _before, first, last| async move {
+                let pins = match (first, last) {
+                    (Some(limit), None) => Ok(pin_library::Entity::find()
+                        .page_after(pin_library::Column::Barcode, after, limit as u64, database)
+                        .await?
+                        .items),
+                    (None, Some(_limit)) => unimplemented!(),
+                    (None, None) => Err(async_graphql::Error::new(
+                        "Pagination limit must be specificed",
+                    )),
+                    (Some(_), Some(_)) => Err(async_graphql::Error::new(
+                        "Pagination direction could not be determined",
+                    )),
+                }?;
 
                 let mut connection = Connection::new(true, true);
                 connection.edges.extend(
