@@ -4,3 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+async-trait = "0.1.74"
+sea-orm = { workspace = true }
+
+[dev-dependencies]
+sea-orm = { workspace = true, features = ["mock"] }
+tokio = { workspace = true }
