@@ -19,6 +19,7 @@ COPY pin_packing/Cargo.toml pin_packing/Cargo.toml
 COPY soakdb_io/Cargo.toml soakdb_io/Cargo.toml
 COPY soakdb_sync/Cargo.toml soakdb_sync/Cargo.toml
 COPY targeting/Cargo.toml targeting/Cargo.toml
+COPY the_paginator/Cargo.toml the_paginator/Cargo.toml
 RUN mkdir chimp_chomp/src \
     && echo "fn main() {}" > chimp_chomp/src/main.rs \
     && mkdir chimp_protocol/src \
@@ -41,6 +42,8 @@ RUN mkdir chimp_chomp/src \
     && echo "fn main() {}" > soakdb_sync/src/main.rs \
     && mkdir targeting/src/ \
     && echo "fn main() {}" > targeting/src/main.rs \
+    && mkdir the_paginator/src \
+    && touch the_paginator/src/lib.rs \
     && cargo build --release
 
 # Build workspace crates
@@ -56,6 +59,7 @@ RUN touch chimp_chomp/src/lib.rs \
     && touch soakdb_io/src/lib.rs \
     && touch soakdb_sync/src/main.rs \
     && touch targeting/src/main.rs \
+    && touch the_paginator/src/lib.rs \
     && cargo build --release
 
 # Collate dynamically linked shared objects for chimp_chomp
