@@ -9,7 +9,7 @@ use sea_orm::{
         QueryStatementBuilder, SeaRc, SelectStatement, SimpleExpr, ValueTuple, WithClause,
     },
     Condition, ConnectionTrait, DbErr, DynIden, EntityTrait, FromQueryResult, Identity,
-    IntoIdentity, QueryTrait, Select, Statement, Value,
+    IntoIdentity, Order, QueryTrait, Select, Statement, Value,
 };
 
 /// The contents of a cursor indexed page, with indicators for the existance of previous and next pages.
@@ -33,7 +33,7 @@ pub trait QueryCursorPage {
     async fn page_after<Columns, Cursor, DbConn>(
         self,
         columns: Columns,
-        cursor: Cursor,
+        cursor: Option<Cursor>,
         limit: u64,
         db: &DbConn,
     ) -> Result<CursorPage<Self::Item>, DbErr>
@@ -54,7 +54,7 @@ where
     async fn page_after<Columns, Cursor, DbConn>(
         self,
         by: Columns,
-        from: Cursor,
+        from: Option<Cursor>,
         limit: u64,
         db: &DbConn,
     ) -> Result<CursorPage<Self::Item>, DbErr>
@@ -85,23 +85,20 @@ where
             .into_identity()
             .apply_prefix(&base_table_prefix)
             .to_owned();
-        let condition = build_condition(
-            by,
-            from.into_value_tuple(),
-            base_table_iden.clone(),
-            |c, v| Expr::col((base_table_iden.clone(), SeaRc::clone(c))).gt(v),
-        );
 
         let stmt = SelectStatement::new()
             .column(ColumnRef::Asterisk)
-            .from(base_table_iden)
-            .cond_where(condition)
+            .from(base_table_iden.clone())
+            .apply_filter(by.clone(), from, base_table_iden.clone(), |c, v| {
+                Expr::col((base_table_iden.clone(), SeaRc::clone(c))).gt(v)
+            })
+            .apply_order_by(by, base_table_iden, Order::Asc)
             .limit(limit)
             .to_owned()
             .with(with_base_query);
 
         let (sql, values) = stmt.build_any(db.get_database_backend().get_query_builder().as_ref());
-        println!("{sql}");
+        println!("{sql} with {values:?}");
         let statement = Statement {
             sql,
             values: Some(values),
@@ -122,36 +119,91 @@ where
     }
 }
 
-/// Copied from `apply_filter` in [`sea_orm::Cursor`]
-/// See: https://github.com/SeaQL/sea-orm/blob/c69b995800684b3f29eedba289a7e041fc54d328/src/executor/cursor.rs#L69
-fn build_condition<V, F>(columns: Identity, values: V, table: DynIden, f: F) -> Condition
-where
-    V: IntoValueTuple,
-    F: Fn(&DynIden, Value) -> SimpleExpr,
-{
-    match (&columns, values.into_value_tuple()) {
-        (Identity::Unary(c1), ValueTuple::One(v1)) => Condition::all().add(f(c1, v1)),
-        (Identity::Binary(c1, c2), ValueTuple::Two(v1, v2)) => Condition::any()
-            .add(
-                Condition::all()
-                    .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
-                    .add(f(c2, v2)),
-            )
-            .add(f(c1, v1)),
-        (Identity::Ternary(c1, c2, c3), ValueTuple::Three(v1, v2, v3)) => Condition::any()
-            .add(
-                Condition::all()
-                    .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
-                    .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c2))).eq(v2.clone()))
-                    .add(f(c3, v3)),
-            )
-            .add(
-                Condition::all()
-                    .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
-                    .add(f(c2, v2)),
-            )
-            .add(f(c1, v1)),
-        _ => panic!("column arity mismatch"),
+trait ApplyFilter {
+    fn apply_filter<V, F>(
+        &mut self,
+        columns: Identity,
+        values: Option<V>,
+        table: DynIden,
+        f: F,
+    ) -> &mut Self
+    where
+        V: IntoValueTuple,
+        F: Fn(&DynIden, Value) -> SimpleExpr;
+}
+
+impl ApplyFilter for SelectStatement {
+    /// Derived from `apply_filter` in [`sea_orm::Cursor`]
+    /// See: https://github.com/SeaQL/sea-orm/blob/c69b995800684b3f29eedba289a7e041fc54d328/src/executor/cursor.rs#L69
+    fn apply_filter<V, F>(
+        &mut self,
+        columns: Identity,
+        values: Option<V>,
+        table: DynIden,
+        f: F,
+    ) -> &mut Self
+    where
+        V: IntoValueTuple,
+        F: Fn(&DynIden, Value) -> SimpleExpr,
+    {
+        let condition = match (&columns, values.map(IntoValueTuple::into_value_tuple)) {
+            (_, None) => Condition::all(),
+            (Identity::Unary(c1), Some(ValueTuple::One(v1))) => Condition::all().add(f(c1, v1)),
+            (Identity::Binary(c1, c2), Some(ValueTuple::Two(v1, v2))) => Condition::any()
+                .add(
+                    Condition::all()
+                        .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
+                        .add(f(c2, v2)),
+                )
+                .add(f(c1, v1)),
+            (Identity::Ternary(c1, c2, c3), Some(ValueTuple::Three(v1, v2, v3))) => {
+                Condition::any()
+                    .add(
+                        Condition::all()
+                            .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
+                            .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c2))).eq(v2.clone()))
+                            .add(f(c3, v3)),
+                    )
+                    .add(
+                        Condition::all()
+                            .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
+                            .add(f(c2, v2)),
+                    )
+                    .add(f(c1, v1))
+            }
+            _ => panic!("column arity mismatch"),
+        };
+
+        self.cond_where(condition)
+    }
+}
+
+trait ApplyOrderBy {
+    fn apply_order_by(&mut self, columns: Identity, table: DynIden, ord: Order) -> &mut Self;
+}
+
+impl ApplyOrderBy for SelectStatement {
+    /// Derived from `apply_order_by` in [`sea_orm::Cursor`]
+    /// See: https://github.com/SeaQL/sea-orm/blob/e9acabd847d34f5fe257dba1b0b95647853c8af0/src/executor/cursor.rs#L178
+    fn apply_order_by(&mut self, columns: Identity, table: DynIden, ord: Order) -> &mut Self {
+        let order = |query: &mut SelectStatement, col| {
+            query.order_by((SeaRc::clone(&table), SeaRc::clone(col)), ord.clone());
+        };
+        match &columns {
+            Identity::Unary(c1) => {
+                order(self, c1);
+            }
+            Identity::Binary(c1, c2) => {
+                order(self, c1);
+                order(self, c2);
+            }
+            Identity::Ternary(c1, c2, c3) => {
+                order(self, c1);
+                order(self, c2);
+                order(self, c3);
+            }
+        };
+        self
     }
 }
 
@@ -160,8 +212,8 @@ trait ApplyPrefix {
 }
 
 impl ApplyPrefix for SelectStatement {
-    /// Copied from `apply_alias` in [`sea_orm::Select`]
-    ///  https://github.com/SeaQL/sea-orm/blob/c69b995800684b3f29eedba289a7e041fc54d328/src/query/combine.rs#L35
+    /// Derived from `apply_alias` in [`sea_orm::Select`]
+    /// See: https://github.com/SeaQL/sea-orm/blob/c69b995800684b3f29eedba289a7e041fc54d328/src/query/combine.rs#L35
     fn apply_prefix(&mut self, pre: &str) -> &mut Self {
         self.exprs_mut_for_each(|sel| {
             match &sel.alias {
@@ -274,7 +326,32 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn page_after_simple() {
+    async fn page_after_start() {
+        let models = vec![
+            book_table::Model { book_id: 1 },
+            book_table::Model { book_id: 2 },
+            book_table::Model { book_id: 4 },
+        ];
+        let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
+            .append_query_results([models.clone()])
+            .into_connection();
+
+        let page = table::Entity::find()
+            .page_after(table::Column::Id, None::<String>, 3, &db)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            models
+                .into_iter()
+                .map(table::Model::from)
+                .collect::<Vec<_>>(),
+            page.items
+        );
+    }
+
+    #[tokio::test]
+    async fn page_after_cursor() {
         let models = vec![
             book_table::Model { book_id: 33 },
             book_table::Model { book_id: 35 },
@@ -285,7 +362,7 @@ mod tests {
             .into_connection();
 
         let page = table::Entity::find()
-            .page_after(table::Column::Id, 32, 3, &db)
+            .page_after(table::Column::Id, Some(32), 3, &db)
             .await
             .unwrap();
 
