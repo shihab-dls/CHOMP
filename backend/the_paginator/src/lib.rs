@@ -134,7 +134,7 @@ trait ApplyFilter {
 
 impl ApplyFilter for SelectStatement {
     /// Derived from `apply_filter` in [`sea_orm::Cursor`]
-    /// See: https://github.com/SeaQL/sea-orm/blob/c69b995800684b3f29eedba289a7e041fc54d328/src/executor/cursor.rs#L69
+    /// See: <https://github.com/SeaQL/sea-orm/blob/c69b995800684b3f29eedba289a7e041fc54d328/src/executor/cursor.rs#L69>
     fn apply_filter<V, F>(
         &mut self,
         columns: Identity,
@@ -184,7 +184,7 @@ trait ApplyOrderBy {
 
 impl ApplyOrderBy for SelectStatement {
     /// Derived from `apply_order_by` in [`sea_orm::Cursor`]
-    /// See: https://github.com/SeaQL/sea-orm/blob/e9acabd847d34f5fe257dba1b0b95647853c8af0/src/executor/cursor.rs#L178
+    /// See: <https://github.com/SeaQL/sea-orm/blob/e9acabd847d34f5fe257dba1b0b95647853c8af0/src/executor/cursor.rs#L178>
     fn apply_order_by(&mut self, columns: Identity, table: DynIden, ord: Order) -> &mut Self {
         let order = |query: &mut SelectStatement, col| {
             query.order_by((SeaRc::clone(&table), SeaRc::clone(col)), ord.clone());
@@ -213,7 +213,7 @@ trait ApplyPrefix {
 
 impl ApplyPrefix for SelectStatement {
     /// Derived from `apply_alias` in [`sea_orm::Select`]
-    /// See: https://github.com/SeaQL/sea-orm/blob/c69b995800684b3f29eedba289a7e041fc54d328/src/query/combine.rs#L35
+    /// See: <https://github.com/SeaQL/sea-orm/blob/c69b995800684b3f29eedba289a7e041fc54d328/src/query/combine.rs#L35>
     fn apply_prefix(&mut self, pre: &str) -> &mut Self {
         self.exprs_mut_for_each(|sel| {
             match &sel.alias {
