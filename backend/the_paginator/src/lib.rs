@@ -5,12 +5,11 @@
 use async_trait::async_trait;
 use sea_orm::{
     sea_query::{
-        Alias, ColumnRef, CommonTableExpression, Expr, IntoColumnRef, IntoIden, Query,
-        QueryStatementBuilder, SeaRc, SelectStatement, SimpleExpr, UnionType, Values,
-        WindowStatement, WithClause,
+        Alias, ColumnRef, Expr, IntoIden, Query, SeaRc, SelectStatement, SimpleExpr, UnionType,
+        Values, WindowStatement,
     },
-    Condition, ConnectionTrait, DbErr, DynIden, EntityTrait, FromQueryResult, Iden, Identity,
-    Iterable, Order, OrderedStatement, QueryTrait, Statement, Value,
+    Condition, ConnectionTrait, DbErr, DynIden, EntityTrait, FromQueryResult, Iden, Iterable,
+    Order, OrderedStatement, QueryTrait, Statement, Value,
 };
 
 /// The contents of a cursor indexed page, with indicators for the existance of previous and next pages.
@@ -74,30 +73,15 @@ where
     where
         DbConn: ConnectionTrait,
     {
-        const BASE_TABLE: &str = "book";
-        let base_table_prefix = format!("{BASE_TABLE}_");
-        let base_table_iden = Alias::new(BASE_TABLE).into_iden();
-
-        let base_query = Self::find()
-            .into_query()
-            .apply_prefix(&base_table_prefix)
-            .to_owned();
-
-        let with_base_query = WithClause::new()
-            .cte(
-                CommonTableExpression::new()
-                    .query(base_query)
-                    .table_name(base_table_iden.clone())
-                    .to_owned(),
-            )
-            .to_owned();
+        let base_table_prefix = "book_";
 
         let cursor_by = E::PrimaryKey::iter()
+            .map(|pk_idx| SeaRc::new(pk_idx) as SeaRc<dyn Iden>)
+            .collect::<Vec<_>>();
+        let prefixed_cursor_by = cursor_by
+            .iter()
             .map(|pk_idx| {
-                SeaRc::new(Alias::new(&format!(
-                    "{base_table_prefix}{}",
-                    pk_idx.to_string()
-                ))) as SeaRc<dyn Iden>
+                Alias::new(&format!("{base_table_prefix}{}", pk_idx.to_string())).into_iden()
             })
             .collect::<Vec<_>>();
 
@@ -112,14 +96,14 @@ where
                     .expr_window_as(
                         Expr::cust_with_values("LAG(TRUE, $1, FALSE)", [1_i32]),
                         WindowStatement::new()
-                            .apply_order_by(&cursor_by, None, Order::Asc)
+                            .apply_order_by(&prefixed_cursor_by, Order::Asc)
                             .to_owned(),
                         Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_PREVIOUS}")),
                     )
                     .expr_window_as(
                         Expr::cust_with_values("LEAD(TRUE, $1, FALSE)", [limit as i32]),
                         WindowStatement::new()
-                            .apply_order_by(&cursor_by, None, Order::Asc)
+                            .apply_order_by(&prefixed_cursor_by, Order::Asc)
                             .to_owned(),
                         Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_NEXT}")),
                     )
@@ -127,46 +111,26 @@ where
                         Query::select()
                             .column(ColumnRef::Asterisk)
                             .from_subquery(
-                                Query::select()
-                                    .column(ColumnRef::Asterisk)
-                                    .from(base_table_iden.clone())
-                                    .apply_order_by(
-                                        &cursor_by,
-                                        Some(base_table_iden.clone()),
-                                        Order::Desc,
-                                    )
-                                    .apply_filter(
-                                        &cursor_by,
-                                        from.clone(),
-                                        base_table_iden.clone(),
-                                        |c, v| {
-                                            Expr::col((base_table_iden.clone(), SeaRc::clone(c)))
-                                                .lte(v)
-                                        },
-                                    )
+                                E::find()
+                                    .into_query()
+                                    .apply_prefix(base_table_prefix)
+                                    .apply_order_by(&cursor_by, Order::Desc)
+                                    .apply_filter(&cursor_by, from.clone(), |c, v| {
+                                        Expr::col(SeaRc::clone(c)).lte(v)
+                                    })
                                     .limit(1)
                                     .to_owned(),
                                 before_table_iden.clone(),
                             )
                             .union(
                                 UnionType::All,
-                                Query::select()
-                                    .column(ColumnRef::Asterisk)
-                                    .from(base_table_iden.clone())
-                                    .apply_order_by(
-                                        &cursor_by,
-                                        Some(base_table_iden.clone()),
-                                        Order::Asc,
-                                    )
-                                    .apply_filter(
-                                        &cursor_by,
-                                        from.clone(),
-                                        base_table_iden.clone(),
-                                        |c, v| {
-                                            Expr::col((base_table_iden.clone(), SeaRc::clone(c)))
-                                                .gt(v)
-                                        },
-                                    )
+                                E::find()
+                                    .into_query()
+                                    .apply_prefix(base_table_prefix)
+                                    .apply_order_by(&cursor_by, Order::Asc)
+                                    .apply_filter(&cursor_by, from.clone(), |c, v| {
+                                        Expr::col(SeaRc::clone(c)).gt(v)
+                                    })
                                     .limit(limit + 1)
                                     .to_owned(),
                             )
@@ -176,20 +140,12 @@ where
                     .to_owned(),
                 cursored_page_table_iden.clone(),
             )
-            .apply_order_by(
-                &cursor_by,
-                Some(cursored_page_table_iden.clone()),
-                Order::Asc,
-            )
-            .apply_filter(
-                &cursor_by,
-                from.clone(),
-                cursored_page_table_iden.clone(),
-                |c, v| Expr::col((cursored_page_table_iden.clone(), SeaRc::clone(c))).gt(v),
-            )
+            .apply_order_by(&prefixed_cursor_by, Order::Asc)
+            .apply_filter(&prefixed_cursor_by, from.clone(), |c, v| {
+                Expr::col((cursored_page_table_iden.clone(), SeaRc::clone(c))).gt(v)
+            })
             .limit(limit)
-            .to_owned()
-            .with(with_base_query);
+            .to_owned();
 
         let (sql, values) = stmt.build_any(db.get_database_backend().get_query_builder().as_ref());
         println!("{sql} with {values:?}");
@@ -203,7 +159,7 @@ where
         let neighbours = Neighbours::from_query_result(&query_results[0], NEIGHBOURS_PREFIX)?;
         let items = query_results
             .into_iter()
-            .map(|query_result| E::Model::from_query_result(&query_result, &base_table_prefix))
+            .map(|query_result| E::Model::from_query_result(&query_result, base_table_prefix))
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(CursorPage {
@@ -219,7 +175,6 @@ trait ApplyFilter {
         &mut self,
         columns: &[DynIden],
         values: Option<Values>,
-        table: DynIden,
         f: Filter,
     ) -> &mut Self
     where
@@ -233,7 +188,6 @@ impl ApplyFilter for SelectStatement {
         &mut self,
         columns: &[DynIden],
         values: Option<Values>,
-        table: DynIden,
         filter_expr: Filter,
     ) -> &mut Self
     where
@@ -250,7 +204,7 @@ impl ApplyFilter for SelectStatement {
                                 let val = val.clone();
 
                                 let expr = if i != (n - 1) {
-                                    Expr::col((SeaRc::clone(&table), SeaRc::clone(col))).eq(val)
+                                    Expr::col(SeaRc::clone(col)).eq(val)
                                 } else {
                                     filter_expr(col, val)
                                 };
@@ -267,28 +221,13 @@ impl ApplyFilter for SelectStatement {
 }
 
 trait ApplyOrderBy {
-    fn apply_order_by(
-        &mut self,
-        columns: &[DynIden],
-        table: Option<DynIden>,
-        ord: Order,
-    ) -> &mut Self;
+    fn apply_order_by(&mut self, columns: &[DynIden], ord: Order) -> &mut Self;
 }
 
 impl<O: OrderedStatement> ApplyOrderBy for O {
-    fn apply_order_by(
-        &mut self,
-        columns: &[DynIden],
-        table: Option<DynIden>,
-        ord: Order,
-    ) -> &mut Self {
+    fn apply_order_by(&mut self, columns: &[DynIden], ord: Order) -> &mut Self {
         let order = |query: &mut O, col| {
-            let column_ref = if let Some(table) = table.as_ref() {
-                (SeaRc::clone(table), SeaRc::clone(col)).into_column_ref()
-            } else {
-                SeaRc::clone(col).into_column_ref()
-            };
-            query.order_by(column_ref, ord.clone());
+            query.order_by(SeaRc::clone(col), ord.clone());
         };
         for column in columns {
             order(self, column)
@@ -341,26 +280,6 @@ impl ApplyPrefix for SelectStatement {
                 }
             };
         });
-        self
-    }
-}
-
-impl ApplyPrefix for Identity {
-    fn apply_prefix(&mut self, pre: &str) -> &mut Self {
-        match self {
-            Identity::Unary(iden) => {
-                *iden = Alias::new(&format!("{pre}{}", iden.to_string())).into_iden()
-            }
-            Identity::Binary(iden1, iden2) => {
-                *iden1 = Alias::new(&format!("{pre}{}", iden1.to_string())).into_iden();
-                *iden2 = Alias::new(&format!("{pre}{}", iden2.to_string())).into_iden();
-            }
-            Identity::Ternary(iden1, iden2, iden3) => {
-                *iden1 = Alias::new(&format!("{pre}{}", iden1.to_string())).into_iden();
-                *iden2 = Alias::new(&format!("{pre}{}", iden2.to_string())).into_iden();
-                *iden3 = Alias::new(&format!("{pre}{}", iden3.to_string())).into_iden();
-            }
-        };
         self
     }
 }
