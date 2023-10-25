@@ -41,11 +41,10 @@ impl PinLibraryQuery {
             first,
             last,
             |after, _before, first, last| async move {
-                let pins = match (first, last) {
+                let page = match (first, last) {
                     (Some(limit), None) => Ok(pin_library::Entity::find()
                         .page_after(pin_library::Column::Barcode, after, limit as u64, database)
-                        .await?
-                        .items),
+                        .await?),
                     (None, Some(_limit)) => unimplemented!(),
                     (None, None) => Err(async_graphql::Error::new(
                         "Pagination limit must be specificed",
@@ -55,9 +54,10 @@ impl PinLibraryQuery {
                     )),
                 }?;
 
-                let mut connection = Connection::new(true, true);
+                let mut connection = Connection::new(page.has_previous, page.has_next);
                 connection.edges.extend(
-                    pins.into_iter()
+                    page.items
+                        .into_iter()
                         .map(|pin| Edge::new(pin.barcode.clone(), pin)),
                 );
                 Ok::<_, async_graphql::Error>(connection)

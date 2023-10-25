@@ -5,15 +5,16 @@
 use async_trait::async_trait;
 use sea_orm::{
     sea_query::{
-        Alias, ColumnRef, CommonTableExpression, Expr, IntoIden, IntoValueTuple,
-        QueryStatementBuilder, SeaRc, SelectStatement, SimpleExpr, ValueTuple, WithClause,
+        Alias, ColumnRef, CommonTableExpression, Expr, IntoColumnRef, IntoIden, IntoValueTuple,
+        Query, QueryStatementBuilder, SeaRc, SelectStatement, SimpleExpr, UnionType, ValueTuple,
+        WindowStatement, WithClause,
     },
     Condition, ConnectionTrait, DbErr, DynIden, EntityTrait, FromQueryResult, Identity,
-    IntoIdentity, Order, QueryTrait, Select, Statement, Value,
+    IntoIdentity, Order, OrderedStatement, QueryTrait, Select, Statement, Value,
 };
 
 /// The contents of a cursor indexed page, with indicators for the existance of previous and next pages.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct CursorPage<I> {
     /// The rows found in the page
     pub items: Vec<I>,
@@ -21,6 +22,25 @@ pub struct CursorPage<I> {
     pub has_previous: bool,
     /// True if at least one row exists after this page
     pub has_next: bool,
+}
+
+const HAS_PREVIOUS: &str = "has_previous";
+const HAS_NEXT: &str = "has_next";
+const NEIGHBOURS_PREFIX: &str = "neighbours_";
+
+#[derive(Debug)]
+struct Neighbours {
+    pub has_previous: bool,
+    pub has_next: bool,
+}
+
+impl FromQueryResult for Neighbours {
+    fn from_query_result(res: &sea_orm::QueryResult, pre: &str) -> Result<Self, DbErr> {
+        Ok(Self {
+            has_previous: res.try_get::<Option<bool>>(pre, HAS_PREVIOUS)?.is_some(),
+            has_next: res.try_get::<Option<bool>>(pre, HAS_NEXT)?.is_some(),
+        })
+    }
 }
 
 /// Allows for querying of pages from a selection.
@@ -39,7 +59,7 @@ pub trait QueryCursorPage {
     ) -> Result<CursorPage<Self::Item>, DbErr>
     where
         Columns: IntoIdentity + Send + Sync,
-        Cursor: IntoValueTuple + Send + Sync,
+        Cursor: IntoValueTuple + Clone + Send + Sync,
         DbConn: ConnectionTrait;
 }
 
@@ -60,7 +80,7 @@ where
     ) -> Result<CursorPage<Self::Item>, DbErr>
     where
         Columns: IntoIdentity + Send + Sync,
-        Cursor: IntoValueTuple + Send + Sync,
+        Cursor: IntoValueTuple + Clone + Send + Sync,
         DbConn: ConnectionTrait,
     {
         const BASE_TABLE: &str = "book";
@@ -86,13 +106,92 @@ where
             .apply_prefix(&base_table_prefix)
             .to_owned();
 
-        let stmt = SelectStatement::new()
+        let before_table_iden = Alias::new("before").into_iden();
+        let page_table_iden = Alias::new("page").into_iden();
+        let cursored_page_table_iden = Alias::new("cursored_page").into_iden();
+        let stmt = Query::select()
             .column(ColumnRef::Asterisk)
-            .from(base_table_iden.clone())
-            .apply_filter(by.clone(), from, base_table_iden.clone(), |c, v| {
-                Expr::col((base_table_iden.clone(), SeaRc::clone(c))).gt(v)
-            })
-            .apply_order_by(by, base_table_iden, Order::Asc)
+            .from_subquery(
+                Query::select()
+                    .column(ColumnRef::Asterisk)
+                    .expr_window_as(
+                        Expr::cust_with_values("LAG(TRUE, $1)", [1_i32]),
+                        WindowStatement::new()
+                            .apply_order_by(by.clone(), None, Order::Asc)
+                            .to_owned(),
+                        Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_PREVIOUS}")),
+                    )
+                    .expr_window_as(
+                        Expr::cust_with_values("LEAD(TRUE, $1)", [limit as i32]),
+                        WindowStatement::new()
+                            .apply_order_by(by.clone(), None, Order::Asc)
+                            .to_owned(),
+                        Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_NEXT}")),
+                    )
+                    .from_subquery(
+                        Query::select()
+                            .column(ColumnRef::Asterisk)
+                            .from_subquery(
+                                Query::select()
+                                    .column(ColumnRef::Asterisk)
+                                    .from(base_table_iden.clone())
+                                    .apply_order_by(
+                                        by.clone(),
+                                        Some(base_table_iden.clone()),
+                                        Order::Desc,
+                                    )
+                                    .apply_filter(
+                                        by.clone(),
+                                        from.clone(),
+                                        base_table_iden.clone(),
+                                        |c, v| {
+                                            Expr::col((base_table_iden.clone(), SeaRc::clone(c)))
+                                                .lte(v)
+                                        },
+                                    )
+                                    .limit(1)
+                                    .to_owned(),
+                                before_table_iden.clone(),
+                            )
+                            .union(
+                                UnionType::All,
+                                Query::select()
+                                    .column(ColumnRef::Asterisk)
+                                    .from(base_table_iden.clone())
+                                    .apply_order_by(
+                                        by.clone(),
+                                        Some(base_table_iden.clone()),
+                                        Order::Asc,
+                                    )
+                                    .apply_filter(
+                                        by.clone(),
+                                        from.clone(),
+                                        base_table_iden.clone(),
+                                        |c, v| {
+                                            Expr::col((base_table_iden.clone(), SeaRc::clone(c)))
+                                                .gt(v)
+                                        },
+                                    )
+                                    .limit(limit + 1)
+                                    .to_owned(),
+                            )
+                            .to_owned(),
+                        page_table_iden.clone(),
+                    )
+                    .to_owned(),
+                cursored_page_table_iden.clone(),
+            )
+            .apply_order_by(
+                by.clone(),
+                Some(cursored_page_table_iden.clone()),
+                Order::Asc,
+            )
+            .apply_filter(
+                by.clone(),
+                from.clone(),
+                cursored_page_table_iden.clone(),
+                |c, v| Expr::col((cursored_page_table_iden.clone(), SeaRc::clone(c))).gt(v),
+            )
             .limit(limit)
             .to_owned()
             .with(with_base_query);
@@ -106,6 +205,7 @@ where
         };
 
         let query_results = db.query_all(statement).await?;
+        let neighbours = Neighbours::from_query_result(&query_results[0], NEIGHBOURS_PREFIX)?;
         let items = query_results
             .into_iter()
             .map(|query_result| M::from_query_result(&query_result, &base_table_prefix))
@@ -113,63 +213,65 @@ where
 
         Ok(CursorPage {
             items,
-            has_next: false,
-            has_previous: false,
+            has_next: neighbours.has_next,
+            has_previous: neighbours.has_previous,
         })
     }
 }
 
 trait ApplyFilter {
-    fn apply_filter<V, F>(
+    fn apply_filter<Cursor, Filter>(
         &mut self,
         columns: Identity,
-        values: Option<V>,
+        values: Option<Cursor>,
         table: DynIden,
-        f: F,
+        f: Filter,
     ) -> &mut Self
     where
-        V: IntoValueTuple,
-        F: Fn(&DynIden, Value) -> SimpleExpr;
+        Cursor: IntoValueTuple,
+        Filter: Fn(&DynIden, Value) -> SimpleExpr;
 }
 
 impl ApplyFilter for SelectStatement {
     /// Derived from `apply_filter` in [`sea_orm::Cursor`]
     /// See: <https://github.com/SeaQL/sea-orm/blob/c69b995800684b3f29eedba289a7e041fc54d328/src/executor/cursor.rs#L69>
-    fn apply_filter<V, F>(
+    fn apply_filter<Cursor, Filter>(
         &mut self,
         columns: Identity,
-        values: Option<V>,
+        values: Option<Cursor>,
         table: DynIden,
-        f: F,
+        filter_expr: Filter,
     ) -> &mut Self
     where
-        V: IntoValueTuple,
-        F: Fn(&DynIden, Value) -> SimpleExpr,
+        Cursor: IntoValueTuple,
+        Filter: Fn(&DynIden, Value) -> SimpleExpr,
     {
         let condition = match (&columns, values.map(IntoValueTuple::into_value_tuple)) {
             (_, None) => Condition::all(),
-            (Identity::Unary(c1), Some(ValueTuple::One(v1))) => Condition::all().add(f(c1, v1)),
+            (Identity::Unary(c1), Some(ValueTuple::One(v1))) => {
+                Condition::all().add(filter_expr(c1, v1))
+            }
             (Identity::Binary(c1, c2), Some(ValueTuple::Two(v1, v2))) => Condition::any()
                 .add(
                     Condition::all()
                         .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
-                        .add(f(c2, v2)),
+                        .add(filter_expr(c2, v2)),
                 )
-                .add(f(c1, v1)),
+                .add(filter_expr(c1, v1)),
             (Identity::Ternary(c1, c2, c3), Some(ValueTuple::Three(v1, v2, v3))) => {
                 Condition::any()
                     .add(
                         Condition::all()
                             .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
                             .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c2))).eq(v2.clone()))
-                            .add(f(c3, v3)),
+                            .add(filter_expr(c3, v3)),
                     )
                     .add(
                         Condition::all()
                             .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
-                            .add(f(c2, v2)),
+                            .add(filter_expr(c2, v2)),
                     )
-                    .add(f(c1, v1))
+                    .add(filter_expr(c1, v1))
             }
             _ => panic!("column arity mismatch"),
         };
@@ -179,15 +281,28 @@ impl ApplyFilter for SelectStatement {
 }
 
 trait ApplyOrderBy {
-    fn apply_order_by(&mut self, columns: Identity, table: DynIden, ord: Order) -> &mut Self;
+    fn apply_order_by(
+        &mut self,
+        columns: Identity,
+        table: Option<DynIden>,
+        ord: Order,
+    ) -> &mut Self;
 }
 
-impl ApplyOrderBy for SelectStatement {
-    /// Derived from `apply_order_by` in [`sea_orm::Cursor`]
-    /// See: <https://github.com/SeaQL/sea-orm/blob/e9acabd847d34f5fe257dba1b0b95647853c8af0/src/executor/cursor.rs#L178>
-    fn apply_order_by(&mut self, columns: Identity, table: DynIden, ord: Order) -> &mut Self {
-        let order = |query: &mut SelectStatement, col| {
-            query.order_by((SeaRc::clone(&table), SeaRc::clone(col)), ord.clone());
+impl<O: OrderedStatement> ApplyOrderBy for O {
+    fn apply_order_by(
+        &mut self,
+        columns: Identity,
+        table: Option<DynIden>,
+        ord: Order,
+    ) -> &mut Self {
+        let order = |query: &mut O, col| {
+            let column_ref = if let Some(table) = table.as_ref() {
+                (SeaRc::clone(table), SeaRc::clone(col)).into_column_ref()
+            } else {
+                SeaRc::clone(col).into_column_ref()
+            };
+            query.order_by(column_ref, ord.clone());
         };
         match &columns {
             Identity::Unary(c1) => {
@@ -277,11 +392,11 @@ impl ApplyPrefix for Identity {
 
 #[cfg(test)]
 mod tests {
-    use crate::QueryCursorPage;
+    use crate::{CursorPage, QueryCursorPage};
     use sea_orm::{EntityTrait, MockDatabase};
 
     mod table {
-        use super::book_table;
+        use super::result_table;
         use sea_orm::{
             ActiveModelBehavior, DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait,
             EnumIter, PrimaryKeyTrait,
@@ -299,14 +414,14 @@ mod tests {
 
         impl ActiveModelBehavior for ActiveModel {}
 
-        impl From<book_table::Model> for Model {
-            fn from(value: book_table::Model) -> Self {
+        impl From<result_table::Model> for Model {
+            fn from(value: result_table::Model) -> Self {
                 Self { id: value.book_id }
             }
         }
     }
 
-    mod book_table {
+    mod result_table {
         use sea_orm::{
             ActiveModelBehavior, DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait,
             EnumIter, PrimaryKeyTrait,
@@ -317,6 +432,8 @@ mod tests {
         pub struct Model {
             #[sea_orm(primary_key)]
             pub book_id: u64,
+            pub neighbours_has_previous: Option<bool>,
+            pub neighbours_has_next: Option<bool>,
         }
 
         #[derive(Debug, EnumIter, DeriveRelation)]
@@ -328,9 +445,21 @@ mod tests {
     #[tokio::test]
     async fn page_after_start() {
         let models = vec![
-            book_table::Model { book_id: 1 },
-            book_table::Model { book_id: 2 },
-            book_table::Model { book_id: 4 },
+            result_table::Model {
+                book_id: 1,
+                neighbours_has_previous: None,
+                neighbours_has_next: Some(true),
+            },
+            result_table::Model {
+                book_id: 2,
+                neighbours_has_previous: Some(true),
+                neighbours_has_next: None,
+            },
+            result_table::Model {
+                book_id: 4,
+                neighbours_has_previous: Some(true),
+                neighbours_has_next: None,
+            },
         ];
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results([models.clone()])
@@ -342,20 +471,33 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            models
-                .into_iter()
-                .map(table::Model::from)
-                .collect::<Vec<_>>(),
-            page.items
+            CursorPage {
+                items: models.into_iter().map(table::Model::from).collect(),
+                has_next: true,
+                has_previous: false
+            },
+            page
         );
     }
 
     #[tokio::test]
     async fn page_after_cursor() {
         let models = vec![
-            book_table::Model { book_id: 33 },
-            book_table::Model { book_id: 35 },
-            book_table::Model { book_id: 38 },
+            result_table::Model {
+                book_id: 33,
+                neighbours_has_next: None,
+                neighbours_has_previous: Some(true),
+            },
+            result_table::Model {
+                book_id: 35,
+                neighbours_has_next: None,
+                neighbours_has_previous: Some(true),
+            },
+            result_table::Model {
+                book_id: 38,
+                neighbours_has_next: None,
+                neighbours_has_previous: Some(true),
+            },
         ];
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results([models.clone()])
@@ -367,11 +509,15 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            models
-                .into_iter()
-                .map(table::Model::from)
-                .collect::<Vec<_>>(),
-            page.items
+            CursorPage {
+                has_next: false,
+                has_previous: true,
+                items: models
+                    .into_iter()
+                    .map(table::Model::from)
+                    .collect::<Vec<_>>(),
+            },
+            page
         );
     }
 }
