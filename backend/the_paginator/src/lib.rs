@@ -37,8 +37,8 @@ struct Neighbours {
 impl FromQueryResult for Neighbours {
     fn from_query_result(res: &sea_orm::QueryResult, pre: &str) -> Result<Self, DbErr> {
         Ok(Self {
-            has_previous: res.try_get::<Option<bool>>(pre, HAS_PREVIOUS)?.is_some(),
-            has_next: res.try_get::<Option<bool>>(pre, HAS_NEXT)?.is_some(),
+            has_previous: res.try_get(pre, HAS_PREVIOUS)?,
+            has_next: res.try_get(pre, HAS_NEXT)?,
         })
     }
 }
@@ -115,14 +115,14 @@ where
                 Query::select()
                     .column(ColumnRef::Asterisk)
                     .expr_window_as(
-                        Expr::cust_with_values("LAG(TRUE, $1)", [1_i32]),
+                        Expr::cust_with_values("LAG(TRUE, $1, FALSE)", [1_i32]),
                         WindowStatement::new()
                             .apply_order_by(by.clone(), None, Order::Asc)
                             .to_owned(),
                         Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_PREVIOUS}")),
                     )
                     .expr_window_as(
-                        Expr::cust_with_values("LEAD(TRUE, $1)", [limit as i32]),
+                        Expr::cust_with_values("LEAD(TRUE, $1, FALSE)", [limit as i32]),
                         WindowStatement::new()
                             .apply_order_by(by.clone(), None, Order::Asc)
                             .to_owned(),
@@ -432,8 +432,8 @@ mod tests {
         pub struct Model {
             #[sea_orm(primary_key)]
             pub book_id: u64,
-            pub neighbours_has_previous: Option<bool>,
-            pub neighbours_has_next: Option<bool>,
+            pub neighbours_has_previous: bool,
+            pub neighbours_has_next: bool,
         }
 
         #[derive(Debug, EnumIter, DeriveRelation)]
@@ -447,18 +447,18 @@ mod tests {
         let models = vec![
             result_table::Model {
                 book_id: 1,
-                neighbours_has_previous: None,
-                neighbours_has_next: Some(true),
+                neighbours_has_previous: false,
+                neighbours_has_next: true,
             },
             result_table::Model {
                 book_id: 2,
-                neighbours_has_previous: Some(true),
-                neighbours_has_next: None,
+                neighbours_has_previous: true,
+                neighbours_has_next: false,
             },
             result_table::Model {
                 book_id: 4,
-                neighbours_has_previous: Some(true),
-                neighbours_has_next: None,
+                neighbours_has_previous: true,
+                neighbours_has_next: false,
             },
         ];
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
@@ -485,18 +485,18 @@ mod tests {
         let models = vec![
             result_table::Model {
                 book_id: 33,
-                neighbours_has_next: None,
-                neighbours_has_previous: Some(true),
+                neighbours_has_next: false,
+                neighbours_has_previous: true,
             },
             result_table::Model {
                 book_id: 35,
-                neighbours_has_next: None,
-                neighbours_has_previous: Some(true),
+                neighbours_has_next: false,
+                neighbours_has_previous: true,
             },
             result_table::Model {
                 book_id: 38,
-                neighbours_has_next: None,
-                neighbours_has_previous: Some(true),
+                neighbours_has_next: false,
+                neighbours_has_previous: true,
             },
         ];
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
