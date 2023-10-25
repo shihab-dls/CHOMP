@@ -5,12 +5,12 @@
 use async_trait::async_trait;
 use sea_orm::{
     sea_query::{
-        Alias, ColumnRef, CommonTableExpression, Expr, IntoColumnRef, IntoIden, IntoValueTuple,
-        Query, QueryStatementBuilder, SeaRc, SelectStatement, SimpleExpr, UnionType, ValueTuple,
+        Alias, ColumnRef, CommonTableExpression, Expr, IntoColumnRef, IntoIden, Query,
+        QueryStatementBuilder, SeaRc, SelectStatement, SimpleExpr, UnionType, Values,
         WindowStatement, WithClause,
     },
-    Condition, ConnectionTrait, DbErr, DynIden, EntityTrait, FromQueryResult, Identity,
-    IntoIdentity, Order, OrderedStatement, QueryTrait, Select, Statement, Value,
+    Condition, ConnectionTrait, DbErr, DynIden, EntityTrait, FromQueryResult, Iden, Identity,
+    Iterable, Order, OrderedStatement, QueryTrait, Statement, Value,
 };
 
 /// The contents of a cursor indexed page, with indicators for the existance of previous and next pages.
@@ -50,44 +50,35 @@ pub trait QueryCursorPage {
     type Item;
 
     /// Get a page of limited size after the cursor.
-    async fn page_after<Columns, Cursor, DbConn>(
-        self,
-        columns: Columns,
-        cursor: Option<Cursor>,
+    async fn page_after<DbConn>(
+        cursor: Option<Values>,
         limit: u64,
         db: &DbConn,
     ) -> Result<CursorPage<Self::Item>, DbErr>
     where
-        Columns: IntoIdentity + Send + Sync,
-        Cursor: IntoValueTuple + Clone + Send + Sync,
         DbConn: ConnectionTrait;
 }
 
 #[async_trait]
-impl<E, M> QueryCursorPage for Select<E>
+impl<E> QueryCursorPage for E
 where
-    E: EntityTrait<Model = M>,
-    M: FromQueryResult + Sized + Send + Sync,
+    E: EntityTrait,
 {
-    type Item = M;
+    type Item = E::Model;
 
-    async fn page_after<Columns, Cursor, DbConn>(
-        self,
-        by: Columns,
-        from: Option<Cursor>,
+    async fn page_after<DbConn>(
+        from: Option<Values>,
         limit: u64,
         db: &DbConn,
     ) -> Result<CursorPage<Self::Item>, DbErr>
     where
-        Columns: IntoIdentity + Send + Sync,
-        Cursor: IntoValueTuple + Clone + Send + Sync,
         DbConn: ConnectionTrait,
     {
         const BASE_TABLE: &str = "book";
         let base_table_prefix = format!("{BASE_TABLE}_");
         let base_table_iden = Alias::new(BASE_TABLE).into_iden();
 
-        let base_query = self
+        let base_query = Self::find()
             .into_query()
             .apply_prefix(&base_table_prefix)
             .to_owned();
@@ -101,10 +92,14 @@ where
             )
             .to_owned();
 
-        let by = by
-            .into_identity()
-            .apply_prefix(&base_table_prefix)
-            .to_owned();
+        let cursor_by = E::PrimaryKey::iter()
+            .map(|pk_idx| {
+                SeaRc::new(Alias::new(&format!(
+                    "{base_table_prefix}{}",
+                    pk_idx.to_string()
+                ))) as SeaRc<dyn Iden>
+            })
+            .collect::<Vec<_>>();
 
         let before_table_iden = Alias::new("before").into_iden();
         let page_table_iden = Alias::new("page").into_iden();
@@ -117,14 +112,14 @@ where
                     .expr_window_as(
                         Expr::cust_with_values("LAG(TRUE, $1, FALSE)", [1_i32]),
                         WindowStatement::new()
-                            .apply_order_by(by.clone(), None, Order::Asc)
+                            .apply_order_by(&cursor_by, None, Order::Asc)
                             .to_owned(),
                         Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_PREVIOUS}")),
                     )
                     .expr_window_as(
                         Expr::cust_with_values("LEAD(TRUE, $1, FALSE)", [limit as i32]),
                         WindowStatement::new()
-                            .apply_order_by(by.clone(), None, Order::Asc)
+                            .apply_order_by(&cursor_by, None, Order::Asc)
                             .to_owned(),
                         Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_NEXT}")),
                     )
@@ -136,12 +131,12 @@ where
                                     .column(ColumnRef::Asterisk)
                                     .from(base_table_iden.clone())
                                     .apply_order_by(
-                                        by.clone(),
+                                        &cursor_by,
                                         Some(base_table_iden.clone()),
                                         Order::Desc,
                                     )
                                     .apply_filter(
-                                        by.clone(),
+                                        &cursor_by,
                                         from.clone(),
                                         base_table_iden.clone(),
                                         |c, v| {
@@ -159,12 +154,12 @@ where
                                     .column(ColumnRef::Asterisk)
                                     .from(base_table_iden.clone())
                                     .apply_order_by(
-                                        by.clone(),
+                                        &cursor_by,
                                         Some(base_table_iden.clone()),
                                         Order::Asc,
                                     )
                                     .apply_filter(
-                                        by.clone(),
+                                        &cursor_by,
                                         from.clone(),
                                         base_table_iden.clone(),
                                         |c, v| {
@@ -182,12 +177,12 @@ where
                 cursored_page_table_iden.clone(),
             )
             .apply_order_by(
-                by.clone(),
+                &cursor_by,
                 Some(cursored_page_table_iden.clone()),
                 Order::Asc,
             )
             .apply_filter(
-                by.clone(),
+                &cursor_by,
                 from.clone(),
                 cursored_page_table_iden.clone(),
                 |c, v| Expr::col((cursored_page_table_iden.clone(), SeaRc::clone(c))).gt(v),
@@ -208,7 +203,7 @@ where
         let neighbours = Neighbours::from_query_result(&query_results[0], NEIGHBOURS_PREFIX)?;
         let items = query_results
             .into_iter()
-            .map(|query_result| M::from_query_result(&query_result, &base_table_prefix))
+            .map(|query_result| E::Model::from_query_result(&query_result, &base_table_prefix))
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(CursorPage {
@@ -220,70 +215,61 @@ where
 }
 
 trait ApplyFilter {
-    fn apply_filter<Cursor, Filter>(
+    fn apply_filter<Filter>(
         &mut self,
-        columns: Identity,
-        values: Option<Cursor>,
+        columns: &[DynIden],
+        values: Option<Values>,
         table: DynIden,
         f: Filter,
     ) -> &mut Self
     where
-        Cursor: IntoValueTuple,
         Filter: Fn(&DynIden, Value) -> SimpleExpr;
 }
 
 impl ApplyFilter for SelectStatement {
     /// Derived from `apply_filter` in [`sea_orm::Cursor`]
     /// See: <https://github.com/SeaQL/sea-orm/blob/c69b995800684b3f29eedba289a7e041fc54d328/src/executor/cursor.rs#L69>
-    fn apply_filter<Cursor, Filter>(
+    fn apply_filter<Filter>(
         &mut self,
-        columns: Identity,
-        values: Option<Cursor>,
+        columns: &[DynIden],
+        values: Option<Values>,
         table: DynIden,
         filter_expr: Filter,
     ) -> &mut Self
     where
-        Cursor: IntoValueTuple,
         Filter: Fn(&DynIden, Value) -> SimpleExpr,
     {
-        let condition = match (&columns, values.map(IntoValueTuple::into_value_tuple)) {
-            (_, None) => Condition::all(),
-            (Identity::Unary(c1), Some(ValueTuple::One(v1))) => {
-                Condition::all().add(filter_expr(c1, v1))
-            }
-            (Identity::Binary(c1, c2), Some(ValueTuple::Two(v1, v2))) => Condition::any()
-                .add(
-                    Condition::all()
-                        .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
-                        .add(filter_expr(c2, v2)),
-                )
-                .add(filter_expr(c1, v1)),
-            (Identity::Ternary(c1, c2, c3), Some(ValueTuple::Three(v1, v2, v3))) => {
-                Condition::any()
-                    .add(
-                        Condition::all()
-                            .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
-                            .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c2))).eq(v2.clone()))
-                            .add(filter_expr(c3, v3)),
-                    )
-                    .add(
-                        Condition::all()
-                            .add(Expr::col((SeaRc::clone(&table), SeaRc::clone(c1))).eq(v1.clone()))
-                            .add(filter_expr(c2, v2)),
-                    )
-                    .add(filter_expr(c1, v1))
-            }
-            _ => panic!("column arity mismatch"),
-        };
+        if let Some(values) = values {
+            let condition = (1..=columns.len())
+                .rev()
+                .fold(Condition::any(), |cond_any, n| {
+                    let inner_cond_all =
+                        columns.iter().zip(values.iter()).enumerate().take(n).fold(
+                            Condition::all(),
+                            |inner_cond_all, (i, (col, val))| {
+                                let val = val.clone();
 
-        self.cond_where(condition)
+                                let expr = if i != (n - 1) {
+                                    Expr::col((SeaRc::clone(&table), SeaRc::clone(col))).eq(val)
+                                } else {
+                                    filter_expr(col, val)
+                                };
+                                inner_cond_all.add(expr)
+                            },
+                        );
+                    cond_any.add(inner_cond_all)
+                });
+
+            self.cond_where(condition);
+        }
+        self
     }
 }
 
 trait ApplyOrderBy {
     fn apply_order_by(
         &mut self,
-        columns: Identity,
+        columns: &[DynIden],
         table: Option<DynIden>,
         ord: Order,
     ) -> &mut Self;
@@ -292,7 +278,7 @@ trait ApplyOrderBy {
 impl<O: OrderedStatement> ApplyOrderBy for O {
     fn apply_order_by(
         &mut self,
-        columns: Identity,
+        columns: &[DynIden],
         table: Option<DynIden>,
         ord: Order,
     ) -> &mut Self {
@@ -304,20 +290,9 @@ impl<O: OrderedStatement> ApplyOrderBy for O {
             };
             query.order_by(column_ref, ord.clone());
         };
-        match &columns {
-            Identity::Unary(c1) => {
-                order(self, c1);
-            }
-            Identity::Binary(c1, c2) => {
-                order(self, c1);
-                order(self, c2);
-            }
-            Identity::Ternary(c1, c2, c3) => {
-                order(self, c1);
-                order(self, c2);
-                order(self, c3);
-            }
-        };
+        for column in columns {
+            order(self, column)
+        }
         self
     }
 }
@@ -392,8 +367,9 @@ impl ApplyPrefix for Identity {
 
 #[cfg(test)]
 mod tests {
-    use crate::{CursorPage, QueryCursorPage};
-    use sea_orm::{EntityTrait, MockDatabase};
+    use super::QueryCursorPage;
+    use crate::CursorPage;
+    use sea_orm::{MockDatabase, Value, Values};
 
     mod table {
         use super::result_table;
@@ -465,10 +441,7 @@ mod tests {
             .append_query_results([models.clone()])
             .into_connection();
 
-        let page = table::Entity::find()
-            .page_after(table::Column::Id, None::<String>, 3, &db)
-            .await
-            .unwrap();
+        let page = table::Entity::page_after(None, 3, &db).await.unwrap();
 
         assert_eq!(
             CursorPage {
@@ -503,8 +476,7 @@ mod tests {
             .append_query_results([models.clone()])
             .into_connection();
 
-        let page = table::Entity::find()
-            .page_after(table::Column::Id, Some(32), 3, &db)
+        let page = table::Entity::page_after(Some(Values(vec![Value::from(32)])), 3, &db)
             .await
             .unwrap();
 

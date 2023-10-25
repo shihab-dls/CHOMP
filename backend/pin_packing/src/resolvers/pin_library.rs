@@ -7,7 +7,9 @@ use async_graphql::{
     ComplexObject, Context, Object,
 };
 use opa_client::subject_authorization;
-use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait};
+use sea_orm::{
+    ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, Value, Values,
+};
 use the_paginator::QueryCursorPage;
 
 #[ComplexObject]
@@ -42,9 +44,12 @@ impl PinLibraryQuery {
             last,
             |after, _before, first, last| async move {
                 let page = match (first, last) {
-                    (Some(limit), None) => Ok(pin_library::Entity::find()
-                        .page_after(pin_library::Column::Barcode, after, limit as u64, database)
-                        .await?),
+                    (Some(limit), None) => Ok(pin_library::Entity::page_after(
+                        after.map(|after| Values(vec![Value::from(after)])),
+                        limit as u64,
+                        database,
+                    )
+                    .await?),
                     (None, Some(_limit)) => unimplemented!(),
                     (None, None) => Err(async_graphql::Error::new(
                         "Pagination limit must be specificed",
