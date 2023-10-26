@@ -1,6 +1,9 @@
-use crate::tables::{
-    pin_library::{self, PinStatus},
-    pin_mount,
+use crate::{
+    resolvers::Cursor,
+    tables::{
+        pin_library::{self, PinStatus},
+        pin_mount,
+    },
 };
 use async_graphql::{
     connection::{query, Connection, Edge, EmptyFields},
@@ -29,19 +32,16 @@ impl PinLibraryQuery {
     async fn library_pins(
         &self,
         ctx: &Context<'_>,
-        after: Option<String>,
-        before: Option<String>,
-        first: Option<i32>,
-        last: Option<i32>,
+        cursor: Cursor,
     ) -> async_graphql::Result<Connection<String, pin_library::Model, EmptyFields, EmptyFields>>
     {
         subject_authorization!("xchemlab.pin_packing.read_pin_library", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
         query(
-            after,
-            before,
-            first,
-            last,
+            cursor.after,
+            cursor.before,
+            cursor.first,
+            cursor.last,
             |after, before, first, last| async move {
                 let page = match (first, last) {
                     (Some(limit), None) => Ok(pin_library::Entity::page_after(
