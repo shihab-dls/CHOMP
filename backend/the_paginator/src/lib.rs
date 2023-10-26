@@ -9,7 +9,7 @@ use sea_orm::{
         Values, WindowStatement,
     },
     Condition, ConnectionTrait, DbErr, DynIden, EntityTrait, FromQueryResult, Iden, Iterable,
-    Order, OrderedStatement, QueryTrait, Statement, Value,
+    Order, OrderedStatement, QueryTrait, Value,
 };
 
 /// The contents of a cursor indexed page, with indicators for the existance of previous and next pages.
@@ -85,9 +85,6 @@ where
             })
             .collect::<Vec<_>>();
 
-        let before_table_iden = Alias::new("before").into_iden();
-        let page_table_iden = Alias::new("page").into_iden();
-        let cursored_page_table_iden = Alias::new("cursored_page").into_iden();
         let stmt = Query::select()
             .column(ColumnRef::Asterisk)
             .from_subquery(
@@ -120,7 +117,7 @@ where
                                     })
                                     .limit(1)
                                     .to_owned(),
-                                before_table_iden.clone(),
+                                Alias::new("before").into_iden(),
                             )
                             .union(
                                 UnionType::All,
@@ -135,26 +132,19 @@ where
                                     .to_owned(),
                             )
                             .to_owned(),
-                        page_table_iden.clone(),
+                        Alias::new("page").into_iden(),
                     )
                     .to_owned(),
-                cursored_page_table_iden.clone(),
+                Alias::new("cursored_page").into_iden(),
             )
             .apply_order_by(&prefixed_cursor_by, Order::Asc)
             .apply_filter(&prefixed_cursor_by, from.clone(), |c, v| {
-                Expr::col((cursored_page_table_iden.clone(), SeaRc::clone(c))).gt(v)
+                Expr::col(SeaRc::clone(c)).gt(v)
             })
             .limit(limit)
             .to_owned();
 
-        let (sql, values) = stmt.build_any(db.get_database_backend().get_query_builder().as_ref());
-        println!("{sql} with {values:?}");
-        let statement = Statement {
-            sql,
-            values: Some(values),
-            db_backend: db.get_database_backend(),
-        };
-
+        let statement = db.get_database_backend().build(&stmt);
         let query_results = db.query_all(statement).await?;
         let neighbours = Neighbours::from_query_result(&query_results[0], NEIGHBOURS_PREFIX)?;
         let items = query_results
