@@ -56,14 +56,161 @@ pub trait QueryCursorPage {
     ) -> Result<CursorPage<Self::Item>, DbErr>
     where
         DbConn: ConnectionTrait;
+
+    /// Get a page of limited size before the cursor.
+    async fn page_before<DbConn>(
+        cursor: Option<Values>,
+        limit: u64,
+        db: &DbConn,
+    ) -> Result<CursorPage<Self::Item>, DbErr>
+    where
+        DbConn: ConnectionTrait;
+}
+
+#[derive(Debug, Clone, Copy)]
+enum PageDirection {
+    Forward,
+    Backward,
+}
+
+impl PageDirection {
+    fn lag(self, limit: u64) -> u64 {
+        match self {
+            Self::Forward => 1,
+            Self::Backward => limit,
+        }
+    }
+
+    fn lead(self, limit: u64) -> u64 {
+        match self {
+            Self::Forward => limit,
+            Self::Backward => 1,
+        }
+    }
+
+    fn order(self) -> Order {
+        match self {
+            Self::Forward => Order::Asc,
+            Self::Backward => Order::Desc,
+        }
+    }
+
+    fn rev_order(self) -> Order {
+        match self {
+            Self::Forward => Order::Desc,
+            Self::Backward => Order::Asc,
+        }
+    }
+
+    fn filter_expr(self) -> impl Fn(&DynIden, Value) -> SimpleExpr {
+        move |c, v| match self {
+            Self::Forward => Expr::col(SeaRc::clone(c)).gt(v),
+            Self::Backward => Expr::col(SeaRc::clone(c)).lt(v),
+        }
+    }
+
+    fn rev_filter_expr(self) -> impl Fn(&DynIden, Value) -> SimpleExpr {
+        move |c, v| match self {
+            Self::Forward => Expr::col(SeaRc::clone(c)).lte(v),
+            Self::Backward => Expr::col(SeaRc::clone(c)).gte(v),
+        }
+    }
+}
+
+async fn get_page<Entity, DbConn>(
+    direction: PageDirection,
+    from: Option<Values>,
+    limit: u64,
+    db: &DbConn,
+) -> Result<CursorPage<Entity::Model>, DbErr>
+where
+    Entity: EntityTrait,
+    DbConn: ConnectionTrait,
+{
+    let base_table_prefix = "book_";
+
+    let cursor_by = Entity::PrimaryKey::iter()
+        .map(|pk_idx| SeaRc::new(pk_idx) as SeaRc<dyn Iden>)
+        .collect::<Vec<_>>();
+    let prefixed_cursor_by = cursor_by
+        .iter()
+        .map(|pk_idx| Alias::new(&format!("{base_table_prefix}{}", pk_idx.to_string())).into_iden())
+        .collect::<Vec<_>>();
+
+    let stmt = Query::select()
+        .column(ColumnRef::Asterisk)
+        .from_subquery(
+            Query::select()
+                .column(ColumnRef::Asterisk)
+                .expr_window_as(
+                    Expr::cust_with_values("LAG(TRUE, $1, FALSE)", [direction.lag(limit) as i32]),
+                    WindowStatement::new()
+                        .apply_order_by(&prefixed_cursor_by, direction.order())
+                        .to_owned(),
+                    Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_PREVIOUS}")),
+                )
+                .expr_window_as(
+                    Expr::cust_with_values("LEAD(TRUE, $1, FALSE)", [direction.lead(limit) as i32]),
+                    WindowStatement::new()
+                        .apply_order_by(&prefixed_cursor_by, direction.order())
+                        .to_owned(),
+                    Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_NEXT}")),
+                )
+                .from_subquery(
+                    Query::select()
+                        .column(ColumnRef::Asterisk)
+                        .from_subquery(
+                            Entity::find()
+                                .into_query()
+                                .apply_prefix(base_table_prefix)
+                                .apply_order_by(&cursor_by, direction.rev_order())
+                                .apply_filter(&cursor_by, from.clone(), direction.rev_filter_expr())
+                                .limit(1)
+                                .to_owned(),
+                            Alias::new("before").into_iden(),
+                        )
+                        .union(
+                            UnionType::All,
+                            Entity::find()
+                                .into_query()
+                                .apply_prefix(base_table_prefix)
+                                .apply_order_by(&cursor_by, direction.order())
+                                .apply_filter(&cursor_by, from.clone(), direction.filter_expr())
+                                .limit(limit + 1)
+                                .to_owned(),
+                        )
+                        .to_owned(),
+                    Alias::new("page").into_iden(),
+                )
+                .to_owned(),
+            Alias::new("cursored_page").into_iden(),
+        )
+        .apply_order_by(&prefixed_cursor_by, direction.order())
+        .apply_filter(&prefixed_cursor_by, from.clone(), direction.filter_expr())
+        .limit(limit)
+        .to_owned();
+
+    let statement = db.get_database_backend().build(&stmt);
+    let query_results = db.query_all(statement).await?;
+    let neighbours = Neighbours::from_query_result(&query_results[0], NEIGHBOURS_PREFIX)?;
+    let items = query_results
+        .into_iter()
+        .map(|query_result| Entity::Model::from_query_result(&query_result, base_table_prefix))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(CursorPage {
+        items,
+        has_next: neighbours.has_next,
+        has_previous: neighbours.has_previous,
+    })
 }
 
 #[async_trait]
-impl<E> QueryCursorPage for E
+impl<Entity> QueryCursorPage for Entity
 where
-    E: EntityTrait,
+    Entity: EntityTrait,
 {
-    type Item = E::Model;
+    type Item = Entity::Model;
 
     async fn page_after<DbConn>(
         from: Option<Values>,
@@ -73,90 +220,18 @@ where
     where
         DbConn: ConnectionTrait,
     {
-        let base_table_prefix = "book_";
+        get_page::<Entity, _>(PageDirection::Forward, from, limit, db).await
+    }
 
-        let cursor_by = E::PrimaryKey::iter()
-            .map(|pk_idx| SeaRc::new(pk_idx) as SeaRc<dyn Iden>)
-            .collect::<Vec<_>>();
-        let prefixed_cursor_by = cursor_by
-            .iter()
-            .map(|pk_idx| {
-                Alias::new(&format!("{base_table_prefix}{}", pk_idx.to_string())).into_iden()
-            })
-            .collect::<Vec<_>>();
-
-        let stmt = Query::select()
-            .column(ColumnRef::Asterisk)
-            .from_subquery(
-                Query::select()
-                    .column(ColumnRef::Asterisk)
-                    .expr_window_as(
-                        Expr::cust_with_values("LAG(TRUE, $1, FALSE)", [1_i32]),
-                        WindowStatement::new()
-                            .apply_order_by(&prefixed_cursor_by, Order::Asc)
-                            .to_owned(),
-                        Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_PREVIOUS}")),
-                    )
-                    .expr_window_as(
-                        Expr::cust_with_values("LEAD(TRUE, $1, FALSE)", [limit as i32]),
-                        WindowStatement::new()
-                            .apply_order_by(&prefixed_cursor_by, Order::Asc)
-                            .to_owned(),
-                        Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_NEXT}")),
-                    )
-                    .from_subquery(
-                        Query::select()
-                            .column(ColumnRef::Asterisk)
-                            .from_subquery(
-                                E::find()
-                                    .into_query()
-                                    .apply_prefix(base_table_prefix)
-                                    .apply_order_by(&cursor_by, Order::Desc)
-                                    .apply_filter(&cursor_by, from.clone(), |c, v| {
-                                        Expr::col(SeaRc::clone(c)).lte(v)
-                                    })
-                                    .limit(1)
-                                    .to_owned(),
-                                Alias::new("before").into_iden(),
-                            )
-                            .union(
-                                UnionType::All,
-                                E::find()
-                                    .into_query()
-                                    .apply_prefix(base_table_prefix)
-                                    .apply_order_by(&cursor_by, Order::Asc)
-                                    .apply_filter(&cursor_by, from.clone(), |c, v| {
-                                        Expr::col(SeaRc::clone(c)).gt(v)
-                                    })
-                                    .limit(limit + 1)
-                                    .to_owned(),
-                            )
-                            .to_owned(),
-                        Alias::new("page").into_iden(),
-                    )
-                    .to_owned(),
-                Alias::new("cursored_page").into_iden(),
-            )
-            .apply_order_by(&prefixed_cursor_by, Order::Asc)
-            .apply_filter(&prefixed_cursor_by, from.clone(), |c, v| {
-                Expr::col(SeaRc::clone(c)).gt(v)
-            })
-            .limit(limit)
-            .to_owned();
-
-        let statement = db.get_database_backend().build(&stmt);
-        let query_results = db.query_all(statement).await?;
-        let neighbours = Neighbours::from_query_result(&query_results[0], NEIGHBOURS_PREFIX)?;
-        let items = query_results
-            .into_iter()
-            .map(|query_result| E::Model::from_query_result(&query_result, base_table_prefix))
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(CursorPage {
-            items,
-            has_next: neighbours.has_next,
-            has_previous: neighbours.has_previous,
-        })
+    async fn page_before<DbConn>(
+        from: Option<Values>,
+        limit: u64,
+        db: &DbConn,
+    ) -> Result<CursorPage<Self::Item>, DbErr>
+    where
+        DbConn: ConnectionTrait,
+    {
+        get_page::<Entity, _>(PageDirection::Backward, from, limit, db).await
     }
 }
 

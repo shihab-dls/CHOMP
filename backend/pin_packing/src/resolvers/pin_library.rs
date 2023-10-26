@@ -42,7 +42,7 @@ impl PinLibraryQuery {
             before,
             first,
             last,
-            |after, _before, first, last| async move {
+            |after, before, first, last| async move {
                 let page = match (first, last) {
                     (Some(limit), None) => Ok(pin_library::Entity::page_after(
                         after.map(|after| Values(vec![Value::from(after)])),
@@ -50,7 +50,12 @@ impl PinLibraryQuery {
                         database,
                     )
                     .await?),
-                    (None, Some(_limit)) => unimplemented!(),
+                    (None, Some(limit)) => Ok(pin_library::Entity::page_before(
+                        before.map(|before| Values(vec![Value::from(before)])),
+                        limit as u64,
+                        database,
+                    )
+                    .await?),
                     (None, None) => Err(async_graphql::Error::new(
                         "Pagination limit must be specificed",
                     )),
