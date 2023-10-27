@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.74"
 sea-orm = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 sea-orm = { workspace = true, features = ["mock"] }

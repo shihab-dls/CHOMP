@@ -6,14 +6,12 @@ use crate::{
     },
 };
 use async_graphql::{
-    connection::{query, Connection, Edge, EmptyFields},
+    connection::{Connection, Edge, EmptyFields},
     ComplexObject, Context, Object,
 };
 use opa_client::subject_authorization;
-use sea_orm::{
-    ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, Value, Values,
-};
-use the_paginator::QueryCursorPage;
+use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait};
+use the_paginator::QueryCursor;
 
 #[ComplexObject]
 impl pin_library::Model {
@@ -37,43 +35,23 @@ impl PinLibraryQuery {
     {
         subject_authorization!("xchemlab.pin_packing.read_pin_library", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
-        query(
+
+        let page = QueryCursor::<pin_library::Entity>::from_bounds(
             cursor.after,
             cursor.before,
-            cursor.first,
-            cursor.last,
-            |after, before, first, last| async move {
-                let page = match (first, last) {
-                    (Some(limit), None) => Ok(pin_library::Entity::page_after(
-                        after.map(|after| Values(vec![Value::from(after)])),
-                        limit as u64,
-                        database,
-                    )
-                    .await?),
-                    (None, Some(limit)) => Ok(pin_library::Entity::page_before(
-                        before.map(|before| Values(vec![Value::from(before)])),
-                        limit as u64,
-                        database,
-                    )
-                    .await?),
-                    (None, None) => Err(async_graphql::Error::new(
-                        "Pagination limit must be specificed",
-                    )),
-                    (Some(_), Some(_)) => Err(async_graphql::Error::new(
-                        "Pagination direction could not be determined",
-                    )),
-                }?;
+            cursor.first.map(|first| first as u64),
+            cursor.last.map(|last| last as u64),
+        )?
+        .all(database)
+        .await?;
 
-                let mut connection = Connection::new(page.has_previous, page.has_next);
-                connection.edges.extend(
-                    page.items
-                        .into_iter()
-                        .map(|pin| Edge::new(pin.barcode.clone(), pin)),
-                );
-                Ok::<_, async_graphql::Error>(connection)
-            },
-        )
-        .await
+        let mut connection = Connection::new(page.has_previous, page.has_next);
+        connection.edges.extend(
+            page.items
+                .into_iter()
+                .map(|pin| Edge::new(pin.barcode.clone(), pin)),
+        );
+        Ok(connection)
     }
 }
 

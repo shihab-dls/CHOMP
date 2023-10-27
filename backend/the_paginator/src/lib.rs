@@ -2,14 +2,13 @@
 #![warn(missing_docs)]
 #![doc=include_str!("../README.md")]
 
-use async_trait::async_trait;
 use sea_orm::{
     sea_query::{
-        Alias, ColumnRef, Expr, IntoIden, Query, SeaRc, SelectStatement, SimpleExpr, UnionType,
-        Values, WindowStatement,
+        Alias, ColumnRef, Expr, IntoIden, IntoValueTuple, Query, SeaRc, SelectStatement,
+        SimpleExpr, UnionType, ValueTuple, Values, WindowStatement,
     },
     Condition, ConnectionTrait, DbErr, DynIden, EntityTrait, FromQueryResult, Iden, Iterable,
-    Order, OrderedStatement, QueryTrait, Value,
+    Order, OrderedStatement, PrimaryKeyTrait, QueryTrait, Value,
 };
 
 /// The contents of a cursor indexed page, with indicators for the existance of previous and next pages.
@@ -42,196 +41,222 @@ impl FromQueryResult for Neighbours {
     }
 }
 
-/// Allows for querying of pages from a selection.
-#[async_trait]
-pub trait QueryCursorPage {
-    /// The type of item returned as page contents.
-    type Item;
-
-    /// Get a page of limited size after the cursor.
-    async fn page_after<DbConn>(
-        cursor: Option<Values>,
-        limit: u64,
-        db: &DbConn,
-    ) -> Result<CursorPage<Self::Item>, DbErr>
-    where
-        DbConn: ConnectionTrait;
-
-    /// Get a page of limited size before the cursor.
-    async fn page_before<DbConn>(
-        cursor: Option<Values>,
-        limit: u64,
-        db: &DbConn,
-    ) -> Result<CursorPage<Self::Item>, DbErr>
-    where
-        DbConn: ConnectionTrait;
+/// The cursor used to retrieve a page from the database using cursor based pagination
+#[derive(Debug)]
+pub struct QueryCursor<Entity: EntityTrait> {
+    after: Option<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>,
+    before: Option<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>,
+    limit: u64,
+    direction: PageDirection,
 }
 
+/// An error which occured when attempting to create the [`QueryCursor`]
+#[derive(Debug, thiserror::Error)]
+pub enum CursorCreationError {
+    /// The page limit was not specified by either a first or last interval
+    #[error("Page limit must be specified")]
+    UnspecifiedLimit,
+    /// The page direction could not be determined as both first and last were specified
+    #[error("Pagination direction could not be determined")]
+    IndeterminateDirection,
+}
+
+/// The direction of pagination
 #[derive(Debug, Clone, Copy)]
-enum PageDirection {
+pub enum PageDirection {
+    /// In ascending order
     Forward,
+    /// In descending order
     Backward,
 }
 
-impl PageDirection {
-    fn lag(self, limit: u64) -> u64 {
-        match self {
-            Self::Forward => 1,
-            Self::Backward => limit,
-        }
-    }
-
-    fn lead(self, limit: u64) -> u64 {
-        match self {
-            Self::Forward => limit,
-            Self::Backward => 1,
-        }
-    }
-
-    fn order(self) -> Order {
-        match self {
-            Self::Forward => Order::Asc,
-            Self::Backward => Order::Desc,
-        }
-    }
-
-    fn rev_order(self) -> Order {
-        match self {
-            Self::Forward => Order::Desc,
-            Self::Backward => Order::Asc,
-        }
-    }
-
-    fn filter_expr(self) -> impl Fn(&DynIden, Value) -> SimpleExpr {
-        move |c, v| match self {
-            Self::Forward => Expr::col(SeaRc::clone(c)).gt(v),
-            Self::Backward => Expr::col(SeaRc::clone(c)).lt(v),
-        }
-    }
-
-    fn rev_filter_expr(self) -> impl Fn(&DynIden, Value) -> SimpleExpr {
-        move |c, v| match self {
-            Self::Forward => Expr::col(SeaRc::clone(c)).lte(v),
-            Self::Backward => Expr::col(SeaRc::clone(c)).gte(v),
-        }
-    }
-}
-
-async fn get_page<Entity, DbConn>(
-    direction: PageDirection,
-    from: Option<Values>,
-    limit: u64,
-    db: &DbConn,
-) -> Result<CursorPage<Entity::Model>, DbErr>
+impl<Entity> QueryCursor<Entity>
 where
     Entity: EntityTrait,
-    DbConn: ConnectionTrait,
+    <Entity::PrimaryKey as PrimaryKeyTrait>::ValueType: Clone,
 {
-    let base_table_prefix = "book_";
-
-    let cursor_by = Entity::PrimaryKey::iter()
-        .map(|pk_idx| SeaRc::new(pk_idx) as SeaRc<dyn Iden>)
-        .collect::<Vec<_>>();
-    let prefixed_cursor_by = cursor_by
-        .iter()
-        .map(|pk_idx| Alias::new(&format!("{base_table_prefix}{}", pk_idx.to_string())).into_iden())
-        .collect::<Vec<_>>();
-
-    let stmt = Query::select()
-        .column(ColumnRef::Asterisk)
-        .from_subquery(
-            Query::select()
-                .column(ColumnRef::Asterisk)
-                .expr_window_as(
-                    Expr::cust_with_values("LAG(TRUE, $1, FALSE)", [direction.lag(limit) as i32]),
-                    WindowStatement::new()
-                        .apply_order_by(&prefixed_cursor_by, direction.order())
-                        .to_owned(),
-                    Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_PREVIOUS}")),
-                )
-                .expr_window_as(
-                    Expr::cust_with_values("LEAD(TRUE, $1, FALSE)", [direction.lead(limit) as i32]),
-                    WindowStatement::new()
-                        .apply_order_by(&prefixed_cursor_by, direction.order())
-                        .to_owned(),
-                    Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_NEXT}")),
-                )
-                .from_subquery(
-                    Query::select()
-                        .column(ColumnRef::Asterisk)
-                        .from_subquery(
-                            Entity::find()
-                                .into_query()
-                                .apply_prefix(base_table_prefix)
-                                .apply_order_by(&cursor_by, direction.rev_order())
-                                .apply_filter(&cursor_by, from.clone(), direction.rev_filter_expr())
-                                .limit(1)
-                                .to_owned(),
-                            Alias::new("before").into_iden(),
-                        )
-                        .union(
-                            UnionType::All,
-                            Entity::find()
-                                .into_query()
-                                .apply_prefix(base_table_prefix)
-                                .apply_order_by(&cursor_by, direction.order())
-                                .apply_filter(&cursor_by, from.clone(), direction.filter_expr())
-                                .limit(limit + 1)
-                                .to_owned(),
-                        )
-                        .to_owned(),
-                    Alias::new("page").into_iden(),
-                )
-                .to_owned(),
-            Alias::new("cursored_page").into_iden(),
-        )
-        .apply_order_by(&prefixed_cursor_by, direction.order())
-        .apply_filter(&prefixed_cursor_by, from.clone(), direction.filter_expr())
-        .limit(limit)
-        .to_owned();
-
-    let statement = db.get_database_backend().build(&stmt);
-    let query_results = db.query_all(statement).await?;
-    let neighbours = Neighbours::from_query_result(&query_results[0], NEIGHBOURS_PREFIX)?;
-    let items = query_results
-        .into_iter()
-        .map(|query_result| Entity::Model::from_query_result(&query_result, base_table_prefix))
-        .collect::<Result<Vec<_>, _>>()?;
-
-    Ok(CursorPage {
-        items,
-        has_next: neighbours.has_next,
-        has_previous: neighbours.has_previous,
-    })
-}
-
-#[async_trait]
-impl<Entity> QueryCursorPage for Entity
-where
-    Entity: EntityTrait,
-{
-    type Item = Entity::Model;
-
-    async fn page_after<DbConn>(
-        from: Option<Values>,
+    /// Constructs a [`QueryCursor`] from bounds and a page size in a given direction
+    pub fn new(
+        after: Option<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>,
+        before: Option<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>,
         limit: u64,
-        db: &DbConn,
-    ) -> Result<CursorPage<Self::Item>, DbErr>
+        direction: PageDirection,
+    ) -> Self {
+        Self {
+            after,
+            before,
+            limit,
+            direction,
+        }
+    }
+
+    /// Constructs a [`QueryCursor`] from [`Option`]al cursors before and after and a size limit determined by either first or last
+    pub fn from_bounds(
+        after: Option<impl Into<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>>,
+        before: Option<impl Into<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>>,
+        first: Option<impl Into<u64>>,
+        last: Option<impl Into<u64>>,
+    ) -> Result<Self, CursorCreationError> {
+        let (limit, direction) = match (first, last) {
+            (Some(_), Some(_)) => Err(CursorCreationError::IndeterminateDirection),
+            (Some(first), None) => Ok((first.into(), PageDirection::Forward)),
+            (None, Some(last)) => Ok((last.into(), PageDirection::Backward)),
+            (None, None) => Err(CursorCreationError::UnspecifiedLimit),
+        }?;
+        Ok(Self {
+            after: after.map(|after| after.into()),
+            before: before.map(|before| before.into()),
+            limit,
+            direction,
+        })
+    }
+
+    fn lag(&self) -> u64 {
+        match self.direction {
+            PageDirection::Forward => 1,
+            PageDirection::Backward => self.limit,
+        }
+    }
+
+    fn lead(&self) -> u64 {
+        match self.direction {
+            PageDirection::Forward => self.limit,
+            PageDirection::Backward => 1,
+        }
+    }
+
+    fn order(&self) -> Order {
+        match self.direction {
+            PageDirection::Forward => Order::Asc,
+            PageDirection::Backward => Order::Desc,
+        }
+    }
+
+    fn rev_order(&self) -> Order {
+        match self.direction {
+            PageDirection::Forward => Order::Desc,
+            PageDirection::Backward => Order::Asc,
+        }
+    }
+
+    fn lower_bound(&self) -> Option<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType> {
+        match self.direction {
+            PageDirection::Forward => self.after.clone(),
+            PageDirection::Backward => self.before.clone(),
+        }
+    }
+
+    fn filter_expr(&self) -> impl Fn(&DynIden, Value) -> SimpleExpr {
+        let direction = self.direction;
+        move |c, v| match direction {
+            PageDirection::Forward => Expr::col(SeaRc::clone(c)).gt(v),
+            PageDirection::Backward => Expr::col(SeaRc::clone(c)).lt(v),
+        }
+    }
+
+    fn rev_filter_expr(&self) -> impl Fn(&DynIden, Value) -> SimpleExpr {
+        let direction = self.direction;
+        move |c, v| match direction {
+            PageDirection::Forward => Expr::col(SeaRc::clone(c)).lte(v),
+            PageDirection::Backward => Expr::col(SeaRc::clone(c)).gte(v),
+        }
+    }
+
+    /// Fetches all items in the page and provides indication of whether a previous and next page exists
+    pub async fn all<DbConn>(self, db: &DbConn) -> Result<CursorPage<Entity::Model>, DbErr>
     where
         DbConn: ConnectionTrait,
     {
-        get_page::<Entity, _>(PageDirection::Forward, from, limit, db).await
-    }
+        let base_table_prefix = "book_";
 
-    async fn page_before<DbConn>(
-        from: Option<Values>,
-        limit: u64,
-        db: &DbConn,
-    ) -> Result<CursorPage<Self::Item>, DbErr>
-    where
-        DbConn: ConnectionTrait,
-    {
-        get_page::<Entity, _>(PageDirection::Backward, from, limit, db).await
+        let cursor_by = Entity::PrimaryKey::iter()
+            .map(|pk_idx| SeaRc::new(pk_idx) as SeaRc<dyn Iden>)
+            .collect::<Vec<_>>();
+        let prefixed_cursor_by = cursor_by
+            .iter()
+            .map(|pk_idx| {
+                Alias::new(&format!("{base_table_prefix}{}", pk_idx.to_string())).into_iden()
+            })
+            .collect::<Vec<_>>();
+
+        let stmt = Query::select()
+            .column(ColumnRef::Asterisk)
+            .from_subquery(
+                Query::select()
+                    .column(ColumnRef::Asterisk)
+                    .expr_window_as(
+                        Expr::cust_with_values("LAG(TRUE, $1, FALSE)", [self.lag() as i32]),
+                        WindowStatement::new()
+                            .apply_order_by(&prefixed_cursor_by, self.order())
+                            .to_owned(),
+                        Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_PREVIOUS}")),
+                    )
+                    .expr_window_as(
+                        Expr::cust_with_values("LEAD(TRUE, $1, FALSE)", [self.lead() as i32]),
+                        WindowStatement::new()
+                            .apply_order_by(&prefixed_cursor_by, self.order())
+                            .to_owned(),
+                        Alias::new(&format!("{NEIGHBOURS_PREFIX}{HAS_NEXT}")),
+                    )
+                    .from_subquery(
+                        Query::select()
+                            .column(ColumnRef::Asterisk)
+                            .from_subquery(
+                                Entity::find()
+                                    .into_query()
+                                    .apply_prefix(base_table_prefix)
+                                    .apply_order_by(&cursor_by, self.rev_order())
+                                    .apply_filter(
+                                        &cursor_by,
+                                        self.lower_bound().map(|bound| bound.into_value_tuple()),
+                                        self.rev_filter_expr(),
+                                    )
+                                    .limit(1)
+                                    .to_owned(),
+                                Alias::new("before").into_iden(),
+                            )
+                            .union(
+                                UnionType::All,
+                                Entity::find()
+                                    .into_query()
+                                    .apply_prefix(base_table_prefix)
+                                    .apply_order_by(&cursor_by, self.order())
+                                    .apply_filter(
+                                        &cursor_by,
+                                        self.lower_bound().map(|bound| bound.into_value_tuple()),
+                                        self.filter_expr(),
+                                    )
+                                    .limit(self.limit + 1)
+                                    .to_owned(),
+                            )
+                            .to_owned(),
+                        Alias::new("page").into_iden(),
+                    )
+                    .to_owned(),
+                Alias::new("cursored_page").into_iden(),
+            )
+            .apply_order_by(&prefixed_cursor_by, self.order())
+            .apply_filter(
+                &prefixed_cursor_by,
+                self.lower_bound().map(|bound| bound.into_value_tuple()),
+                self.filter_expr(),
+            )
+            .limit(self.limit)
+            .to_owned();
+
+        let statement = db.get_database_backend().build(&stmt);
+        let query_results = db.query_all(statement).await?;
+        let neighbours = Neighbours::from_query_result(&query_results[0], NEIGHBOURS_PREFIX)?;
+        let items = query_results
+            .into_iter()
+            .map(|query_result| Entity::Model::from_query_result(&query_result, base_table_prefix))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(CursorPage {
+            items,
+            has_next: neighbours.has_next,
+            has_previous: neighbours.has_previous,
+        })
     }
 }
 
@@ -239,7 +264,7 @@ trait ApplyFilter {
     fn apply_filter<Filter>(
         &mut self,
         columns: &[DynIden],
-        values: Option<Values>,
+        values: Option<ValueTuple>,
         f: Filter,
     ) -> &mut Self
     where
@@ -252,12 +277,13 @@ impl ApplyFilter for SelectStatement {
     fn apply_filter<Filter>(
         &mut self,
         columns: &[DynIden],
-        values: Option<Values>,
+        values: Option<ValueTuple>,
         filter_expr: Filter,
     ) -> &mut Self
     where
         Filter: Fn(&DynIden, Value) -> SimpleExpr,
     {
+        let values = values.map(|values| Values(values.into_iter().collect()));
         if let Some(values) = values {
             let condition = (1..=columns.len())
                 .rev()
@@ -351,9 +377,8 @@ impl ApplyPrefix for SelectStatement {
 
 #[cfg(test)]
 mod tests {
-    use super::QueryCursorPage;
-    use crate::CursorPage;
-    use sea_orm::{MockDatabase, Value, Values};
+    use crate::{CursorPage, PageDirection, QueryCursor};
+    use sea_orm::MockDatabase;
 
     mod table {
         use super::result_table;
@@ -425,7 +450,10 @@ mod tests {
             .append_query_results([models.clone()])
             .into_connection();
 
-        let page = table::Entity::page_after(None, 3, &db).await.unwrap();
+        let page = QueryCursor::<table::Entity>::new(None, None, 3, PageDirection::Forward)
+            .all(&db)
+            .await
+            .unwrap();
 
         assert_eq!(
             CursorPage {
@@ -460,7 +488,8 @@ mod tests {
             .append_query_results([models.clone()])
             .into_connection();
 
-        let page = table::Entity::page_after(Some(Values(vec![Value::from(32)])), 3, &db)
+        let page = QueryCursor::<table::Entity>::new(Some(32), None, 3, PageDirection::Forward)
+            .all(&db)
             .await
             .unwrap();
 
