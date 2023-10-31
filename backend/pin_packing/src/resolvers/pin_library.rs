@@ -1,9 +1,6 @@
-use crate::{
-    resolvers::CursorInput,
-    tables::{
-        pin_library::{self, PinStatus},
-        pin_mount,
-    },
+use crate::tables::{
+    pin_library::{self, PinStatus},
+    pin_mount,
 };
 use async_graphql::{
     connection::{Connection, Edge, EmptyFields},
@@ -11,6 +8,7 @@ use async_graphql::{
 };
 use opa_client::subject_authorization;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait};
+use the_paginator::graphql::CursorInput;
 
 #[ComplexObject]
 impl pin_library::Model {
@@ -36,7 +34,7 @@ impl PinLibraryQuery {
         let database = ctx.data::<DatabaseConnection>()?;
 
         let page = cursor
-            .into_query_cursor::<pin_library::Entity>()?
+            .try_into_query_cursor::<pin_library::Entity>()?
             .all(database)
             .await?;
 

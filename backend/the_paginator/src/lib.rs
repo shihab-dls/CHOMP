@@ -2,6 +2,10 @@
 #![warn(missing_docs)]
 #![doc=include_str!("../README.md")]
 
+#[cfg(feature = "async-graphql")]
+/// Helpers to assist with [`async_graphql`] integration
+pub mod graphql;
+
 use sea_orm::{
     sea_query::{
         Alias, ColumnRef, Expr, IntoIden, IntoValueTuple, Query, SeaRc, SelectStatement,

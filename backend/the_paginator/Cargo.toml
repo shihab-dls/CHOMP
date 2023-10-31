@@ -3,10 +3,16 @@ name = "the_paginator"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+async-graphql = ["dep:async-graphql"]
+
 [dependencies]
 async-trait = "0.1.74"
 sea-orm = { workspace = true }
 thiserror = { workspace = true }
+
+# async-graphql
+async-graphql = { workspace = true, optional = true }
 
 [dev-dependencies]
 sea-orm = { workspace = true, features = ["mock"] }
