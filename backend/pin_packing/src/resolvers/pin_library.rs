@@ -33,7 +33,7 @@ impl PinLibraryQuery {
             .try_into_query_cursor::<pin_library::Entity>()?
             .all(database)
             .await?
-            .into_connection(|item| item.barcode.clone()))
+            .try_into_connection()?)
     }
 }
 

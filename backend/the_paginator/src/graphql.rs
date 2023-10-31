@@ -6,7 +6,10 @@ use async_graphql::{
     },
     InputObject, OutputType,
 };
-use sea_orm::{EntityTrait, ModelTrait, PrimaryKeyTrait};
+use sea_orm::{
+    sea_query::{FromValueTuple, ValueTuple},
+    EntityTrait, Iterable, ModelTrait, PrimaryKeyToColumn, PrimaryKeyTrait,
+};
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
 
@@ -110,25 +113,82 @@ pub type ModelConnection<Model: ModelTrait> = Connection<
     DisableNodesField,
 >;
 
+/// An error produces when primary key extraction fails
+#[derive(Debug, thiserror::Error)]
+#[error("Failed to extract the primary key")]
+pub struct PrimaryKeyExtractionError;
+
+fn try_extract_primary_key<Model>(
+    model: &Model,
+) -> Result<
+    <<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
+    PrimaryKeyExtractionError,
+>
+where
+    Model: ModelTrait,
+{
+    let columns = <Model::Entity as EntityTrait>::PrimaryKey::iter()
+        .map(|key| key.into_column())
+        .collect::<Vec<_>>();
+    let values = match columns.len() {
+        1 => Ok(ValueTuple::One(model.get(columns[0]))),
+        2 => Ok(ValueTuple::Two(
+            model.get(columns[0]),
+            model.get(columns[1]),
+        )),
+        3 => Ok(ValueTuple::Three(
+            model.get(columns[0]),
+            model.get(columns[1]),
+            model.get(columns[2]),
+        )),
+        4 => Ok(ValueTuple::Four(
+            model.get(columns[0]),
+            model.get(columns[1]),
+            model.get(columns[2]),
+            model.get(columns[3]),
+        )),
+        5 => Ok(ValueTuple::Five(
+            model.get(columns[0]),
+            model.get(columns[1]),
+            model.get(columns[2]),
+            model.get(columns[3]),
+            model.get(columns[4]),
+        )),
+        6 => Ok(ValueTuple::Six(
+            model.get(columns[0]),
+            model.get(columns[1]),
+            model.get(columns[2]),
+            model.get(columns[3]),
+            model.get(columns[4]),
+            model.get(columns[5]),
+        )),
+        _ => Err(PrimaryKeyExtractionError),
+    }?;
+    Ok(<<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType::from_value_tuple(
+            values,
+        ))
+}
+
 impl<Model> CursorPage<Model>
 where
     Model: ModelTrait + OutputType,
-    <Model::Entity as EntityTrait>::Model: OutputType,
     <<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType:
         Serialize + DeserializeOwned + Sync,
 {
     /// Converts the [`CursorPage`] into an [`Connection`], with each item as an edge
-    pub fn into_connection(
-        self,
-        extract_cursor: impl Fn(&Model) -> <<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
-    ) -> ModelConnection<Model> {
-        let edges = self.items.into_iter().map(|item| {
-            let cursor = OpaqueCursor(extract_cursor(&item));
-            Edge::new(cursor, item)
-        });
+    pub fn try_into_connection(self) -> Result<ModelConnection<Model>, PrimaryKeyExtractionError> {
+        let edges = self
+            .items
+            .into_iter()
+            .map(|item| {
+                let primary_key = try_extract_primary_key(&item)?;
+                let cursor = OpaqueCursor(primary_key);
+                Ok(Edge::new(cursor, item))
+            })
+            .collect::<Result<Vec<_>, PrimaryKeyExtractionError>>()?;
 
         let mut connection = Connection::new(self.has_previous, self.has_next);
         connection.edges.extend(edges);
-        connection
+        Ok(connection)
     }
 }
