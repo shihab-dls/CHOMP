@@ -9,6 +9,7 @@ async-graphql = ["dep:async-graphql"]
 [dependencies]
 async-trait = "0.1.74"
 sea-orm = { workspace = true }
+serde = { version = "1.0.190" }
 thiserror = { workspace = true }
 
 # async-graphql

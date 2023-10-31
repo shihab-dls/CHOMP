@@ -3801,6 +3801,7 @@ dependencies = [
  "async-graphql",
  "async-trait",
  "sea-orm",
+ "serde",
  "thiserror",
  "tokio",
 ]

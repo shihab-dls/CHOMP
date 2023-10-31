@@ -2,12 +2,13 @@ use crate::{CursorCreationError, CursorPage, QueryCursor};
 use async_graphql::{
     connection::{
         Connection, CursorType, DefaultConnectionName, DefaultEdgeName, DisableNodesField, Edge,
-        EmptyFields,
+        EmptyFields, OpaqueCursor,
     },
     InputObject, OutputType,
 };
 use sea_orm::{EntityTrait, ModelTrait, PrimaryKeyTrait};
-use std::{error::Error, fmt::Debug};
+use serde::{de::DeserializeOwned, Serialize};
+use std::fmt::Debug;
 
 /// An [`async_graphql`] input object for specifying page by cursor
 #[derive(Debug, Clone, InputObject)]
@@ -22,7 +23,7 @@ pub struct CursorInput {
 #[derive(Debug, thiserror::Error)]
 pub enum CursorInputBuildError<Cursor>
 where
-    Cursor: CursorType,
+    Cursor: Serialize + DeserializeOwned,
 {
     /// An error which occured when creating the query cursor
     #[error("An error arose when creating the query cursor")]
@@ -35,10 +36,10 @@ where
     NegativeLast(<i32 as TryInto<u64>>::Error),
     /// The value of after could not be decoded into the expected key type
     #[error("After could not be de-coded to the expected key type")]
-    UndecodableAfter(Cursor::Error),
+    UndecodableAfter(<OpaqueCursor<Cursor> as CursorType>::Error),
     /// The value of last could not be decoded into the expected key type
     #[error("Before could not be de-coded to the expected key type")]
-    UndecodableBefore(Cursor::Error),
+    UndecodableBefore(<OpaqueCursor<Cursor> as CursorType>::Error),
 }
 
 impl CursorInput {
@@ -53,21 +54,25 @@ impl CursorInput {
     >
     where
         Entity: EntityTrait,
-        <Entity::PrimaryKey as PrimaryKeyTrait>::ValueType: CursorType + Clone,
-        <<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType as CursorType>::Error:
-            Error + Send + Sync,
+        <Entity::PrimaryKey as PrimaryKeyTrait>::ValueType: Clone + Serialize + DeserializeOwned,
     {
         let after = match self.after {
             Some(after) => Some(
-                <Entity::PrimaryKey as PrimaryKeyTrait>::ValueType::decode_cursor(&after)
-                    .map_err(CursorInputBuildError::UndecodableAfter)?,
+                OpaqueCursor::<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>::decode_cursor(
+                    &after,
+                )
+                .map_err(CursorInputBuildError::UndecodableAfter)?
+                .0,
             ),
             None => None,
         };
         let before = match self.before {
             Some(before) => Some(
-                <Entity::PrimaryKey as PrimaryKeyTrait>::ValueType::decode_cursor(&before)
-                    .map_err(CursorInputBuildError::UndecodableBefore)?,
+                OpaqueCursor::<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>::decode_cursor(
+                    &before,
+                )
+                .map_err(CursorInputBuildError::UndecodableBefore)?
+                .0,
             ),
             None => None,
         };
@@ -96,7 +101,7 @@ impl CursorInput {
 /// A [`Connection`] which produces pages of a Model
 #[allow(type_alias_bounds)]
 pub type ModelConnection<Model: ModelTrait> = Connection<
-    <<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
+    OpaqueCursor<<<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType>,
     Model,
     EmptyFields,
     EmptyFields,
@@ -108,20 +113,22 @@ pub type ModelConnection<Model: ModelTrait> = Connection<
 impl<Model> CursorPage<Model>
 where
     Model: ModelTrait + OutputType,
-    <<Model as ModelTrait>::Entity as EntityTrait>::Model: OutputType,
-    <<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType: CursorType + Sync,
+    <Model::Entity as EntityTrait>::Model: OutputType,
+    <<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType:
+        Serialize + DeserializeOwned + Sync,
 {
     /// Converts the [`CursorPage`] into an [`Connection`], with each item as an edge
     pub fn into_connection(
         self,
         extract_cursor: impl Fn(&Model) -> <<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
     ) -> ModelConnection<Model> {
+        let edges = self.items.into_iter().map(|item| {
+            let cursor = OpaqueCursor(extract_cursor(&item));
+            Edge::new(cursor, item)
+        });
+
         let mut connection = Connection::new(self.has_previous, self.has_next);
-        connection.edges.extend(
-            self.items
-                .into_iter()
-                .map(|item| Edge::new(extract_cursor(&item), item)),
-        );
+        connection.edges.extend(edges);
         connection
     }
 }
