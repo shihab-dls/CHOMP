@@ -2,13 +2,10 @@ use crate::tables::{
     pin_library::{self, PinStatus},
     pin_mount,
 };
-use async_graphql::{
-    connection::{Connection, Edge, EmptyFields},
-    ComplexObject, Context, Object,
-};
+use async_graphql::{ComplexObject, Context, Object};
 use opa_client::subject_authorization;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait};
-use the_paginator::graphql::CursorInput;
+use the_paginator::graphql::{CursorInput, ModelConnection};
 
 #[ComplexObject]
 impl pin_library::Model {
@@ -28,23 +25,15 @@ impl PinLibraryQuery {
         &self,
         ctx: &Context<'_>,
         cursor: CursorInput,
-    ) -> async_graphql::Result<Connection<String, pin_library::Model, EmptyFields, EmptyFields>>
-    {
+    ) -> async_graphql::Result<ModelConnection<pin_library::Model>> {
         subject_authorization!("xchemlab.pin_packing.read_pin_library", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
 
-        let page = cursor
+        Ok(cursor
             .try_into_query_cursor::<pin_library::Entity>()?
             .all(database)
-            .await?;
-
-        let mut connection = Connection::new(page.has_previous, page.has_next);
-        connection.edges.extend(
-            page.items
-                .into_iter()
-                .map(|pin| Edge::new(pin.barcode.clone(), pin)),
-        );
-        Ok(connection)
+            .await?
+            .into_connection(|item| item.barcode.clone()))
     }
 }
 

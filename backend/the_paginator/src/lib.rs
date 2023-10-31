@@ -17,9 +17,9 @@ use sea_orm::{
 
 /// The contents of a cursor indexed page, with indicators for the existance of previous and next pages.
 #[derive(Debug, PartialEq, Eq)]
-pub struct CursorPage<I> {
+pub struct CursorPage<Item> {
     /// The rows found in the page
-    pub items: Vec<I>,
+    pub items: Vec<Item>,
     /// True if at least one row exists before this page
     pub has_previous: bool,
     /// True if at least one row exists after this page

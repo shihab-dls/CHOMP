@@ -1,6 +1,12 @@
-use crate::{CursorCreationError, QueryCursor};
-use async_graphql::{connection::CursorType, InputObject};
-use sea_orm::{EntityTrait, PrimaryKeyTrait};
+use crate::{CursorCreationError, CursorPage, QueryCursor};
+use async_graphql::{
+    connection::{
+        Connection, CursorType, DefaultConnectionName, DefaultEdgeName, DisableNodesField, Edge,
+        EmptyFields,
+    },
+    InputObject, OutputType,
+};
+use sea_orm::{EntityTrait, ModelTrait, PrimaryKeyTrait};
 use std::{error::Error, fmt::Debug};
 
 /// An [`async_graphql`] input object for specifying page by cursor
@@ -84,5 +90,38 @@ impl CursorInput {
         Ok(QueryCursor::<Entity>::from_bounds(
             after, before, first, last,
         )?)
+    }
+}
+
+/// A [`Connection`] which produces pages of a Model
+#[allow(type_alias_bounds)]
+pub type ModelConnection<Model: ModelTrait> = Connection<
+    <<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
+    Model,
+    EmptyFields,
+    EmptyFields,
+    DefaultConnectionName,
+    DefaultEdgeName,
+    DisableNodesField,
+>;
+
+impl<Model> CursorPage<Model>
+where
+    Model: ModelTrait + OutputType,
+    <<Model as ModelTrait>::Entity as EntityTrait>::Model: OutputType,
+    <<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType: CursorType + Sync,
+{
+    /// Converts the [`CursorPage`] into an [`Connection`], with each item as an edge
+    pub fn into_connection(
+        self,
+        extract_cursor: impl Fn(&Model) -> <<Model::Entity as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
+    ) -> ModelConnection<Model> {
+        let mut connection = Connection::new(self.has_previous, self.has_next);
+        connection.edges.extend(
+            self.items
+                .into_iter()
+                .map(|item| Edge::new(extract_cursor(&item), item)),
+        );
+        connection
     }
 }
