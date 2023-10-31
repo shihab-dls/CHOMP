@@ -92,20 +92,20 @@ where
 
     /// Constructs a [`QueryCursor`] from [`Option`]al cursors before and after and a size limit determined by either first or last
     pub fn from_bounds(
-        after: Option<impl Into<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>>,
-        before: Option<impl Into<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>>,
-        first: Option<impl Into<u64>>,
-        last: Option<impl Into<u64>>,
+        after: Option<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>,
+        before: Option<<Entity::PrimaryKey as PrimaryKeyTrait>::ValueType>,
+        first: Option<u64>,
+        last: Option<u64>,
     ) -> Result<Self, CursorCreationError> {
         let (limit, direction) = match (first, last) {
             (Some(_), Some(_)) => Err(CursorCreationError::IndeterminateDirection),
-            (Some(first), None) => Ok((first.into(), PageDirection::Forward)),
-            (None, Some(last)) => Ok((last.into(), PageDirection::Backward)),
+            (Some(first), None) => Ok((first, PageDirection::Forward)),
+            (None, Some(last)) => Ok((last, PageDirection::Backward)),
             (None, None) => Err(CursorCreationError::UnspecifiedLimit),
         }?;
         Ok(Self {
-            after: after.map(|after| after.into()),
-            before: before.map(|before| before.into()),
+            after,
+            before,
             limit,
             direction,
         })

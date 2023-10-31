@@ -1,5 +1,5 @@
 use crate::{
-    resolvers::Cursor,
+    resolvers::CursorInput,
     tables::{
         pin_library::{self, PinStatus},
         pin_mount,
@@ -11,7 +11,6 @@ use async_graphql::{
 };
 use opa_client::subject_authorization;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait};
-use the_paginator::QueryCursor;
 
 #[ComplexObject]
 impl pin_library::Model {
@@ -30,20 +29,16 @@ impl PinLibraryQuery {
     async fn library_pins(
         &self,
         ctx: &Context<'_>,
-        cursor: Cursor,
+        cursor: CursorInput,
     ) -> async_graphql::Result<Connection<String, pin_library::Model, EmptyFields, EmptyFields>>
     {
         subject_authorization!("xchemlab.pin_packing.read_pin_library", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
 
-        let page = QueryCursor::<pin_library::Entity>::from_bounds(
-            cursor.after,
-            cursor.before,
-            cursor.first.map(|first| first as u64),
-            cursor.last.map(|last| last as u64),
-        )?
-        .all(database)
-        .await?;
+        let page = cursor
+            .into_query_cursor::<pin_library::Entity>()?
+            .all(database)
+            .await?;
 
         let mut connection = Connection::new(page.has_previous, page.has_next);
         connection.edges.extend(
