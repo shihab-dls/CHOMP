@@ -19,4 +19,4 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
-futures = { version = "0.3.28" }
+futures = { version = "0.3.29" }
