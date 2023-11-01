@@ -252,7 +252,17 @@ where
     {
         let query = db.get_database_backend().build(&self.query());
         let query_results = db.query_all(query).await?;
-        let neighbours = Neighbours::from_query_result(&query_results[0], NEIGHBOURS_PREFIX)?;
+        let anchor_row = match self.direction {
+            PageDirection::Forward => query_results.first(),
+            PageDirection::Backward => query_results.last(),
+        };
+        let neighbours = match anchor_row {
+            Some(anchor_row) => Neighbours::from_query_result(anchor_row, NEIGHBOURS_PREFIX)?,
+            None => Neighbours {
+                has_next: false,
+                has_previous: false,
+            },
+        };
         let items = query_results
             .into_iter()
             .map(|query_result| Entity::Model::from_query_result(&query_result, BASE_TABLE_PREFIX))
