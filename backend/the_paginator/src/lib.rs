@@ -74,6 +74,8 @@ pub enum PageDirection {
     Backward,
 }
 
+const BASE_TABLE_PREFIX: &str = "book_";
+
 impl<Entity> QueryCursor<Entity>
 where
     Entity: EntityTrait,
@@ -166,24 +168,18 @@ where
         }
     }
 
-    /// Fetches all items in the page and provides indication of whether a previous and next page exists
-    pub async fn all<DbConn>(self, db: &DbConn) -> Result<CursorPage<Entity::Model>, DbErr>
-    where
-        DbConn: ConnectionTrait,
-    {
-        let base_table_prefix = "book_";
-
+    fn query(&self) -> SelectStatement {
         let cursor_by = Entity::PrimaryKey::iter()
             .map(|pk_idx| SeaRc::new(pk_idx) as SeaRc<dyn Iden>)
             .collect::<Vec<_>>();
         let prefixed_cursor_by = cursor_by
             .iter()
             .map(|pk_idx| {
-                Alias::new(&format!("{base_table_prefix}{}", pk_idx.to_string())).into_iden()
+                Alias::new(&format!("{BASE_TABLE_PREFIX}{}", pk_idx.to_string())).into_iden()
             })
             .collect::<Vec<_>>();
 
-        let stmt = Query::select()
+        Query::select()
             .column(ColumnRef::Asterisk)
             .from_subquery(
                 Query::select()
@@ -208,7 +204,7 @@ where
                             .from_subquery(
                                 Entity::find()
                                     .into_query()
-                                    .apply_prefix(base_table_prefix)
+                                    .apply_prefix(BASE_TABLE_PREFIX)
                                     .apply_order_by(&cursor_by, self.rev_order())
                                     .apply_filter(
                                         &cursor_by,
@@ -223,7 +219,7 @@ where
                                 UnionType::All,
                                 Entity::find()
                                     .into_query()
-                                    .apply_prefix(base_table_prefix)
+                                    .apply_prefix(BASE_TABLE_PREFIX)
                                     .apply_order_by(&cursor_by, self.order())
                                     .apply_filter(
                                         &cursor_by,
@@ -246,14 +242,20 @@ where
                 self.filter_expr(),
             )
             .limit(self.limit)
-            .to_owned();
+            .to_owned()
+    }
 
-        let statement = db.get_database_backend().build(&stmt);
-        let query_results = db.query_all(statement).await?;
+    /// Fetches all items in the page and provides indication of whether a previous and next page exists
+    pub async fn all<DbConn>(self, db: &DbConn) -> Result<CursorPage<Entity::Model>, DbErr>
+    where
+        DbConn: ConnectionTrait,
+    {
+        let query = db.get_database_backend().build(&self.query());
+        let query_results = db.query_all(query).await?;
         let neighbours = Neighbours::from_query_result(&query_results[0], NEIGHBOURS_PREFIX)?;
         let items = query_results
             .into_iter()
-            .map(|query_result| Entity::Model::from_query_result(&query_result, base_table_prefix))
+            .map(|query_result| Entity::Model::from_query_result(&query_result, BASE_TABLE_PREFIX))
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(CursorPage {
