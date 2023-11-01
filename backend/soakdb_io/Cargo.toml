@@ -11,7 +11,7 @@ readme = "../README.md"
 
 [dependencies]
 chrono = { workspace = true }
-chrono-tz = { version = "0.8.2" }
+chrono-tz = { version = "0.8.4" }
 derive_more = { workspace = true }
 lexical = { version = "6.1.1" }
 sea-orm = { workspace = true, features = ["sqlx-sqlite"] }
