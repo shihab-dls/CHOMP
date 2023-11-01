@@ -8,6 +8,7 @@ use opa_client::subject_authorization;
 use sea_orm::{
     ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, TransactionTrait,
 };
+use the_paginator::graphql::{CursorInput, ModelConnection};
 use uuid::Uuid;
 
 #[ComplexObject]
@@ -37,10 +38,15 @@ impl CaneMountQuery {
     async fn get_cane_mounts(
         &self,
         ctx: &Context<'_>,
-    ) -> async_graphql::Result<Vec<cane_mount::Model>> {
+        cursor: CursorInput,
+    ) -> async_graphql::Result<ModelConnection<cane_mount::Model>> {
         subject_authorization!("xchemlab.pin_packing.read_cane_mount", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
-        Ok(cane_mount::Entity::find().all(database).await?)
+        Ok(cursor
+            .try_into_query_cursor::<cane_mount::Entity>()?
+            .all(database)
+            .await?
+            .try_into_connection()?)
     }
 }
 

@@ -5,6 +5,7 @@ use crate::tables::{
 use async_graphql::{ComplexObject, Context, Object};
 use opa_client::subject_authorization;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait};
+use the_paginator::graphql::{CursorInput, ModelConnection};
 
 #[ComplexObject]
 impl puck_library::Model {
@@ -23,10 +24,15 @@ impl PuckLibraryQuery {
     async fn library_pucks(
         &self,
         ctx: &Context<'_>,
-    ) -> async_graphql::Result<Vec<puck_library::Model>> {
+        cursor: CursorInput,
+    ) -> async_graphql::Result<ModelConnection<puck_library::Model>> {
         subject_authorization!("xchemlab.pin_packing.read_puck_library", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
-        Ok(puck_library::Entity::find().all(database).await?)
+        Ok(cursor
+            .try_into_query_cursor::<puck_library::Entity>()?
+            .all(database)
+            .await?
+            .try_into_connection()?)
     }
 }
 

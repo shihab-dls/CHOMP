@@ -28,7 +28,6 @@ impl PinLibraryQuery {
     ) -> async_graphql::Result<ModelConnection<pin_library::Model>> {
         subject_authorization!("xchemlab.pin_packing.read_pin_library", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
-
         Ok(cursor
             .try_into_query_cursor::<pin_library::Entity>()?
             .all(database)

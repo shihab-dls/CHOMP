@@ -5,6 +5,7 @@ use crate::tables::{
 use async_graphql::{ComplexObject, Context, Object};
 use opa_client::subject_authorization;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait};
+use the_paginator::graphql::{CursorInput, ModelConnection};
 
 #[ComplexObject]
 impl cane_library::Model {
@@ -23,10 +24,15 @@ impl CaneLibraryQuery {
     async fn library_canes(
         &self,
         ctx: &Context<'_>,
-    ) -> async_graphql::Result<Vec<cane_library::Model>> {
+        cursor: CursorInput,
+    ) -> async_graphql::Result<ModelConnection<cane_library::Model>> {
         subject_authorization!("xchemlab.pin_packing.read_cane_library", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
-        Ok(cane_library::Entity::find().all(database).await?)
+        Ok(cursor
+            .try_into_query_cursor::<cane_library::Entity>()?
+            .all(database)
+            .await?
+            .try_into_connection()?)
     }
 }
 
