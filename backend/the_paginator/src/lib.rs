@@ -521,4 +521,83 @@ mod tests {
             page
         );
     }
+
+    #[tokio::test]
+    async fn page_before_end() {
+        let models = vec![
+            result_table::Model {
+                book_id: 96,
+                neighbours_has_previous: true,
+                neighbours_has_next: false,
+            },
+            result_table::Model {
+                book_id: 98,
+                neighbours_has_previous: true,
+                neighbours_has_next: false,
+            },
+            result_table::Model {
+                book_id: 99,
+                neighbours_has_previous: false,
+                neighbours_has_next: true,
+            },
+        ];
+        let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
+            .append_query_results([models.clone()])
+            .into_connection();
+
+        let page = QueryCursor::<table::Entity>::new(None, None, 3, PageDirection::Backward)
+            .all(&db)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            CursorPage {
+                items: models.into_iter().map(table::Model::from).collect(),
+                has_next: true,
+                has_previous: false
+            },
+            page
+        );
+    }
+
+    #[tokio::test]
+    async fn page_before_cursor() {
+        let models = vec![
+            result_table::Model {
+                book_id: 38,
+                neighbours_has_next: false,
+                neighbours_has_previous: true,
+            },
+            result_table::Model {
+                book_id: 35,
+                neighbours_has_next: false,
+                neighbours_has_previous: true,
+            },
+            result_table::Model {
+                book_id: 33,
+                neighbours_has_next: false,
+                neighbours_has_previous: true,
+            },
+        ];
+        let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
+            .append_query_results([models.clone()])
+            .into_connection();
+
+        let page = QueryCursor::<table::Entity>::new(Some(32), None, 3, PageDirection::Backward)
+            .all(&db)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            CursorPage {
+                has_next: false,
+                has_previous: true,
+                items: models
+                    .into_iter()
+                    .map(table::Model::from)
+                    .collect::<Vec<_>>(),
+            },
+            page
+        );
+    }
 }
