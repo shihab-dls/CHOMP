@@ -12,6 +12,7 @@ jobs:
       matrix:
         target:
           - chimp_chomp
+          - chimp_controller
           - pin_packing
           - soakdb_sync
           - targeting
