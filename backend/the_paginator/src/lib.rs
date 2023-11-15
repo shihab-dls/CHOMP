@@ -394,7 +394,7 @@ impl ApplyPrefix for SelectStatement {
 #[cfg(test)]
 mod tests {
     use crate::{CursorPage, PageDirection, QueryCursor};
-    use sea_orm::MockDatabase;
+    use sea_orm::{DbBackend, MockDatabase, Statement, Transaction};
 
     mod table {
         use super::result_table;
@@ -479,6 +479,44 @@ mod tests {
             },
             page
         );
+
+        assert_eq!(
+            db.into_transaction_log(),
+            [Transaction::many([Statement::from_sql_and_values(
+                DbBackend::Postgres,
+                [
+                    r#"SELECT * "#,
+                    r#"FROM ("#,
+                        r#"SELECT "#,
+                            r#"*, "#,
+                            r#"LAG(TRUE, $1, FALSE) OVER (  ORDER BY "book_id" ASC ) AS "neighbours_has_previous", "#,
+                            r#"LEAD(TRUE, $2, FALSE) OVER (  ORDER BY "book_id" ASC ) AS "neighbours_has_next" "#,
+                        r#"FROM ("#,
+                            r#"SELECT * "#,
+                            r#"FROM ("#,
+                                r#"SELECT "#,
+                                    r#""table"."id" AS "book_id" "#,
+                                r#"FROM "table" "#,
+                                r#"ORDER BY "id" DESC "#,
+                                r#"LIMIT $3"#,
+                            r#") AS "before" "#,
+                            r#"UNION ALL ("#,
+                                r#"SELECT "#,
+                                    r#""table"."id" AS "book_id" "#,
+                                r#"FROM "table" "#,
+                                r#"ORDER BY "id" ASC "#,
+                                r#"LIMIT $4"#,
+                            r#")"#,
+                        r#") AS "page""#,
+                    r#") AS "cursored_page" "#,
+                    r#"ORDER BY "book_id" ASC "#,
+                    r#"LIMIT $5"#
+                ]
+                .join("")
+                .as_str(),
+                [1.into(), 3.into(), 1_u64.into(), 4_u64.into(), 3_u64.into()]
+            )])]
+        )
     }
 
     #[tokio::test]
@@ -520,6 +558,47 @@ mod tests {
             },
             page
         );
+
+        assert_eq!(
+            db.into_transaction_log(),
+            [Transaction::many([Statement::from_sql_and_values(
+                DbBackend::Postgres,
+                [
+                    r#"SELECT * "#,
+                    r#"FROM ("#,
+                        r#"SELECT "#,
+                            r#"*, "#,
+                            r#"LAG(TRUE, $1, FALSE) OVER (  ORDER BY "book_id" ASC ) AS "neighbours_has_previous", "#,
+                            r#"LEAD(TRUE, $2, FALSE) OVER (  ORDER BY "book_id" ASC ) AS "neighbours_has_next" "#,
+                        r#"FROM ("#,
+                            r#"SELECT * "#,
+                            r#"FROM ("#,
+                                r#"SELECT "#,
+                                    r#""table"."id" AS "book_id" "#,
+                                r#"FROM "table" "#,
+                                r#"WHERE "id" <= $3 "#,
+                                r#"ORDER BY "id" DESC "#,
+                                r#"LIMIT $4"#,
+                            r#") AS "before" "#,
+                            r#"UNION ALL ("#,
+                                r#"SELECT "#,
+                                    r#""table"."id" AS "book_id" "#,
+                                r#"FROM "table" "#,
+                                r#"WHERE "id" > $5 "#,
+                                r#"ORDER BY "id" ASC "#,
+                                r#"LIMIT $6"#,
+                            r#")"#,
+                        r#") AS "page""#,
+                    r#") AS "cursored_page" "#,
+                    r#"WHERE "book_id" > $7 "#,
+                    r#"ORDER BY "book_id" ASC "#,
+                    r#"LIMIT $8"#
+                ]
+                .join("")
+                .as_str(),
+                [1.into(), 3.into(), 32_u64.into(), 1_u64.into(), 32_u64.into(), 4_u64.into(), 32_u64.into(), 3_u64.into()]
+            )])]
+        )
     }
 
     #[tokio::test]
@@ -558,6 +637,44 @@ mod tests {
             },
             page
         );
+
+        assert_eq!(
+            db.into_transaction_log(),
+            [Transaction::many([Statement::from_sql_and_values(
+                DbBackend::Postgres,
+                [
+                    r#"SELECT * "#,
+                    r#"FROM ("#,
+                        r#"SELECT "#,
+                            r#"*, "#,
+                            r#"LAG(TRUE, $1, FALSE) OVER (  ORDER BY "book_id" DESC ) AS "neighbours_has_previous", "#,
+                            r#"LEAD(TRUE, $2, FALSE) OVER (  ORDER BY "book_id" DESC ) AS "neighbours_has_next" "#,
+                        r#"FROM ("#,
+                            r#"SELECT * "#,
+                            r#"FROM ("#,
+                                r#"SELECT "#,
+                                    r#""table"."id" AS "book_id" "#,
+                                r#"FROM "table" "#,
+                                r#"ORDER BY "id" ASC "#,
+                                r#"LIMIT $3"#,
+                            r#") AS "before" "#,
+                            r#"UNION ALL ("#,
+                                r#"SELECT "#,
+                                    r#""table"."id" AS "book_id" "#,
+                                r#"FROM "table" "#,
+                                r#"ORDER BY "id" DESC "#,
+                                r#"LIMIT $4"#,
+                            r#")"#,
+                        r#") AS "page""#,
+                    r#") AS "cursored_page" "#,
+                    r#"ORDER BY "book_id" DESC "#,
+                    r#"LIMIT $5"#
+                ]
+                .join("")
+                .as_str(),
+                [3.into(), 1.into(), 1_u64.into(), 4_u64.into(), 3_u64.into()]
+            )])]
+        )
     }
 
     #[tokio::test]
@@ -583,7 +700,7 @@ mod tests {
             .append_query_results([models.clone()])
             .into_connection();
 
-        let page = QueryCursor::<table::Entity>::new(Some(32), None, 3, PageDirection::Backward)
+        let page = QueryCursor::<table::Entity>::new(None, Some(32), 3, PageDirection::Backward)
             .all(&db)
             .await
             .unwrap();
@@ -599,5 +716,46 @@ mod tests {
             },
             page
         );
+
+        assert_eq!(
+            db.into_transaction_log(),
+            [Transaction::many([Statement::from_sql_and_values(
+                DbBackend::Postgres,
+                [
+                    r#"SELECT * "#,
+                    r#"FROM ("#,
+                        r#"SELECT "#,
+                            r#"*, "#,
+                            r#"LAG(TRUE, $1, FALSE) OVER (  ORDER BY "book_id" DESC ) AS "neighbours_has_previous", "#,
+                            r#"LEAD(TRUE, $2, FALSE) OVER (  ORDER BY "book_id" DESC ) AS "neighbours_has_next" "#,
+                        r#"FROM ("#,
+                            r#"SELECT * "#,
+                            r#"FROM ("#,
+                                r#"SELECT "#,
+                                    r#""table"."id" AS "book_id" "#,
+                                r#"FROM "table" "#,
+                                r#"WHERE "id" >= $3 "#,
+                                r#"ORDER BY "id" ASC "#,
+                                r#"LIMIT $4"#,
+                            r#") AS "before" "#,
+                            r#"UNION ALL ("#,
+                                r#"SELECT "#,
+                                    r#""table"."id" AS "book_id" "#,
+                                r#"FROM "table" "#,
+                                r#"WHERE "id" < $5 "#,
+                                r#"ORDER BY "id" DESC "#,
+                                r#"LIMIT $6"#,
+                            r#")"#,
+                        r#") AS "page""#,
+                    r#") AS "cursored_page" "#,
+                    r#"WHERE "book_id" < $7 "#,
+                    r#"ORDER BY "book_id" DESC "#,
+                    r#"LIMIT $8"#
+                ]
+                .join("")
+                .as_str(),
+                [3.into(), 1.into(), 32_u64.into(), 1_u64.into(), 32_u64.into(), 4_u64.into(), 32_u64.into(), 3_u64.into()]
+            )])]
+        )
     }
 }
