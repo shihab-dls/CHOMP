@@ -15,7 +15,6 @@ derive_more = { workspace = true }
 dotenvy = { workspace = true }
 graphql_endpoints = { path = "../graphql_endpoints" }
 graphql_event_broker = { path = "../graphql_event_broker" }
-graphql_types = { path = "../graphql_types" }
 opa_client = { path = "../opa_client", features = ["graphql"] }
 sea-orm = { workspace = true, features = ["sqlx-postgres"] }
 sea-orm-migration = { workspace = true }
@@ -24,3 +23,4 @@ tokio-stream = { version = "0.1.14" }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 url = { workspace = true }
+uuid = { workspace = true }

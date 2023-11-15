@@ -1,7 +1,9 @@
-use crate::tables::{prediction, prediction_crystal, prediction_drop};
+use crate::{
+    resolvers::Well,
+    tables::{prediction, prediction_crystal, prediction_drop},
+};
 use async_graphql::{ComplexObject, Context, InputObject, Object, SimpleObject};
 use chrono::Utc;
-use graphql_types::Well;
 use opa_client::subject_authorization;
 use sea_orm::{
     prelude::Uuid, ActiveValue, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, ModelTrait,

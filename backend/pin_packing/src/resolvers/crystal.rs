@@ -1,10 +1,12 @@
-use crate::tables::{
-    crystal::{self, CompoundState, CrystalState},
-    pin_mount,
+use crate::{
+    resolvers::Well,
+    tables::{
+        crystal::{self, CompoundState, CrystalState},
+        pin_mount,
+    },
 };
 use async_graphql::{ComplexObject, Context, Object};
 use chrono::Utc;
-use graphql_types::Well;
 use opa_client::subject_authorization;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait, ModelTrait};
 use uuid::Uuid;

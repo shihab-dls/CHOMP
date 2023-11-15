@@ -1,4 +1,5 @@
 use crate::{
+    resolvers::Well,
     tables::{image, prediction},
     S3Bucket,
 };
@@ -6,7 +7,6 @@ use async_graphql::{ComplexObject, Context, Object, Subscription, Upload};
 use aws_sdk_s3::presigning::PresigningConfig;
 use chrono::Utc;
 use graphql_event_broker::EventBroker;
-use graphql_types::Well;
 use opa_client::subject_authorization;
 use sea_orm::{
     prelude::Uuid, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter,

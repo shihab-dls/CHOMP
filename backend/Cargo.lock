@@ -1677,15 +1677,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "graphql_types"
-version = "0.1.0"
-dependencies = [
- "async-graphql",
- "thiserror",
- "uuid",
-]
-
-[[package]]
 name = "h2"
 version = "0.3.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2738,7 +2729,6 @@ dependencies = [
  "clap 4.4.8",
  "dotenvy",
  "graphql_endpoints",
- "graphql_types",
  "opa_client",
  "sea-orm",
  "sea-orm-migration",
@@ -3752,7 +3742,6 @@ dependencies = [
  "dotenvy",
  "graphql_endpoints",
  "graphql_event_broker",
- "graphql_types",
  "opa_client",
  "sea-orm",
  "sea-orm-migration",
@@ -3761,6 +3750,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "url",
+ "uuid",
 ]
 
 [[package]]
