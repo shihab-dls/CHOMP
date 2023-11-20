@@ -15,9 +15,14 @@ services:
 
   frontend:
     image: docker.io/library/node:20.6.0-bookworm
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
     volumes:
       - ..:/workspace:z
     command: sleep infinity
+    environment:
+      SCHEMA_PATH: http://backend
 
   opa:
     image: docker.io/openpolicyagent/opa:0.53.1
