@@ -8,7 +8,7 @@ anyhow = { workspace = true }
 async-tungstenite = { version = "0.22.0", features = ["tokio-runtime"] }
 chimp_protocol = { path = "../chimp_protocol" }
 clap = { workspace = true }
-cynic = { version = "3.2.2", features = ["http-reqwest"] }
+cynic = { version = "3.3.0", features = ["http-reqwest"] }
 dotenvy = { workspace = true }
 futures-util = { version = "0.3.28" }
 graphql-ws-client = { version = "0.5.0", features = ["cynic"] }
