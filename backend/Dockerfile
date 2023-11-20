@@ -1,4 +1,4 @@
-FROM docker.io/library/rust:1.73.0-bullseye AS build
+FROM docker.io/library/rust:1.74.0-bullseye AS build
 
 WORKDIR /app
 
