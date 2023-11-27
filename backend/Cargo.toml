@@ -27,7 +27,7 @@ aws-credential-types = { version = "0.56.0" }
 aws-sdk-s3 = { version = "0.29.0" }
 axum = { version = "0.6.20", features = ["headers", "macros", "ws"] }
 chrono = { version = "0.4.28", default-features = false }
-clap = { version = "4.4.8", features = ["derive", "env"] }
+clap = { version = "4.4.9", features = ["derive", "env"] }
 derive_more = { version = "0.99.17" }
 dotenvy = { version = "0.15.7" }
 itertools = { version = "0.11.0" }
