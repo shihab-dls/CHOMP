@@ -986,7 +986,7 @@ dependencies = [
  "anyhow",
  "approx",
  "chimp_protocol",
- "clap 4.4.9",
+ "clap 4.4.10",
  "derive_more",
  "dotenvy",
  "futures",
@@ -1009,7 +1009,7 @@ dependencies = [
  "anyhow",
  "async-tungstenite",
  "chimp_protocol",
- "clap 4.4.9",
+ "clap 4.4.10",
  "cynic",
  "cynic-codegen",
  "dotenvy",
@@ -1113,9 +1113,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.9"
+version = "4.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46ca43acc1b21c6cc2d1d3129c19e323a613935b5bc28fb3b33b5b2e5fb00030"
+checksum = "41fffed7514f420abec6d183b1d3acfd9099c79c3a10a06ade4f8203f1411272"
 dependencies = [
  "clap_builder",
  "clap_derive 4.4.7",
@@ -2878,7 +2878,7 @@ dependencies = [
  "async-graphql",
  "axum",
  "chrono",
- "clap 4.4.9",
+ "clap 4.4.10",
  "dotenvy",
  "graphql_endpoints",
  "opa_client",
@@ -3655,7 +3655,7 @@ dependencies = [
  "async-graphql",
  "axum",
  "chrono",
- "clap 4.4.9",
+ "clap 4.4.10",
  "derive_more",
  "dotenvy",
  "graphql_endpoints",
@@ -3931,7 +3931,7 @@ dependencies = [
  "aws-sdk-s3",
  "axum",
  "chrono",
- "clap 4.4.9",
+ "clap 4.4.10",
  "derive_more",
  "dotenvy",
  "graphql_endpoints",
