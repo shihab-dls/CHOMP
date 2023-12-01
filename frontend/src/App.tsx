@@ -3,11 +3,11 @@ import { gql } from './__generated__/gql';
 import React from "react";
 import { theme } from "@diamondlightsource/ui-components"
 import { ChakraProvider, Alert, AlertIcon, AlertTitle, AlertDescription, Button, HStack } from "@chakra-ui/react";
-import { PaginationTable } from "./components/Table";
+import { PaginationTable } from "./components/PaginationTable";
 
 const GET_INFO = gql(`
 query pinInfo ($after: String) {
-  libraryPins(first: 2, after: $after) {
+  libraryPins(cursor: {first: 2, after: $after}) {
     pageInfo {
       hasPreviousPage,
       hasNextPage,

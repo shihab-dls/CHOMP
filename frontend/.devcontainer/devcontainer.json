@@ -7,8 +7,7 @@
             "extensions": [
                 "ms-vscode.vscode-typescript-next",
                 "dbaeumer.vscode-eslint",
-                "esbenp.prettier-vscode",
-                "cweijan.vscode-database-client2"
+                "esbenp.prettier-vscode"
             ]
         }
     },

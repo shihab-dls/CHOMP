@@ -7,3 +7,6 @@ yarn-error.log*
 
 # codegen generated code
 src/__generated__/
+
+# Frontend Build Folder
+build/
