@@ -1,4 +1,4 @@
-FROM docker.io/library/node:20.6.0-bookworm 
+FROM docker.io/library/node:21.3.0-bookworm 
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
