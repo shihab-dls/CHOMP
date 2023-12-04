@@ -80,7 +80,7 @@
     ]
   },
   "dependencies": {
-    "@apollo/client": "3.5.4",
+    "@apollo/client": "3.8.8",
     "@chakra-ui/react": "^2.8.1",
     "@diamondlightsource/ui-components": "^1.0.2",
     "@emotion/react": "^11.11.1",
