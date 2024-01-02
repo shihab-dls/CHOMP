@@ -42,9 +42,8 @@ updates:
       interval: weekly
     open-pull-requests-limit: 100
     groups:
-      minor:
+      patch:
         update-types:
-          - minor
           - patch
 
   - package-ecosystem: npm
