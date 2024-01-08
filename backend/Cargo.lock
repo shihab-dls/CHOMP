@@ -986,7 +986,7 @@ dependencies = [
  "anyhow",
  "approx",
  "chimp_protocol",
- "clap 4.4.12",
+ "clap 4.4.14",
  "derive_more",
  "dotenvy",
  "futures",
@@ -1009,7 +1009,7 @@ dependencies = [
  "anyhow",
  "async-tungstenite",
  "chimp_protocol",
- "clap 4.4.12",
+ "clap 4.4.14",
  "cynic",
  "cynic-codegen",
  "dotenvy",
@@ -1113,9 +1113,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.12"
+version = "4.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcfab8ba68f3668e89f6ff60f5b205cea56aa7b769451a59f34b8682f51c056d"
+checksum = "33e92c5c1a78c62968ec57dbc2440366a2d6e5a23faf829970ff1585dc6b18e2"
 dependencies = [
  "clap_builder",
  "clap_derive 4.4.7",
@@ -1123,9 +1123,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.12"
+version = "4.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb7fb5e4e979aec3be7791562fcba452f94ad85e954da024396433e0e25a79e9"
+checksum = "f4323769dc8a61e2c39ad7dc26f6f2800524691a44d74fe3d1071a5c24db6370"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1296,9 +1296,9 @@ dependencies = [
 
 [[package]]
 name = "cynic"
-version = "3.3.0"
+version = "3.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcdc5f4454181d193b830f4c7c078d2c7cad5bd35967436467104a1dd9183041"
+checksum = "73f08d114a2d87adefeedbb9c1ab44c7955b28950c0c92653bd781e680189e17"
 dependencies = [
  "cynic-proc-macros",
  "ref-cast",
@@ -1311,9 +1311,9 @@ dependencies = [
 
 [[package]]
 name = "cynic-codegen"
-version = "3.3.0"
+version = "3.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca35aca0bce346d72a3443693d6008a3d085e3a9d41cdc034c1fc05574c486ee"
+checksum = "c7bd30e88ddb48049dbc4c6371d534f6de1cb9bb99d0d8417681de70c853b6a7"
 dependencies = [
  "counter",
  "darling",
@@ -1329,9 +1329,9 @@ dependencies = [
 
 [[package]]
 name = "cynic-proc-macros"
-version = "3.3.0"
+version = "3.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a9089aa5d1d58ab88c12c75458f8def586e1164a16a7c7123f4e90daa8d6f16"
+checksum = "cf1d18711760aba62c42e38bbf5a7f1b7161fb9e73c038f25a0fe646a991d04c"
 dependencies = [
  "cynic-codegen",
  "darling",
@@ -2878,7 +2878,7 @@ dependencies = [
  "async-graphql",
  "axum",
  "chrono",
- "clap 4.4.12",
+ "clap 4.4.14",
  "dotenvy",
  "graphql_endpoints",
  "opa_client",
@@ -3525,18 +3525,18 @@ checksum = "b0293b4b29daaf487284529cc2f5675b8e57c61f70167ba415a463651fd6a918"
 
 [[package]]
 name = "serde"
-version = "1.0.194"
+version = "1.0.195"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b114498256798c94a0689e1a15fec6005dee8ac1f41de56404b67afc2a4b773"
+checksum = "63261df402c67811e9ac6def069e4786148c4563f4b50fd4bf30aa370d626b02"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.194"
+version = "1.0.195"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3385e45322e8f9931410f01b3031ec534c3947d0e94c18049af4d9f9907d4e0"
+checksum = "46fe8f8603d81ba86327b23a2e9cdf49e1255fb94a4c5f297f6ee0547178ea2c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3545,9 +3545,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.110"
+version = "1.0.111"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fbd975230bada99c8bb618e0c365c2eefa219158d5c6c29610fd09ff1833257"
+checksum = "176e46fa42316f18edd598015a5166857fc835ec732f5215eac6b7bdbf0a84f4"
 dependencies = [
  "itoa",
  "ryu",
@@ -3655,7 +3655,7 @@ dependencies = [
  "async-graphql",
  "axum",
  "chrono",
- "clap 4.4.12",
+ "clap 4.4.14",
  "derive_more",
  "dotenvy",
  "graphql_endpoints",
@@ -3931,7 +3931,7 @@ dependencies = [
  "aws-sdk-s3",
  "axum",
  "chrono",
- "clap 4.4.12",
+ "clap 4.4.14",
  "derive_more",
  "dotenvy",
  "graphql_endpoints",
