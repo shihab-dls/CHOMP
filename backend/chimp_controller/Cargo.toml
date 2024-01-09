@@ -19,5 +19,5 @@ url = { workspace = true }
 uuid = { workspace = true }
 
 [build-dependencies]
-cynic-codegen = { version = "3.2.2" }
+cynic-codegen = { version = "3.3.3" }
 targeting = { path = "../targeting" }
