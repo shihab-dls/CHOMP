@@ -135,9 +135,9 @@ dependencies = [
 
 [[package]]
 name = "anstream"
-version = "0.6.4"
+version = "0.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ab91ebe16eb252986481c5b62f6098f3b698a45e34b5b98200cf20dd2484a44"
+checksum = "4cd2405b3ac1faab2990b74d728624cd9fd115651fcecc7c2d8daf01376275ba"
 dependencies = [
  "anstyle",
  "anstyle-parse",
@@ -986,7 +986,7 @@ dependencies = [
  "anyhow",
  "approx",
  "chimp_protocol",
- "clap 4.4.14",
+ "clap 4.4.17",
  "derive_more",
  "dotenvy",
  "futures",
@@ -1009,7 +1009,7 @@ dependencies = [
  "anyhow",
  "async-tungstenite",
  "chimp_protocol",
- "clap 4.4.14",
+ "clap 4.4.17",
  "cynic",
  "cynic-codegen",
  "dotenvy",
@@ -1113,9 +1113,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.14"
+version = "4.4.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33e92c5c1a78c62968ec57dbc2440366a2d6e5a23faf829970ff1585dc6b18e2"
+checksum = "80932e03c33999b9235edb8655bc9df3204adc9887c2f95b50cb1deb9fd54253"
 dependencies = [
  "clap_builder",
  "clap_derive 4.4.7",
@@ -1123,9 +1123,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.14"
+version = "4.4.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4323769dc8a61e2c39ad7dc26f6f2800524691a44d74fe3d1071a5c24db6370"
+checksum = "d6c0db58c659eef1c73e444d298c27322a1b52f6927d2ad470c0c0f96fa7b8fa"
 dependencies = [
  "anstream",
  "anstyle",
@@ -2503,9 +2503,9 @@ dependencies = [
 
 [[package]]
 name = "opencv"
-version = "0.88.6"
+version = "0.88.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edc7d90a679ddd02190fc621ee1592b96b299122fac4b65aa669143317bd4b6a"
+checksum = "461ace7d1fd13b846ef1096dc7cac0f2ac39e8803360953eb869a42e8e1e5baa"
 dependencies = [
  "cc",
  "dunce",
@@ -2522,9 +2522,9 @@ dependencies = [
 
 [[package]]
 name = "opencv-binding-generator"
-version = "0.83.0"
+version = "0.84.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9f66d4e88785bc4748e65aeaffcaa457d1b0df4e6cd0a5dbe15b5bd53514fb0"
+checksum = "6e842c276fd00b26100de550e2b47f6ded4f06213c62f0575cb7242aecde2efd"
 dependencies = [
  "clang",
  "clang-sys",
@@ -2878,7 +2878,7 @@ dependencies = [
  "async-graphql",
  "axum",
  "chrono",
- "clap 4.4.14",
+ "clap 4.4.17",
  "dotenvy",
  "graphql_endpoints",
  "opa_client",
@@ -3655,7 +3655,7 @@ dependencies = [
  "async-graphql",
  "axum",
  "chrono",
- "clap 4.4.14",
+ "clap 4.4.17",
  "derive_more",
  "dotenvy",
  "graphql_endpoints",
@@ -3931,7 +3931,7 @@ dependencies = [
  "aws-sdk-s3",
  "axum",
  "chrono",
- "clap 4.4.14",
+ "clap 4.4.17",
  "derive_more",
  "dotenvy",
  "graphql_endpoints",
