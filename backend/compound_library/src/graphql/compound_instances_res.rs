@@ -1,0 +1,81 @@
+use crate::entities::{compound_instances, compound_types};
+use async_graphql::{ComplexObject, Context, Object};
+use chrono::Utc;
+use opa_client::subject_authorization;
+use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter};
+use the_paginator::graphql::{CursorInput, ModelConnection};
+use uuid::Uuid;
+
+#[derive(Debug, Clone, Default)]
+pub struct CompoundInstanceQuery;
+
+#[derive(Debug, Clone, Default)]
+pub struct CompoundInstanceMutation;
+
+#[ComplexObject]
+impl compound_instances::Model {
+    async fn compound_types(
+        &self,
+        ctx: &Context<'_>,
+    ) -> async_graphql::Result<Option<compound_types::Model>> {
+        subject_authorization!("xchemlab.compound_library.read_compound", ctx).await?;
+        let db = ctx.data::<DatabaseConnection>()?;
+        Ok(self.find_related(compound_types::Entity).one(db).await?)
+    }
+}
+
+#[Object]
+impl CompoundInstanceQuery {
+    async fn compound_instances(
+        &self,
+        ctx: &Context<'_>,
+        cursor: CursorInput,
+    ) -> async_graphql::Result<ModelConnection<compound_instances::Model>> {
+        subject_authorization!("xchemlab.compound_library.read_compound", ctx).await?;
+        let db = ctx.data::<DatabaseConnection>()?;
+        Ok(cursor
+            .try_into_query_cursor::<compound_instances::Entity>()?
+            .all(db)
+            .await?
+            .try_into_connection()?)
+    }
+
+    async fn compound_instance(
+        &self,
+        ctx: &Context<'_>,
+        compound_name: String,
+    ) -> async_graphql::Result<Option<compound_instances::Model>> {
+        subject_authorization!("xchemlab.compound_library.read_compound", ctx).await?;
+        let db = ctx.data::<DatabaseConnection>()?;
+        Ok(
+            compound_instances::Entity::find()
+                .filter(compound_instances::Column::CompoundType.eq(compound_name.to_ascii_lowercase()))
+                .one(db)
+                .await?
+        )
+    }
+}
+
+#[Object]
+impl CompoundInstanceMutation {
+    async fn add_compound_instance(
+        &self,
+        ctx: &Context<'_>,
+        plate_id: Uuid,
+        well_number: i16,
+        compound_type: String,
+    ) -> async_graphql::Result<compound_instances::Model> {
+        let user = subject_authorization!("xchemlab.compound_library.write_compound", ctx).await?;
+        let db = ctx.data::<DatabaseConnection>()?;
+        let compound_instance = compound_instances::ActiveModel {
+            plate_id: ActiveValue::Set(plate_id),
+            well_number: ActiveValue::Set(well_number),
+            compound_type: ActiveValue::Set(compound_type.to_ascii_lowercase()),
+            username: ActiveValue::Set(user),
+            timestamp: ActiveValue::Set(Utc::now()),
+        };
+        Ok(compound_instances::Entity::insert(compound_instance)
+            .exec_with_returning(db)
+            .await?)
+    }
+}

@@ -3,6 +3,7 @@ members = [
     "chimp_chomp",
     "chimp_controller",
     "chimp_protocol",
+    "compound_library",
     "graphql_endpoints",
     "graphql_event_broker",
     "opa_client",

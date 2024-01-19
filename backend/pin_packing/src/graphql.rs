@@ -15,6 +15,7 @@ pub fn root_schema_builder() -> SchemaBuilder<RootQuery, RootMutation, EmptySubs
         RootMutation::default(),
         EmptySubscription,
     )
+    .enable_federation()
 }
 
 pub type RootSchema = Schema<RootQuery, RootMutation, EmptySubscription>;

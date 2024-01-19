@@ -6,7 +6,8 @@
 			"extensions": [
 				"redhat.vscode-yaml",
 				"tsandall.opa",
-				"ms-kubernetes-tools.vscode-kubernetes-tools"
+				"ms-kubernetes-tools.vscode-kubernetes-tools",
+				"rust-lang.rust-analyzer"
 			]
 		}
 	},
