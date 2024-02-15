@@ -8,12 +8,12 @@ anyhow = { workspace = true }
 async-tungstenite = { version = "0.22.0", features = ["tokio-runtime"] }
 chimp_protocol = { path = "../chimp_protocol" }
 clap = { workspace = true }
-cynic = { version = "3.4.0", features = ["http-reqwest"] }
+cynic = { version = "3.4.3", features = ["http-reqwest"] }
 dotenvy = { workspace = true }
 futures-util = { version = "0.3.30" }
 graphql-ws-client = { version = "0.5.0", features = ["cynic"] }
 lapin = { version = "2.2.1", default-features = false, features = ["rustls"] }
-reqwest = { version = "0.11.23" }
+reqwest = { version = "0.11.24" }
 tokio = { workspace = true, features = ["sync"] }
 url = { workspace = true }
 uuid = { workspace = true }
