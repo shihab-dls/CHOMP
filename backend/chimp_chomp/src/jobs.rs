@@ -30,14 +30,14 @@ pub async fn setup_rabbitmq_client(address: Url) -> Result<Connection, anyhow::E
 }
 
 /// Joins a RabbitMQ channel, creating a [`Consumer`] with [`Default`] [`BasicConsumeOptions`] and [`FieldTable`].
-/// The consumer tag is generated following the format `chimp_chomp_${`[`Uuid::new_v4`]`}`.
+/// The consumer tag is generated following the format `chimp_chomp_${`[`Uuid::now_v7`]`}`.
 ///
 /// Returns a [`lapin::Error`] if the requested channel is not available.
 pub async fn setup_job_consumer(
     rabbitmq_channel: Channel,
     channel: impl AsRef<str>,
 ) -> Result<Consumer, lapin::Error> {
-    let worker_id = Uuid::new_v4();
+    let worker_id = Uuid::now_v7();
     let worker_tag = format!("chimp_chomp_{worker_id}");
     rabbitmq_channel
         .queue_declare(

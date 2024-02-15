@@ -53,7 +53,7 @@ impl CrystalMutation {
         let operator_id = subject_authorization!("xchemlab.pin_packing.write_crystal", ctx).await?;
         let database = ctx.data::<DatabaseConnection>()?;
         let crystal = crystal::ActiveModel {
-            id: ActiveValue::Set(Uuid::new_v4()),
+            id: ActiveValue::Set(Uuid::now_v7()),
             plate: ActiveValue::Set(well.plate),
             well: ActiveValue::Set(well.well),
             crystal_state: ActiveValue::Set(crystal_state),

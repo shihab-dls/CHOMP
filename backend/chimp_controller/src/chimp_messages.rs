@@ -20,7 +20,7 @@ pub async fn setup_chimp_client(
 
     let channel = connection.create_channel().await?;
 
-    let reply_queue_id = Uuid::new_v4();
+    let reply_queue_id = Uuid::now_v7();
     channel
         .queue_declare(
             &reply_queue_id.to_string(),

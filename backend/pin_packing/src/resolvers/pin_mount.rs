@@ -77,7 +77,7 @@ impl PinMountMutation {
         }?;
 
         let pin_mount = pin_mount::ActiveModel {
-            id: ActiveValue::Set(Uuid::new_v4()),
+            id: ActiveValue::Set(Uuid::now_v7()),
             crystal_id: ActiveValue::Set(crystal_id),
             puck_mount_id: ActiveValue::Set(puck_mount_id),
             puck_location: ActiveValue::Set(puck_location),

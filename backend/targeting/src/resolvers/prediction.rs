@@ -46,7 +46,7 @@ struct CrystalInput {
 impl prediction_crystal::ActiveModel {
     fn from_crystal_input_and_drop_id(crystal_input: &CrystalInput, drop_id: Uuid) -> Self {
         Self {
-            id: ActiveValue::Set(Uuid::new_v4()),
+            id: ActiveValue::Set(Uuid::now_v7()),
             drop_id: ActiveValue::Set(drop_id),
             left: ActiveValue::Set(crystal_input.bounding_box.left),
             right: ActiveValue::Set(crystal_input.bounding_box.right),
@@ -96,7 +96,7 @@ struct DropInput {
 impl prediction_drop::ActiveModel {
     fn from_drop_input_and_prediction_id(drop_input: &DropInput, prediction_id: Uuid) -> Self {
         Self {
-            id: ActiveValue::Set(Uuid::new_v4()),
+            id: ActiveValue::Set(Uuid::now_v7()),
             prediction_id: ActiveValue::Set(prediction_id),
             insertion_point_x: ActiveValue::Set(drop_input.insertion_point.x),
             insertion_point_y: ActiveValue::Set(drop_input.insertion_point.y),
@@ -185,7 +185,7 @@ impl PredicitonMutation {
             .transaction::<_, _, DbErr>(|transaction| {
                 Box::pin(async move {
                     let prediction = prediction::Entity::insert(prediction::ActiveModel {
-                        id: ActiveValue::Set(Uuid::new_v4()),
+                        id: ActiveValue::Set(Uuid::now_v7()),
                         plate: ActiveValue::Set(plate.plate),
                         well: ActiveValue::Set(plate.well),
                         well_centroid_x: ActiveValue::Set(well_centroid.x),

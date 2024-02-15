@@ -66,7 +66,7 @@ impl PuckMountMutation {
         }?;
 
         let puck = puck_mount::ActiveModel {
-            id: ActiveValue::Set(Uuid::new_v4()),
+            id: ActiveValue::Set(Uuid::now_v7()),
             cane_mount_id: ActiveValue::Set(None),
             cane_location: ActiveValue::Set(None),
             barcode: ActiveValue::Set(barcode),

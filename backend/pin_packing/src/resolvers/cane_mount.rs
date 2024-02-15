@@ -74,7 +74,7 @@ impl CaneMountMutation {
         }?;
 
         let cane = cane_mount::ActiveModel {
-            id: ActiveValue::Set(Uuid::new_v4()),
+            id: ActiveValue::Set(Uuid::now_v7()),
             barcode: ActiveValue::Set(barcode),
             operator_id: ActiveValue::Set(operator_id),
             timestamp: ActiveValue::Set(Utc::now()),
