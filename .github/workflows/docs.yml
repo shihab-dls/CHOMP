@@ -47,7 +47,7 @@ jobs:
         run: chmod -R +rX backend/target/doc
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3.0.0
+        uses: actions/upload-pages-artifact@v3.0.1
         with:
           path: backend/target/doc
 
