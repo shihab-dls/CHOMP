@@ -11,6 +11,7 @@ COPY Cargo.toml Cargo.lock ./
 COPY chimp_chomp/Cargo.toml chimp_chomp/Cargo.toml
 COPY chimp_controller/Cargo.toml chimp_controller/Cargo.toml
 COPY chimp_protocol/Cargo.toml chimp_protocol/Cargo.toml
+COPY compound_library/Cargo.toml compound_library/Cargo.toml
 COPY graphql_endpoints/Cargo.toml graphql_endpoints/Cargo.toml
 COPY graphql_event_broker/Cargo.toml graphql_event_broker/Cargo.toml
 COPY opa_client/Cargo.toml opa_client/Cargo.toml
@@ -25,6 +26,8 @@ RUN mkdir chimp_chomp/src \
     && touch chimp_protocol/src/lib.rs \
     && mkdir chimp_controller/src \
     && echo "fn main() {}" > chimp_controller/src/main.rs \
+    && mkdir compound_library/src \
+    && echo "fn main() {}" > compound_library/src/main.rs \
     && mkdir graphql_endpoints/src \
     && touch graphql_endpoints/src/lib.rs \
     && mkdir graphql_event_broker/src \
@@ -49,6 +52,7 @@ COPY . /app
 RUN touch chimp_chomp/src/main.rs \
     && touch chimp_protocol/src/lib.rs \
     && touch chimp_controller/src/main.rs \
+    && touch compound_library/src/main.rs \
     && touch graphql_endpoints/src/lib.rs \
     && touch graphql_event_broker/src/lib.rs \
     && touch opa_client/src/lib.rs \
@@ -86,6 +90,12 @@ FROM gcr.io/distroless/cc as pin_packing
 COPY --from=build /app/target/release/pin_packing /pin_packing
 
 ENTRYPOINT ["/pin_packing"]
+
+FROM gcr.io/distroless/cc as compound_library
+
+COPY --from=build /app/target/release/compound_library /compound_library
+
+ENTRYPOINT ["/compound_library"]
 
 FROM gcr.io/distroless/cc as soakdb_sync
 

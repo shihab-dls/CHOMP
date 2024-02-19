@@ -1,3 +1,7 @@
+#![forbid(unsafe_code)]
+// #![warn(missing_docs)]
+// #![warn(clippy::missing_docs_in_private_items)]
+#![doc=include_str!("../README.md")]
 mod entities;
 mod graphql;
 mod migrator;
@@ -5,7 +9,7 @@ mod migrator;
 use async_graphql::extensions::Tracing;
 use axum::{routing::get, Router, Server};
 use clap::Parser;
-use graphql::schema::{root_schema_builder, RootSchema};
+use graphql::{root_schema_builder, RootSchema};
 use graphql_endpoints::{GraphQLHandler, GraphQLSubscription, GraphiQLHandler};
 use opa_client::OPAClient;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr, TransactionError};
@@ -31,6 +35,8 @@ struct ServeArgs {
     port: u16,
     #[arg(long, env)]
     database_url: Url,
+    #[arg(long, env, default_value = "compound_library")]
+    database_path: String,
     #[arg(long, env)]
     opa_url: Url,
 }
@@ -41,10 +47,13 @@ struct SchemaArgs {
     path: Option<PathBuf>,
 }
 
-async fn setup_database() -> Result<DatabaseConnection, TransactionError<DbErr>> {
-    let db_url =
-        ConnectOptions::new("postgres://postgres:password@postgres/compound_library".to_string());
-    let db = Database::connect(db_url).await?;
+async fn setup_database(
+    db_base: Url,
+    db_path: String,
+) -> Result<DatabaseConnection, TransactionError<DbErr>> {
+    let db_url = format!("{}/{}", db_base, db_path);
+    let db_options = ConnectOptions::new(db_url);
+    let db = Database::connect(db_options).await?;
     migrator::Migrator::up(&db, None).await?;
     Ok(db)
 }
@@ -85,7 +94,9 @@ async fn main() {
 
     match args {
         Cli::Serve(args) => {
-            let db = setup_database().await.unwrap();
+            let db = setup_database(args.database_url, args.database_path)
+                .await
+                .unwrap();
             let opa_client = OPAClient::new(args.opa_url);
             let schema = root_schema_builder()
                 .data(db)

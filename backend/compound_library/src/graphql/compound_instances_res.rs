@@ -47,12 +47,10 @@ impl CompoundInstanceQuery {
     ) -> async_graphql::Result<Option<compound_instances::Model>> {
         subject_authorization!("xchemlab.compound_library.read_compound", ctx).await?;
         let db = ctx.data::<DatabaseConnection>()?;
-        Ok(
-            compound_instances::Entity::find()
-                .filter(compound_instances::Column::CompoundType.eq(compound_name.to_ascii_lowercase()))
-                .one(db)
-                .await?
-        )
+        Ok(compound_instances::Entity::find()
+            .filter(compound_instances::Column::CompoundType.eq(compound_name.to_ascii_lowercase()))
+            .one(db)
+            .await?)
     }
 }
 
@@ -65,13 +63,14 @@ impl CompoundInstanceMutation {
         well_number: i16,
         compound_type: String,
     ) -> async_graphql::Result<compound_instances::Model> {
-        let user = subject_authorization!("xchemlab.compound_library.write_compound", ctx).await?;
+        let operator_id =
+            subject_authorization!("xchemlab.compound_library.write_compound", ctx).await?;
         let db = ctx.data::<DatabaseConnection>()?;
         let compound_instance = compound_instances::ActiveModel {
             plate_id: ActiveValue::Set(plate_id),
             well_number: ActiveValue::Set(well_number),
             compound_type: ActiveValue::Set(compound_type.to_ascii_lowercase()),
-            username: ActiveValue::Set(user),
+            operator_id: ActiveValue::Set(operator_id),
             timestamp: ActiveValue::Set(Utc::now()),
         };
         Ok(compound_instances::Entity::insert(compound_instance)

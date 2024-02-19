@@ -1,10 +1,10 @@
 use super::compound_instances;
 use async_graphql::SimpleObject;
+use chrono::{DateTime, Utc};
 use sea_orm::{
     ActiveModelBehavior, DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait,
     EnumIter, PrimaryKeyTrait, Related, RelationDef, RelationTrait,
 };
-use chrono::{DateTime, Utc};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
 #[sea_orm(table_name = "compound_types")]
@@ -12,9 +12,12 @@ use chrono::{DateTime, Utc};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub name: String,
-    #[sea_orm(desc = "Simplified Molecular-Input Line-Entry System (SMILES) notation for the compound")]
+    #[sea_orm(
+        desc = "Simplified Molecular-Input Line-Entry System (SMILES) notation for the compound",
+        unique
+    )]
     pub smiles: String,
-    pub username: String, 
+    pub operator_id: String,
     pub timestamp: DateTime<Utc>,
 }
 

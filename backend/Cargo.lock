@@ -1244,6 +1244,7 @@ dependencies = [
  "dotenvy",
  "graphql_endpoints",
  "opa_client",
+ "purr",
  "sea-orm",
  "sea-orm-migration",
  "the_paginator",
@@ -3171,6 +3172,12 @@ dependencies = [
  "version_check",
  "yansi",
 ]
+
+[[package]]
+name = "purr"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f65ecf8f6541cb5191a715bcd065373e1d49dfc64ad39f6a3d2cba4c8c20108a"
 
 [[package]]
 name = "quote"

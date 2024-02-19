@@ -1,10 +1,10 @@
 use super::compound_types;
 use async_graphql::SimpleObject;
+use chrono::{DateTime, Utc};
 use sea_orm::{
     ActiveModelBehavior, DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait,
     EnumIter, PrimaryKeyTrait, Related, RelationDef, RelationTrait,
 };
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
@@ -16,7 +16,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub well_number: i16,
     pub compound_type: String,
-    pub username: String, 
+    pub operator_id: String,
     pub timestamp: DateTime<Utc>,
 }
 

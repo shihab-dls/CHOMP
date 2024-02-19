@@ -13,6 +13,7 @@ jobs:
         target:
           - chimp_chomp
           - chimp_controller
+          - compound_library
           - pin_packing
           - soakdb_sync
           - targeting

@@ -1,23 +1,14 @@
 package xchemlab.compound_library
 
 import data.xchemlab
-import rego.v1
 
 default read_compound = {"allowed" : false}
 default write_compound = {"allowed" : false}
 
-read_compound = response if {
+read_compound = {"allowed": true, "subject": xchemlab.subject} {
     xchemlab.valid_token
-    response := {
-        "allowed": true,
-        "subject": xchemlab.subject,
-    }
 }
 
-write_compound = response if {
+write_compound = {"allowed" : true, "subject" : xchemlab.subject} {
     xchemlab.valid_token
-    response := {
-        "allowed" : true, 
-        "subject" : xchemlab.subject,
-    }
 }

@@ -4,7 +4,6 @@ use chrono::Utc;
 use opa_client::subject_authorization;
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter};
 use the_paginator::graphql::{CursorInput, ModelConnection};
-// use uuid::Uuid;
 
 #[derive(Debug, Clone, Default)]
 pub struct CompoundQuery;
@@ -50,12 +49,10 @@ impl CompoundQuery {
     ) -> async_graphql::Result<Option<compound_types::Model>> {
         subject_authorization!("xchemlab.compound_library.read_compound", ctx).await?;
         let db = ctx.data::<DatabaseConnection>()?;
-        Ok(
-            compound_types::Entity::find()
-                .filter(compound_types::Column::Name.eq(name.to_ascii_lowercase()))
-                .one(db)
-                .await?
-        )
+        Ok(compound_types::Entity::find()
+            .filter(compound_types::Column::Name.eq(name.to_ascii_lowercase()))
+            .one(db)
+            .await?)
     }
 }
 
@@ -67,12 +64,13 @@ impl CompoundMutation {
         name: String,
         smiles: String,
     ) -> async_graphql::Result<compound_types::Model> {
-        let user = subject_authorization!("xchemlab.compound_library.write_compound", ctx).await?;
+        let operator_id =
+            subject_authorization!("xchemlab.compound_library.write_compound", ctx).await?;
         let db = ctx.data::<DatabaseConnection>()?;
         let compound = compound_types::ActiveModel {
             name: ActiveValue::set(name.to_ascii_lowercase()),
-            smiles: ActiveValue::Set(smiles),
-            username: ActiveValue::Set(user),
+            smiles: ActiveValue::Set(smiles.to_ascii_uppercase()),
+            operator_id: ActiveValue::Set(operator_id),
             timestamp: ActiveValue::Set(Utc::now()),
         };
         Ok(compound_types::Entity::insert(compound)
