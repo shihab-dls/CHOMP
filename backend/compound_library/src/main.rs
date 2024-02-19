@@ -17,6 +17,7 @@ use axum::{routing::get, Router, Server};
 use clap::Parser;
 use graphql::{root_schema_builder, RootSchema};
 use graphql_endpoints::{GraphQLHandler, GraphQLSubscription, GraphiQLHandler};
+use migrator::Migrator;
 use opa_client::OPAClient;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr, TransactionError};
 use sea_orm_migration::MigratorTrait;
@@ -48,9 +49,6 @@ struct ServeArgs {
     /// Base URL for the database.
     #[arg(long, env)]
     database_url: Url,
-    /// Database path
-    #[arg(long, env, default_value = "compound_library")]
-    database_path: String,
     /// URL for the OPA server
     #[arg(long, env)]
     opa_url: Url,
@@ -65,18 +63,21 @@ struct SchemaArgs {
 }
 
 /// Sets up the database connection and performs the migrations.
+/// The database name is set of compound_library if not provided.
+///
 /// Returns a `Result` with a `DatabaseConnection` on success,
 /// or a `TransactionError<DbErr>` if connecting to the database or running
 /// migrations fails.
 async fn setup_database(
-    db_base: Url,
-    db_path: String,
+    mut database_url: Url,
 ) -> Result<DatabaseConnection, TransactionError<DbErr>> {
-    let db_url = format!("{}/{}", db_base, db_path);
-    let db_options = ConnectOptions::new(db_url);
-    let db = Database::connect(db_options).await?;
-    migrator::Migrator::up(&db, None).await?;
-    Ok(db)
+    if database_url.path().is_empty() {
+        database_url.set_path("compound_library");
+    }
+    let connection_options = ConnectOptions::new(database_url.to_string());
+    let connection = Database::connect(connection_options).await?;
+    Migrator::up(&connection, None).await?;
+    Ok(connection)
 }
 
 /// Sets up the router for handling GraphQL queries and subscriptions.
@@ -120,9 +121,7 @@ async fn main() {
 
     match args {
         Cli::Serve(args) => {
-            let db = setup_database(args.database_url, args.database_path)
-                .await
-                .unwrap();
+            let db = setup_database(args.database_url).await.unwrap();
             let opa_client = OPAClient::new(args.opa_url);
             let schema = root_schema_builder()
                 .data(db)

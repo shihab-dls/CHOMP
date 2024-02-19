@@ -38,7 +38,12 @@ fn setup_router(schema: RootSchema) -> Router {
         .route_service(SUBSCRIPTION_ENDPOINT, GraphQLSubscription::new(schema))
 }
 
-async fn setup_database(database_url: Url) -> Result<DatabaseConnection, TransactionError<DbErr>> {
+async fn setup_database(
+    mut database_url: Url,
+) -> Result<DatabaseConnection, TransactionError<DbErr>> {
+    if database_url.path().is_empty() {
+        database_url.set_path("pin_packing");
+    }
     let connection_options = ConnectOptions::new(database_url.to_string());
     let connection = Database::connect(connection_options).await?;
     Migrator::up(&connection, None).await?;
