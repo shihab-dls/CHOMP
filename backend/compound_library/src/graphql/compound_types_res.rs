@@ -9,15 +9,18 @@ use purr::{
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter};
 use the_paginator::graphql::{CursorInput, ModelConnection};
 
+/// CompundQuery is a type that represents all the queries for the compound types.
 #[derive(Debug, Clone, Default)]
 pub struct CompoundQuery;
 
+/// CompundMutation is a type that represents all the mutations for the compound types.
 #[derive(Debug, Clone, Default)]
 pub struct CompoundMutation;
 
 #[ComplexObject]
 impl compound_types::Model {
-    async fn compound_instances(
+    /// This function fetches all compound instances related to this compound type.
+    async fn instances(
         &self,
         ctx: &Context<'_>,
     ) -> async_graphql::Result<Vec<compound_instances::Model>> {
@@ -32,6 +35,7 @@ impl compound_types::Model {
 
 #[Object]
 impl CompoundQuery {
+    /// This function fetches all compound types from the database.
     async fn compounds(
         &self,
         ctx: &Context<'_>,
@@ -46,6 +50,7 @@ impl CompoundQuery {
             .try_into_connection()?)
     }
 
+    /// This function fetches a single compound type using the compound name.
     async fn compound(
         &self,
         ctx: &Context<'_>,
@@ -60,14 +65,12 @@ impl CompoundQuery {
     }
 }
 
+/// SmilesValidator is a type for custom graphql validation.
 struct SmilesValidator;
 
 impl SmilesValidator {
-    pub fn new() -> Self {
-        SmilesValidator {}
-    }
-
-    fn valid_smiles(&self, smiles: &str) -> bool {
+    /// This function checks if the given `smiles` string is in correct format.
+    fn valid_smiles(smiles: &str) -> bool {
         let mut builder = Builder::new();
         let mut trace = Trace::new();
         read(smiles, &mut builder, Some(&mut trace)).is_ok()
@@ -76,21 +79,20 @@ impl SmilesValidator {
 
 impl CustomValidator<String> for SmilesValidator {
     fn check(&self, smiles: &String) -> Result<(), InputValueError<String>> {
-        if self.valid_smiles(smiles) {
-            Ok(())
-        } else {
-            Err(InputValueError::custom("Invalid SMILES format"))
-        }
+        SmilesValidator::valid_smiles(smiles)
+            .then_some(())
+            .ok_or(InputValueError::custom("Invalid SMILES format"))
     }
 }
 
 #[Object]
 impl CompoundMutation {
+    /// This function adds a compound type to the database.
     async fn add_compound(
         &self,
         ctx: &Context<'_>,
         name: String,
-        #[graphql(validator(custom = "SmilesValidator::new()"))] smiles: String,
+        #[graphql(validator(custom = "SmilesValidator"))] smiles: String,
     ) -> async_graphql::Result<compound_types::Model> {
         let operator_id =
             subject_authorization!("xchemlab.compound_library.write_compound", ctx).await?;

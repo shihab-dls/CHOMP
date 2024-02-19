@@ -6,15 +6,18 @@ use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, ModelTr
 use the_paginator::graphql::{CursorInput, ModelConnection};
 use uuid::Uuid;
 
+/// CompoundInstanceQuery is a type that represents all the queries for the compound instances.
 #[derive(Debug, Clone, Default)]
 pub struct CompoundInstanceQuery;
 
+/// CompoundInstanceMutation is a type that represents all the mutations for the compound instances.
 #[derive(Debug, Clone, Default)]
 pub struct CompoundInstanceMutation;
 
 #[ComplexObject]
 impl compound_instances::Model {
-    async fn compound_types(
+    /// This function fetches all compound types related to this compound instance.
+    async fn types(
         &self,
         ctx: &Context<'_>,
     ) -> async_graphql::Result<Option<compound_types::Model>> {
@@ -26,6 +29,7 @@ impl compound_instances::Model {
 
 #[Object]
 impl CompoundInstanceQuery {
+    /// This function fetches all the compound instances from the database.
     async fn compound_instances(
         &self,
         ctx: &Context<'_>,
@@ -40,6 +44,7 @@ impl CompoundInstanceQuery {
             .try_into_connection()?)
     }
 
+    /// This function fetches a single compound instance from the database using the compound name.
     async fn compound_instance(
         &self,
         ctx: &Context<'_>,
@@ -56,6 +61,7 @@ impl CompoundInstanceQuery {
 
 #[Object]
 impl CompoundInstanceMutation {
+    /// This function adds a compound instance to the database.
     async fn add_compound_instance(
         &self,
         ctx: &Context<'_>,

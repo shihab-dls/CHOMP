@@ -1,3 +1,3 @@
 # Compound Library Service
 
-This service keeps track of all the compounds used for expeiments on the i04-1 beamline at Diamond Light Source.
+This service keeps track of all the compounds used for expeiments at the Diamond Light Source.
