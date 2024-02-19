@@ -2,6 +2,9 @@ dependencies:
 - name: chimp-chomp
   repository: ""
   version: 0.0.3
+- name: compound-library
+  repository: ""
+  version: 0.0.1
 - name: pin-packing
   repository: ""
   version: 0.0.3
@@ -32,5 +35,5 @@ dependencies:
 - name: oauth2-proxy
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 3.7.4
-digest: sha256:4b0ce326f2d48a9af560de0471ebf021e50fa0a9fba1f401bb11fdcdb28ef1d1
-generated: "2023-10-05T14:59:27.826614445+01:00"
+digest: sha256:37e0bc3ab1b7e071e600dc4e8416c4e98bed058f54fec0b1ee7b488f2eabe8d7
+generated: "2024-02-19T17:22:02.993010787Z"

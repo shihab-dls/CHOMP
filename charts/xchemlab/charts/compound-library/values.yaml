@@ -1,0 +1,43 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/diamondlightsource/xchemlab-compound-library
+  pullPolicy: Always
+  tag: ""
+
+imagePullSecrets: []
+
+database:
+  host: ""
+  user: ""
+  password:
+    secretName: ""
+    secretKey: ""
+
+opa:
+  url: ""
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80
+
+serviceAccount:
+  create: false
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
