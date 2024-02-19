@@ -1,7 +1,6 @@
-// src/resolvers/crystal_wells_res.rs
-
 use crate::entities::crystal_wells;
 use async_graphql::{Context, Object};
+use chrono::Utc;
 use opa_client::subject_authorization;
 use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait};
 use the_paginator::graphql::{CursorInput, ModelConnection};
@@ -46,14 +45,17 @@ impl CrystalMutation {
         &self,
         ctx: &Context<'_>,
         plate_id: Uuid,
-        well_num: i16,
+        well_number: i16,
     ) -> async_graphql::Result<crystal_wells::Model> {
-        subject_authorization!("xchemlab.crystal_library.write_crystal", ctx).await?;
+        let operator_id =
+            subject_authorization!("xchemlab.crystal_library.write_crystal", ctx).await?;
         let db = ctx.data::<DatabaseConnection>()?;
         let crystal = crystal_wells::ActiveModel {
             id: ActiveValue::Set(Uuid::now_v7()),
             plate_id: ActiveValue::Set(plate_id),
-            well_num: ActiveValue::Set(well_num),
+            well_number: ActiveValue::Set(well_number),
+            operator_id: ActiveValue::Set(operator_id),
+            timestamp: ActiveValue::Set(Utc::now()),
         };
         Ok(crystal_wells::Entity::insert(crystal)
             .exec_with_returning(db)

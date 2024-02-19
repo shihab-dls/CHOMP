@@ -1,7 +1,7 @@
-// src/graphql.rs
+pub mod crystal_wells_res;
 
-use crate::resolvers::crystal_wells_res::{CrystalMutation, CrystalQuery};
 use async_graphql::{EmptySubscription, MergedObject, Schema, SchemaBuilder};
+use crystal_wells_res::{CrystalMutation, CrystalQuery};
 
 #[derive(Debug, Clone, MergedObject, Default)]
 pub struct Query(CrystalQuery);

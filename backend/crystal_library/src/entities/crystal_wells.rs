@@ -1,6 +1,5 @@
-//src/entities/compound_instances.rs
-
 use async_graphql::SimpleObject;
+use chrono::{DateTime, Utc};
 use sea_orm::{
     ActiveModelBehavior, DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait,
     EnumIter, PrimaryKeyTrait,
@@ -14,7 +13,9 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub plate_id: Uuid,
-    pub well_num: i16,
+    pub well_number: i16,
+    pub operator_id: String,
+    pub timestamp: DateTime<Utc>,
 }
 
 #[derive(Clone, Copy, Debug, EnumIter, DeriveRelation)]

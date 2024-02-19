@@ -1,5 +1,3 @@
-// src/migrator.rs
-
 use crate::entities::crystal_wells;
 use axum::async_trait;
 use sea_orm::{DbErr, DeriveMigrationName, Schema};

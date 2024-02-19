@@ -1,9 +1,6 @@
-// main.rs
-
 mod entities;
 mod graphql;
 mod migrator;
-mod resolvers;
 
 use async_graphql::extensions::Tracing;
 use axum::{routing::get, Router, Server};
