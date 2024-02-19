@@ -1,7 +1,11 @@
 use crate::entities::{compound_instances, compound_types};
-use async_graphql::{ComplexObject, Context, Object};
+use async_graphql::{ComplexObject, Context, CustomValidator, InputValueError, Object};
 use chrono::Utc;
 use opa_client::subject_authorization;
+use purr::{
+    graph::Builder,
+    read::{read, Trace},
+};
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter};
 use the_paginator::graphql::{CursorInput, ModelConnection};
 
@@ -56,13 +60,37 @@ impl CompoundQuery {
     }
 }
 
+struct SmilesValidator;
+
+impl SmilesValidator {
+    pub fn new() -> Self {
+        SmilesValidator {}
+    }
+
+    fn valid_smiles(&self, smiles: &str) -> bool {
+        let mut builder = Builder::new();
+        let mut trace = Trace::new();
+        read(smiles, &mut builder, Some(&mut trace)).is_ok()
+    }
+}
+
+impl CustomValidator<String> for SmilesValidator {
+    fn check(&self, smiles: &String) -> Result<(), InputValueError<String>> {
+        if self.valid_smiles(smiles) {
+            Ok(())
+        } else {
+            Err(InputValueError::custom("Invalid SMILES format"))
+        }
+    }
+}
+
 #[Object]
 impl CompoundMutation {
     async fn add_compound(
         &self,
         ctx: &Context<'_>,
         name: String,
-        smiles: String,
+        #[graphql(validator(custom = "SmilesValidator::new()"))] smiles: String,
     ) -> async_graphql::Result<compound_types::Model> {
         let operator_id =
             subject_authorization!("xchemlab.compound_library.write_compound", ctx).await?;
