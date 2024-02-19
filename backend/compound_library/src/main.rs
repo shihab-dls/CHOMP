@@ -29,24 +29,23 @@ use std::{
 };
 use url::Url;
 
-/// A commnd line interface for Compound Library Service.
+/// A service for tracking compounds available in the XChem lab
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
 enum Cli {
-    /// Starts the web server.
+    /// Starts a webserver serving the GraphQL API
     Serve(ServeArgs),
-    /// Saves the schema to a file if a file path is provided,
-    /// else prints it to the terminal
+    /// Prints the GraphQL API to stdout
     Schema(SchemaArgs),
 }
 
-/// Arguments for the `serve` command.
 #[derive(Debug, Parser)]
+#[allow(clippy::missing_docs_in_private_items)]
 struct ServeArgs {
-    /// Port number of the server.
+    /// The port number to serve on.
     #[arg(short, long, default_value_t = 80)]
     port: u16,
-    /// Base URL for the database.
+    /// URL for the OPA server
     #[arg(long, env)]
     database_url: Url,
     /// URL for the OPA server
