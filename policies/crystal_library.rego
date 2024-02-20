@@ -1,23 +1,14 @@
 package xchemlab.crystal_library
 
 import data.xchemlab
-import rego.v1
 
 default read_crystal = {"allowed" : false}
 default write_crystal = {"allowed" : false}
 
-read_crystal = response if {
+read_crystal = {"allowed": true, "subject": xchemlab.subject} {
     xchemlab.valid_token
-    response := {
-        "allowed": true,
-        "subject": xchemlab.subject,
-    }
 }
 
-write_crystal = response if {
+write_crystal = {"allowed" : true, "subject" : xchemlab.subject} {
     xchemlab.valid_token
-    response := {
-        "allowed" : true, 
-        "subject" : xchemlab.subject,
-    }
 }

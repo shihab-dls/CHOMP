@@ -42,12 +42,16 @@ struct SchemaArgs {
     path: Option<PathBuf>,
 }
 
-async fn setup_database() -> Result<DatabaseConnection, TransactionError<DbErr>> {
-    let db_url =
-        ConnectOptions::new("postgres://postgres:password@postgres/crystal_library".to_string());
-    let db = Database::connect(db_url).await?;
-    migrator::Migrator::up(&db, None).await?;
-    Ok(db)
+async fn setup_database(
+    mut database_url: Url,
+) -> Result<DatabaseConnection, TransactionError<DbErr>> {
+    if database_url.path().is_empty() {
+        database_url.set_path("crystal_library");
+    }
+    let connection_options = ConnectOptions::new(database_url.to_string());
+    let connection = Database::connect(connection_options).await?;
+    migrator::Migrator::up(&connection, None).await?;
+    Ok(connection)
 }
 
 fn setup_router(schema: RootSchema) -> Router {
@@ -66,8 +70,8 @@ fn setup_router(schema: RootSchema) -> Router {
         .route_service(SUBSCRIPTION_ENDPOINT, GraphQLSubscription::new(schema))
 }
 
-async fn serve(router: Router) {
-    let socket_addr: SocketAddr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 82));
+async fn serve(router: Router, port: u16) {
+    let socket_addr: SocketAddr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port));
     println!("GraphiQL IDE: {}", socket_addr);
     Server::bind(&socket_addr)
         .serve(router.into_make_service())
@@ -86,7 +90,7 @@ async fn main() {
 
     match args {
         Cli::Serve(args) => {
-            let db = setup_database().await.unwrap();
+            let db = setup_database(args.database_url).await.unwrap();
             let opa_client = OPAClient::new(args.opa_url);
             let schema = root_schema_builder()
                 .data(db)
@@ -94,7 +98,7 @@ async fn main() {
                 .extension(Tracing)
                 .finish();
             let router = setup_router(schema);
-            serve(router).await;
+            serve(router, args.port).await;
         }
         Cli::Schema(args) => {
             let schema = root_schema_builder().finish();

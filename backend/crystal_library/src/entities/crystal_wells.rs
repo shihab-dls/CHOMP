@@ -11,8 +11,8 @@ use uuid::Uuid;
 #[graphql(name = "crystal_wells")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub id: Uuid,
     pub plate_id: Uuid,
+    #[sea_orm(primary_key, auto_increment = false)]
     pub well_number: i16,
     pub operator_id: String,
     pub timestamp: DateTime<Utc>,

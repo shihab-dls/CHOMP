@@ -2,7 +2,7 @@ use crate::entities::crystal_wells;
 use async_graphql::{Context, Object};
 use chrono::Utc;
 use opa_client::subject_authorization;
-use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait};
+use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use the_paginator::graphql::{CursorInput, ModelConnection};
 use uuid::Uuid;
 
@@ -31,11 +31,16 @@ impl CrystalQuery {
     async fn crystal(
         &self,
         ctx: &Context<'_>,
-        id: Uuid,
+        plate_id: Uuid,
+        well_number: i16,
     ) -> async_graphql::Result<Option<crystal_wells::Model>> {
         subject_authorization!("xchemlab.crystal_library.read_crystal", ctx).await?;
         let db = ctx.data::<DatabaseConnection>()?;
-        Ok(crystal_wells::Entity::find_by_id(id).one(db).await?)
+        Ok(crystal_wells::Entity::find()
+            .filter(crystal_wells::Column::PlateId.eq(plate_id))
+            .filter(crystal_wells::Column::WellNumber.eq(well_number))
+            .one(db)
+            .await?)
     }
 }
 
@@ -51,7 +56,6 @@ impl CrystalMutation {
             subject_authorization!("xchemlab.crystal_library.write_crystal", ctx).await?;
         let db = ctx.data::<DatabaseConnection>()?;
         let crystal = crystal_wells::ActiveModel {
-            id: ActiveValue::Set(Uuid::now_v7()),
             plate_id: ActiveValue::Set(plate_id),
             well_number: ActiveValue::Set(well_number),
             operator_id: ActiveValue::Set(operator_id),
