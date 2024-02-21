@@ -1256,6 +1256,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "compound_soaking"
+version = "0.1.0"
+dependencies = [
+ "async-graphql",
+ "axum",
+ "chrono",
+ "clap 4.5.1",
+ "dotenvy",
+ "graphql_endpoints",
+ "opa_client",
+ "sea-orm",
+ "sea-orm-migration",
+ "the_paginator",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

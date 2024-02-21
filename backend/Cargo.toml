@@ -5,6 +5,7 @@ members = [
     "chimp_protocol", 
     "crystal_library",
     "compound_library",
+    "compound_soaking",
     "graphql_endpoints",
     "graphql_event_broker",
     "opa_client",
