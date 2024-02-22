@@ -1,4 +1,4 @@
-use crate::entities::{crystal_plates, crystal_wells};
+use crate::tables::{crystal_plates, crystal_wells};
 use async_graphql::{ComplexObject, Context, Object};
 use chrono::Utc;
 use opa_client::subject_authorization;
@@ -68,7 +68,7 @@ impl CrystalWellsMutation {
         &self,
         ctx: &Context<'_>,
         plate_id: Uuid,
-        well_number: i16,
+        #[graphql(validator(minimum = 1, maximum = 288))] well_number: i16,
     ) -> async_graphql::Result<crystal_wells::Model> {
         let operator_id =
             subject_authorization!("xchemlab.crystal_library.write_crystal_wells", ctx).await?;

@@ -1,6 +1,6 @@
-/// The cyrstal plates resolver module
+/// A collection of resolvers relating to crystal plates
 pub mod crystal_plates_res;
-/// The cyrstal wells resolver module
+/// A collection of resolvers relating to crystal wells
 pub mod crystal_wells_res;
 
 use async_graphql::{EmptySubscription, MergedObject, Schema, SchemaBuilder};

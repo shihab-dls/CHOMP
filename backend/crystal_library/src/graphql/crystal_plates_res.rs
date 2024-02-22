@@ -1,4 +1,4 @@
-use crate::entities::{crystal_plates, crystal_wells};
+use crate::tables::{crystal_plates, crystal_wells};
 use async_graphql::{ComplexObject, Context, Object};
 use chrono::Utc;
 use opa_client::subject_authorization;

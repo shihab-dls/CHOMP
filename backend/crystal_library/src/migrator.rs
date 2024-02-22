@@ -1,4 +1,4 @@
-use crate::entities::{crystal_plates, crystal_wells};
+use crate::tables::{crystal_plates, crystal_wells};
 use axum::async_trait;
 use sea_orm::{DbErr, DeriveMigrationName, Schema};
 use sea_orm_migration::{MigrationTrait, MigratorTrait, SchemaManager};

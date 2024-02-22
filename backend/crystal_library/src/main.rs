@@ -3,14 +3,14 @@
 #![warn(clippy::missing_docs_in_private_items)]
 #![doc=include_str!("../README.md")]
 
-/// This module defines the structure and schema of the database tables
-/// through various entity structs.
-mod entities;
 /// This module sets up the GraphQL schema, including queries, mutations,
 /// and subscriptions. It defines how data is queried and mutated through the API.
 mod graphql;
 /// This module is responsible for defining and applying database migrations.
 mod migrator;
+/// This module defines the structure and schema of the database tables
+/// through various entity structs.
+mod tables;
 
 use async_graphql::extensions::Tracing;
 use axum::{routing::get, Router, Server};
