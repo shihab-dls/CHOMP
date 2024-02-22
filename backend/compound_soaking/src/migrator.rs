@@ -1,10 +1,13 @@
-use crate::entities::soak_compound;
+use crate::tables::soak_compound;
 use axum::async_trait;
 use sea_orm::{DbErr, DeriveMigrationName, Schema};
 use sea_orm_migration::{MigrationTrait, MigratorTrait, SchemaManager};
 
+/// Migrator for managing and applying database migrations.
 pub struct Migrator;
 
+/// This struct is used to define the very first migration that sets up
+/// the initial database schema.
 #[derive(DeriveMigrationName)]
 struct Initial;
 

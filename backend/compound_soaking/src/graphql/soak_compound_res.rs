@@ -1,4 +1,4 @@
-use crate::entities::soak_compound;
+use crate::tables::soak_compound;
 use async_graphql::{Context, Object};
 use chrono::Utc;
 use opa_client::subject_authorization;
@@ -6,14 +6,17 @@ use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFi
 use the_paginator::graphql::{CursorInput, ModelConnection};
 use uuid::Uuid;
 
+/// SoakCompundQuery is a type that represents all the queries for the compound soaking.
 #[derive(Debug, Clone, Default)]
 pub struct SoakCompoundQuery;
 
+/// SoakCompundMutation is a type that represents all the mutations for the compound soaking.
 #[derive(Debug, Clone, Default)]
 pub struct SoakCompoundMutation;
 
 #[Object]
 impl SoakCompoundQuery {
+    /// Fetches all soaked compounds from the database
     async fn soaked_compounds(
         &self,
         ctx: &Context<'_>,
@@ -28,6 +31,7 @@ impl SoakCompoundQuery {
             .try_into_connection()?)
     }
 
+    /// Fetches a single soaked compound from the database
     async fn soaked_compound(
         &self,
         ctx: &Context<'_>,
@@ -50,6 +54,7 @@ impl SoakCompoundQuery {
 
 #[Object]
 impl SoakCompoundMutation {
+    /// Adds a soaked compound to the database
     async fn add_soaked_compound(
         &self,
         ctx: &Context<'_>,
