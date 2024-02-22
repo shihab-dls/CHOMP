@@ -1,16 +1,19 @@
+/// The cyrstal plates resolver module
+pub mod crystal_plates_res;
 /// The cyrstal wells resolver module
 pub mod crystal_wells_res;
 
 use async_graphql::{EmptySubscription, MergedObject, Schema, SchemaBuilder};
-use crystal_wells_res::{CrystalMutation, CrystalQuery};
+use crystal_plates_res::{CrystalPlatesMutation, CrystalPlatesQuery};
+use crystal_wells_res::{CrystalWellsMutation, CrystalWellsQuery};
 
 /// Combines all query resolvers into a single GraphQL `Query` type.
 #[derive(Debug, Clone, MergedObject, Default)]
-pub struct Query(CrystalQuery);
+pub struct Query(CrystalWellsQuery, CrystalPlatesQuery);
 
 /// Combines all mutation resolvers into a single GraphQL `Query` type.
 #[derive(Debug, Clone, MergedObject, Default)]
-pub struct Mutation(CrystalMutation);
+pub struct Mutation(CrystalWellsMutation, CrystalPlatesMutation);
 
 /// Type alias for the complete GraphQL schema.
 pub type RootSchema = Schema<Query, Mutation, EmptySubscription>;

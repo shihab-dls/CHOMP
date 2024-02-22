@@ -1,4 +1,4 @@
-use crate::entities::crystal_wells;
+use crate::entities::{crystal_plates, crystal_wells};
 use axum::async_trait;
 use sea_orm::{DbErr, DeriveMigrationName, Schema};
 use sea_orm_migration::{MigrationTrait, MigratorTrait, SchemaManager};
@@ -23,6 +23,10 @@ impl MigrationTrait for Initial {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let backend = manager.get_database_backend();
         let schema = Schema::new(backend);
+
+        manager
+            .create_table(schema.create_table_from_entity(crystal_plates::Entity))
+            .await?;
 
         manager
             .create_table(schema.create_table_from_entity(crystal_wells::Entity))
