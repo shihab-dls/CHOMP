@@ -7,3 +7,7 @@ RUN apt-get update \
     sqlite3 pre-commit \
     libopencv-dev clang libclang-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Rover CLI for composing and precompiles rust router (gateway) for subgraphs
+RUN curl -sSL https://rover.apollo.dev/nix/latest | sh\
+    && curl -sSL https://router.apollo.dev/download/nix/latest | sh

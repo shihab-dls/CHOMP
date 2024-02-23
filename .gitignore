@@ -3,3 +3,7 @@
 
 # Developer Tooling
 .vscode
+
+# Apollo router
+router
+backend/router
