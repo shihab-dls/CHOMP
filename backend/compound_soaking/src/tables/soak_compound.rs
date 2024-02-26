@@ -8,8 +8,8 @@ use uuid::Uuid;
 
 /// Represents a soaked compound within the database.
 #[derive(Clone, Debug, DeriveEntityModel, PartialEq, SimpleObject)]
-#[sea_orm(table_name = "soak_compound")]
-#[graphql(name = "soak_compound")]
+#[sea_orm(table_name = "soaked_compounds")]
+#[graphql(name = "soaked_compounds", complex)]
 pub struct Model {
     /// ID of the plate on which the compound is located.
     #[sea_orm(primary_key, auto_increment = false)]

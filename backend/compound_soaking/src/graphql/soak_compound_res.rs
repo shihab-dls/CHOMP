@@ -47,6 +47,27 @@ impl CompoundInstances {
     }
 }
 
+#[ComplexObject]
+impl soak_compound::Model {
+    /// Fetches the information of the crystals soaked from
+    /// crystal library subgraph
+    async fn crystals(&self) -> async_graphql::Result<CrystalWells> {
+        Ok(CrystalWells {
+            plate_id: self.crystal_plate_id,
+            well_number: self.crystal_well_number,
+        })
+    }
+
+    /// Fetches the information of the compounds soaked from
+    /// compound library subgraph
+    async fn compounds(&self) -> async_graphql::Result<CompoundInstances> {
+        Ok(CompoundInstances {
+            plate_id: self.compound_plate_id,
+            well_number: self.compound_well_number,
+        })
+    }
+}
+
 #[Object]
 impl SoakCompoundQuery {
     /// Fetches all soaked compounds from the database

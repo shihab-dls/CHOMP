@@ -65,13 +65,13 @@ impl CompoundInstanceQuery {
         ctx: &Context<'_>,
         plate_id: Uuid,
         well_number: i16,
-    ) -> async_graphql::Result<Vec<compound_instances::Model>> {
+    ) -> async_graphql::Result<Option<compound_instances::Model>> {
         subject_authorization!("xchemlab.compound_library.read_compound", ctx).await?;
         let db = ctx.data::<DatabaseConnection>()?;
         Ok(compound_instances::Entity::find()
             .filter(compound_instances::Column::PlateId.eq(plate_id))
             .filter(compound_instances::Column::WellNumber.eq(well_number))
-            .all(db)
+            .one(db)
             .await?)
     }
 }
