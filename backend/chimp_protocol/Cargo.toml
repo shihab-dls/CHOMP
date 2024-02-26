@@ -5,6 +5,6 @@ edition = "2021"
 
 [dependencies]
 serde = { workspace = true }
-serde_json = { version = "1.0.113" }
+serde_json = { version = "1.0.114" }
 url = { workspace = true, features = ["serde"] }
 uuid = { workspace = true, features = ["serde"] }

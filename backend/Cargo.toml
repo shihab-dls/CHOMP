@@ -40,7 +40,7 @@ sea-orm = { version = "0.11.2", default-features = false, features = [
     "with-uuid",
 ] }
 sea-orm-migration = { version = "0.11.3" }
-serde = { version = "1.0.196" }
+serde = { version = "1.0.197" }
 thiserror = { version = "1.0.57" }
 tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
 tracing = { version = "0.1.40" }
