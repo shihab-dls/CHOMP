@@ -1,5 +1,7 @@
 /// A collection of resolvers relating to soaked compounds
-pub mod soak_compound_res;
+mod soak_compound_res;
+/// A collection of subgraphs extended from other services
+mod subgraph_extensions;
 
 use async_graphql::{EmptySubscription, MergedObject, Schema, SchemaBuilder};
 use soak_compound_res::{SoakCompoundMutation, SoakCompoundQuery};

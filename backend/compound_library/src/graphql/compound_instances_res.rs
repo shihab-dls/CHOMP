@@ -1,4 +1,4 @@
-use crate::entities::{compound_instances, compound_types};
+use crate::tables::{compound_instances, compound_types};
 use async_graphql::{ComplexObject, Context, Object};
 use chrono::Utc;
 use opa_client::subject_authorization;
@@ -57,6 +57,23 @@ impl CompoundInstanceQuery {
             .one(db)
             .await?)
     }
+
+    /// Reference resolver for compound instance in compound library subgraph
+    #[graphql(entity)]
+    async fn get_compound_instance_by_id(
+        &self,
+        ctx: &Context<'_>,
+        plate_id: Uuid,
+        well_number: i16,
+    ) -> async_graphql::Result<Vec<compound_instances::Model>> {
+        subject_authorization!("xchemlab.compound_library.read_compound", ctx).await?;
+        let db = ctx.data::<DatabaseConnection>()?;
+        Ok(compound_instances::Entity::find()
+            .filter(compound_instances::Column::PlateId.eq(plate_id))
+            .filter(compound_instances::Column::WellNumber.eq(well_number))
+            .all(db)
+            .await?)
+    }
 }
 
 #[Object]
@@ -66,7 +83,7 @@ impl CompoundInstanceMutation {
         &self,
         ctx: &Context<'_>,
         plate_id: Uuid,
-        well_number: i16,
+        #[graphql(validator(minimum = 1, maximum = 288))] well_number: i16,
         compound_type: String,
     ) -> async_graphql::Result<compound_instances::Model> {
         let operator_id =

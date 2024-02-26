@@ -10,7 +10,7 @@ use uuid::Uuid;
 /// Represents a crystal within the database.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
 #[sea_orm(table_name = "crystal_wells")]
-#[graphql(name = "crystal_wells", complex)]
+#[graphql(name = "crystal_wells", complex, shareable)]
 pub struct Model {
     /// ID of the plate on which the crystal is located.
     #[sea_orm(primary_key, auto_increment = false)]

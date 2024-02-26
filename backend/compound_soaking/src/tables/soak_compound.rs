@@ -7,7 +7,7 @@ use sea_orm::{
 use uuid::Uuid;
 
 /// Represents a soaked compound within the database.
-#[derive(Clone, Debug, DeriveEntityModel, Eq, PartialEq, SimpleObject)]
+#[derive(Clone, Debug, DeriveEntityModel, PartialEq, SimpleObject)]
 #[sea_orm(table_name = "soak_compound")]
 #[graphql(name = "soak_compound")]
 pub struct Model {
@@ -23,6 +23,8 @@ pub struct Model {
     /// The well on the plate which the crystal is located.
     #[sea_orm(primary_key, auto_increment = false)]
     pub crystal_well_number: i16,
+    /// The volume of compounds soaked.
+    pub volume: f32,
     /// The identifier of the operator which added this entry.
     pub operator_id: String,
     /// The date and time when the compound instance was added.

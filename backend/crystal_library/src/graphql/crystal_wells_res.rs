@@ -59,6 +59,23 @@ impl CrystalWellsQuery {
             .one(db)
             .await?)
     }
+
+    /// Reference resolver for crystal wells in crystal library graphql subgraph
+    #[graphql(entity)]
+    async fn find_crystal_wells_by_id(
+        &self,
+        ctx: &Context<'_>,
+        plate_id: Uuid,
+        well_number: i16,
+    ) -> async_graphql::Result<Option<crystal_wells::Model>> {
+        subject_authorization!("xchemlab.crystal_library.read_crystal_wells", ctx).await?;
+        let db = ctx.data::<DatabaseConnection>()?;
+        Ok(crystal_wells::Entity::find()
+            .filter(crystal_wells::Column::PlateId.eq(plate_id))
+            .filter(crystal_wells::Column::WellNumber.eq(well_number))
+            .one(db)
+            .await?)
+    }
 }
 
 #[Object]

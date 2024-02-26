@@ -1,7 +1,7 @@
 /// A collection of resolvers relating to crystal plates
-pub mod crystal_plates_res;
+mod crystal_plates_res;
 /// A collection of resolvers relating to crystal wells
-pub mod crystal_wells_res;
+mod crystal_wells_res;
 
 use async_graphql::{EmptySubscription, MergedObject, Schema, SchemaBuilder};
 use crystal_plates_res::{CrystalPlatesMutation, CrystalPlatesQuery};

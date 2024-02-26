@@ -1,4 +1,4 @@
-use crate::entities::{compound_instances, compound_types};
+use crate::tables::{compound_instances, compound_types};
 use async_graphql::{ComplexObject, Context, CustomValidator, InputValueError, Object};
 use chrono::Utc;
 use opa_client::subject_authorization;

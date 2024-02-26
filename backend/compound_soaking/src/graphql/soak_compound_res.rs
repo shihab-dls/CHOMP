@@ -1,18 +1,51 @@
+use super::subgraph_extensions::{CompoundInstances, CrystalWells};
 use crate::tables::soak_compound;
-use async_graphql::{Context, Object};
+use async_graphql::{ComplexObject, Context, Object};
 use chrono::Utc;
 use opa_client::subject_authorization;
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use the_paginator::graphql::{CursorInput, ModelConnection};
 use uuid::Uuid;
 
-/// SoakCompundQuery is a type that represents all the queries for the compound soaking.
+/// SoakCompoundQuery is a type that represents all the queries for the compound soaking.
 #[derive(Debug, Clone, Default)]
 pub struct SoakCompoundQuery;
 
-/// SoakCompundMutation is a type that represents all the mutations for the compound soaking.
+/// SoakCompoundMutation is a type that represents all the mutations for the compound soaking.
 #[derive(Debug, Clone, Default)]
 pub struct SoakCompoundMutation;
+
+#[ComplexObject]
+impl CrystalWells {
+    /// Fetches all the compounds soaked in a crystal well
+    async fn compound_soaked(
+        &self,
+        ctx: &Context<'_>,
+    ) -> async_graphql::Result<Vec<soak_compound::Model>> {
+        let db = ctx.data::<DatabaseConnection>()?;
+        Ok(soak_compound::Entity::find()
+            .filter(soak_compound::Column::CrystalPlateId.eq(self.plate_id))
+            .filter(soak_compound::Column::CrystalWellNumber.eq(self.well_number))
+            .all(db)
+            .await?)
+    }
+}
+
+#[ComplexObject]
+impl CompoundInstances {
+    /// Fetches all the crystals soaked with the compounds
+    async fn crystal_soaked(
+        &self,
+        ctx: &Context<'_>,
+    ) -> async_graphql::Result<Vec<soak_compound::Model>> {
+        let db = ctx.data::<DatabaseConnection>()?;
+        Ok(soak_compound::Entity::find()
+            .filter(soak_compound::Column::CompoundPlateId.eq(self.plate_id))
+            .filter(soak_compound::Column::CompoundWellNumber.eq(self.well_number))
+            .all(db)
+            .await?)
+    }
+}
 
 #[Object]
 impl SoakCompoundQuery {
@@ -50,6 +83,28 @@ impl SoakCompoundQuery {
             .one(db)
             .await?)
     }
+
+    /// Reference resolver for crystal wells
+    #[graphql(entity)]
+    async fn get_crystal_well_by_plate_id(&self, plate_id: Uuid, well_number: i16) -> CrystalWells {
+        CrystalWells {
+            plate_id,
+            well_number,
+        }
+    }
+
+    /// Reference resolver for compound wells
+    #[graphql(entity)]
+    async fn get_compound_instances_by_plate_id(
+        &self,
+        plate_id: Uuid,
+        well_number: i16,
+    ) -> CompoundInstances {
+        CompoundInstances {
+            plate_id,
+            well_number,
+        }
+    }
 }
 
 #[Object]
@@ -59,9 +114,10 @@ impl SoakCompoundMutation {
         &self,
         ctx: &Context<'_>,
         compound_plate_id: Uuid,
-        compound_well_number: i16,
+        #[graphql(validator(minimum = 1, maximum = 288))] compound_well_number: i16,
         crystal_plate_id: Uuid,
-        crystal_well_number: i16,
+        #[graphql(validator(minimum = 1, maximum = 288))] crystal_well_number: i16,
+        volume: f32,
     ) -> async_graphql::Result<soak_compound::Model> {
         let operator_id =
             subject_authorization!("xchemlab.compound_soaking.write_soaked_compound", ctx).await?;
@@ -71,6 +127,7 @@ impl SoakCompoundMutation {
             compound_well_number: ActiveValue::Set(compound_well_number),
             crystal_plate_id: ActiveValue::Set(crystal_plate_id),
             crystal_well_number: ActiveValue::Set(crystal_well_number),
+            volume: ActiveValue::set(volume),
             operator_id: ActiveValue::Set(operator_id),
             timestamp: ActiveValue::Set(Utc::now()),
         };

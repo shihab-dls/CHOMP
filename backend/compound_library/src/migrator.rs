@@ -1,4 +1,4 @@
-use crate::entities::{compound_instances, compound_types};
+use crate::tables::{compound_instances, compound_types};
 use axum::async_trait;
 use sea_orm::{DbErr, DeriveMigrationName, Schema};
 use sea_orm_migration::{MigrationTrait, MigratorTrait, SchemaManager};

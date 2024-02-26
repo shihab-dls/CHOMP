@@ -22,5 +22,5 @@ pub type RootSchema = Schema<Query, Mutation, EmptySubscription>;
 /// This function initializes the schema with default instances of `Query`,
 /// `Mutation`, and `EmptySubscription`.
 pub fn root_schema_builder() -> SchemaBuilder<Query, Mutation, EmptySubscription> {
-    Schema::build(Query::default(), Mutation::default(), EmptySubscription)
+    Schema::build(Query::default(), Mutation::default(), EmptySubscription).enable_federation()
 }

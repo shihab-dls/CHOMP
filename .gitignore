@@ -7,3 +7,5 @@
 # Apollo router
 router
 backend/router
+# Generated supergraph schema 
+backend/supergraph.graphql

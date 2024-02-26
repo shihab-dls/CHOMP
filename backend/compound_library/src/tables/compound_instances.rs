@@ -10,7 +10,7 @@ use uuid::Uuid;
 /// Represents a compound instance within the database.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
 #[sea_orm(table_name = "compound_instances")]
-#[graphql(name = "compund_instances", complex)]
+#[graphql(name = "compound_instances", complex, shareable)]
 pub struct Model {
     /// ID of the plate on which the compound instance is located.
     #[sea_orm(primary_key, auto_increment = false)]
