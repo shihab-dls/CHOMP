@@ -62,7 +62,7 @@ impl CrystalWellsQuery {
 
     /// Reference resolver for crystal wells in crystal library graphql subgraph
     #[graphql(entity)]
-    async fn find_crystal_wells_by_id(
+    async fn route_crystal_wells(
         &self,
         ctx: &Context<'_>,
         plate_id: Uuid,

@@ -107,7 +107,7 @@ impl SoakCompoundQuery {
 
     /// Reference resolver for crystal wells
     #[graphql(entity)]
-    async fn get_crystal_well_by_plate_id(&self, plate_id: Uuid, well_number: i16) -> CrystalWells {
+    async fn route_crystal_well(&self, plate_id: Uuid, well_number: i16) -> CrystalWells {
         CrystalWells {
             plate_id,
             well_number,
@@ -116,7 +116,7 @@ impl SoakCompoundQuery {
 
     /// Reference resolver for compound wells
     #[graphql(entity)]
-    async fn get_compound_instances_by_plate_id(
+    async fn route_compound_instances(
         &self,
         plate_id: Uuid,
         well_number: i16,
@@ -131,14 +131,14 @@ impl SoakCompoundQuery {
 #[Object]
 impl SoakCompoundMutation {
     /// Adds a soaked compound to the database
-    async fn add_soaked_compound(
+    async fn soak_compound(
         &self,
         ctx: &Context<'_>,
         compound_plate_id: Uuid,
         #[graphql(validator(minimum = 1, maximum = 288))] compound_well_number: i16,
         crystal_plate_id: Uuid,
         #[graphql(validator(minimum = 1, maximum = 288))] crystal_well_number: i16,
-        volume: f32,
+        volume: u32,
     ) -> async_graphql::Result<soak_compound::Model> {
         let operator_id =
             subject_authorization!("xchemlab.compound_soaking.write_soaked_compound", ctx).await?;

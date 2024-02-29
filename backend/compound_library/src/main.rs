@@ -43,7 +43,7 @@ enum Cli {
 #[allow(clippy::missing_docs_in_private_items)]
 struct ServeArgs {
     /// The port number to serve on.
-    #[arg(short, long, default_value_t = 80)]
+    #[arg(short, long, default_value_t = 80, env = "COMPOUND_LIBRARY_PORT")]
     port: u16,
     /// URL for the OPA server
     #[arg(long, env)]

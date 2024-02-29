@@ -23,8 +23,8 @@ pub struct Model {
     /// The well on the plate which the crystal is located.
     #[sea_orm(primary_key, auto_increment = false)]
     pub crystal_well_number: i16,
-    /// The volume of compounds soaked.
-    pub volume: f32,
+    /// The volume of compounds transferred into the crystal well in mircolitres.
+    pub volume: u32,
     /// The identifier of the operator which added this entry.
     pub operator_id: String,
     /// The date and time when the compound instance was added.

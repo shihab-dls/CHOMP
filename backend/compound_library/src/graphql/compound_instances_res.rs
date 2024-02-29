@@ -60,7 +60,7 @@ impl CompoundInstanceQuery {
 
     /// Reference resolver for compound instance in compound library subgraph
     #[graphql(entity)]
-    async fn get_compound_instance_by_id(
+    async fn route_compound_instance(
         &self,
         ctx: &Context<'_>,
         plate_id: Uuid,

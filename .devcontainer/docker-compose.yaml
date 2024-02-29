@@ -1,6 +1,20 @@
 version: "3.8"
 
 services:
+  apollo-router:
+    image: ghcr.io/apollographql/router:v1.41.0-rc.2
+    volumes:
+      - ./supergraph.graphql:/dist/schema/supergraph.graphql
+      - ./router.yaml:/dist/config/router.yaml
+    ports:
+      - 4001:4000
+    command:
+      - --dev
+      - -config
+      - config/router.yaml
+      - -supergraph 
+      - schema/supergraph.graphql
+      
   backend:
     build:
       context: .
@@ -12,6 +26,9 @@ services:
       OPA_URL: http://opa:8181
       DATABASE_URL: postgres://postgres:password@postgres
       RABBITMQ_URL: amqp://rabbitmq:password@rabbitmq
+      CRYSTAL_LIBRARY_PORT: 8000
+      COMPOUND_LIBRARY_PORT: 8001
+      COMPOUND_SOAKING_PORT: 8002
 
   frontend:
     image: docker.io/library/node:20.6.0-bookworm

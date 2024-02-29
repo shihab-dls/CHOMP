@@ -4,8 +4,5 @@
 # Developer Tooling
 .vscode
 
-# Apollo router
-router
-backend/router
 # Generated supergraph schema 
-backend/supergraph.graphql
+.devcontainer/supergraph.graphql

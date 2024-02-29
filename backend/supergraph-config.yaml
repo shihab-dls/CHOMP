@@ -1,14 +1,14 @@
 federation_version: 2
 subgraphs:
   crystal_library:
-    routing_url: http://localhost:80
+    routing_url: http://backend:8000
     schema:
-      subgraph_url: http://localhost:80
+      subgraph_url: http://backend:8000
   compound_library:
-    routing_url: http://localhost:81
+    routing_url: http://backend:8001
     schema:
-      subgraph_url: http://localhost:81
+      subgraph_url: http://backend:8001 
   compound_soaking:
-    routing_url: http://localhost:82
+    routing_url: http://backend:8002
     schema:
-      subgraph_url: http://localhost:82
+      subgraph_url: http://backend:8002

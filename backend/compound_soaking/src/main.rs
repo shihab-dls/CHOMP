@@ -41,7 +41,7 @@ enum Cli {
 #[derive(Debug, Parser)]
 #[allow(clippy::missing_docs_in_private_items)]
 struct ServeArgs {
-    #[arg(short, long, default_value_t = 80)]
+    #[arg(short, long, default_value_t = 80, env = "COMPOUND_SOAKING_PORT")]
     port: u16,
     #[arg(long, env)]
     database_url: Url,
