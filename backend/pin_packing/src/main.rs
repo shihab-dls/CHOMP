@@ -72,7 +72,7 @@ enum Cli {
 #[derive(Debug, Parser)]
 struct ServeArgs {
     /// The port number to serve on.
-    #[arg(short, long, default_value_t = 80)]
+    #[arg(short, long, default_value_t = 80, env = "PIN_PACKING_PORT")]
     port: u16,
     /// The URL of a postgres database which will be used to persist service data.
     #[arg(long, env)]

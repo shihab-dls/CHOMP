@@ -29,6 +29,8 @@ services:
       CRYSTAL_LIBRARY_PORT: 8000
       COMPOUND_LIBRARY_PORT: 8001
       COMPOUND_SOAKING_PORT: 8002
+      PIN_PACKING_PORT: 8003
+      TARGITING_PORT: 8004
 
   frontend:
     image: docker.io/library/node:20.6.0-bookworm
