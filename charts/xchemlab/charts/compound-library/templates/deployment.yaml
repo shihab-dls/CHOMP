@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "pinPacking.fullname" . }}
+  name: {{ include "compoundLibrary.fullname" . }}
   labels:
-    {{- include "pinPacking.labels" . | nindent 4 }}
+    {{- include "compoundLibrary.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "pinPacking.selectorLabels" . | nindent 6 }}
+      {{- include "compoundLibrary.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -16,13 +16,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "pinPacking.selectorLabels" . | nindent 8 }}
+        {{- include "compoundLibrary.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "pinPacking.serviceAccountName" . }}
+      serviceAccountName: {{ include "compoundLibrary.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -40,7 +40,7 @@ spec:
                   name: {{ .Values.database.password.secretName }}
                   key: {{ .Values.database.password.secretKey }}
             - name: DATABASE_URL
-              value: {{ include "pinPacking.databaseURL" . }}
+              value: {{ include "compoundLibrary.databaseURL" . }}
             - name: OPA_URL
               value: {{ tpl .Values.opa.url . }}
           ports:
