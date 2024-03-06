@@ -30,6 +30,17 @@ compound-library:
   opa:
     url: http://{{ .Release.Name }}-opa-kube-mgmt:8181
 
+compound-soaking:
+  enabled: true
+  database:
+    host: postgres://postgresql-ha-pgpool
+    user: postgres
+    password:
+      secretName: postgres-passwords
+      secretKey: password
+  opa:
+    url: http://{{ .Release.Name }}-opa-kube-mgmt:8181
+
 crystal-library:
   enabled: true
   database:

@@ -11,7 +11,7 @@ services:
     command:
       - --dev
       - -config
-      - config/router.yaml
+      - /dist/config/router.yaml
       - -supergraph 
       - schema/supergraph.graphql
       

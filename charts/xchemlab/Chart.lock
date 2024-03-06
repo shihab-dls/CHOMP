@@ -5,6 +5,9 @@ dependencies:
 - name: compound-library
   repository: ""
   version: 0.0.1
+- name: compound-soaking
+  repository: ""
+  version: 0.0.1
 - name: crystal-library
   repository: ""
   version: 0.0.1
@@ -38,5 +41,5 @@ dependencies:
 - name: oauth2-proxy
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 3.7.4
-digest: sha256:e2987ea5e22dfa308a63f6f5e029d90bbc3cbd1c926161a2b72aa23ff7605825
-generated: "2024-03-05T14:33:24.387624369Z"
+digest: sha256:2738fe6bf788e283ebdd64f5bbf8c0094b9e7271b40fe693b661117d4bed9eb9
+generated: "2024-03-06T11:37:40.525320982Z"
