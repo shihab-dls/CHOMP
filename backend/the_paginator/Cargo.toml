@@ -7,7 +7,7 @@ edition = "2021"
 async-graphql = ["dep:async-graphql"]
 
 [dependencies]
-async-trait = "0.1.77"
+async-trait = "0.1.79"
 sea-orm = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
