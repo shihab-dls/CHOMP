@@ -1412,9 +1412,9 @@ dependencies = [
 
 [[package]]
 name = "cynic-codegen"
-version = "3.4.3"
+version = "3.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a11d6119f9f0f55c9d7cff5189a7b318f35a7d2d6faa4872441ee521f65420b6"
+checksum = "9ac40efa3e97024222fa95d4c85ce093e2337ed5cdf7279374777132b419f50c"
 dependencies = [
  "counter",
  "darling",
