@@ -34,6 +34,12 @@ use tokio_stream::wrappers::BroadcastStream;
 #[derive(Debug)]
 pub struct EventBroker<E, const CAPACITY: usize = 1024>(Lazy<Sender<E>>);
 
+impl<E: Clone + Send + 'static, const CAPACITY: usize> Default for EventBroker<E, CAPACITY> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<E: Clone + Send + 'static, const CAPACITY: usize> EventBroker<E, CAPACITY> {
     /// Constructs an [`EventBroker`], creation of the underlying channel is performed at first use.
     pub const fn new() -> Self {
