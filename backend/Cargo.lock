@@ -1912,19 +1912,20 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "graphql-ws-client"
-version = "0.5.0"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09d6c77c2de260d565a53df302f27412930a961de7cbecfdfa18e61fe0c59604"
+checksum = "24f40f46bb92221c76ed086e2aa4b3789f04fa605f68df1addd63bc45de6d7c5"
 dependencies = [
- "async-tungstenite",
+ "async-channel",
  "cynic",
- "futures",
+ "futures-lite 2.2.0",
+ "futures-sink",
+ "futures-timer",
  "log",
  "pin-project",
  "serde",
  "serde_json",
  "thiserror",
- "uuid",
 ]
 
 [[package]]
