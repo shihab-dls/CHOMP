@@ -14,7 +14,7 @@ futures-timer = { version = "3.0.3" }
 itertools = { workspace = true }
 lapin = { version = "2.3.3" }
 ndarray = { version = "0.15.6" }
-opencv = { version = "0.88.8", default-features = false, features = [
+opencv = { version = "0.91.1", default-features = false, features = [
     "imgproc",
     "imgcodecs",
 ] }
