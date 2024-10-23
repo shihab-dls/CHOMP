@@ -12,7 +12,7 @@ cynic = { version = "3.4.3", features = ["http-reqwest"] }
 dotenvy = { workspace = true }
 futures-util = { version = "0.3.30" }
 graphql-ws-client = { version = "0.5.0", features = ["cynic"] }
-lapin = { version = "2.3.3", default-features = false, features = ["rustls"] }
+lapin = { version = "2.3.4", default-features = false, features = ["rustls"] }
 reqwest = { version = "0.11.24" }
 tokio = { workspace = true, features = ["sync"] }
 url = { workspace = true }
