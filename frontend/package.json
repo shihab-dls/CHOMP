@@ -48,7 +48,7 @@
     "style-loader": "^4.0.0",
     "terser-webpack-plugin": "^5.3.10",
     "typescript": "5.4.5",
-    "web-vitals": "^3.5.2",
+    "web-vitals": "^4.2.4",
     "webpack": "^5.91.0",
     "webpack-dev-server": "^5.0.4",
     "webpack-manifest-plugin": "^5.0.0",
