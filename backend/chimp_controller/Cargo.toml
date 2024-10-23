@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { workspace = true }
-async-tungstenite = { version = "0.22.0", features = ["tokio-runtime"] }
+async-tungstenite = { version = "0.28.0", features = ["tokio-runtime"] }
 chimp_protocol = { path = "../chimp_protocol" }
 clap = { workspace = true }
 cynic = { version = "3.4.3", features = ["http-reqwest"] }
